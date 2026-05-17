@@ -1,0 +1,395 @@
+import React, {
+    forwardRef, useImperativeHandle, useReducer, useCallback, useEffect, useState,
+} from "react";
+import { SavedGraphQLRequest, SavedGraphQLMock, Folder, Environment } from "@/types";
+import EditorTitleBar from "@/components/editor/EditorTitleBar";
+import { BottomBar, TabStrip } from "@/components/editor/RequestTab";
+import {
+    graphqlTabReducer, initGraphQLState, stateToRequestPayload, stateToMockPayload,
+    stateToDraft, isDraftEmpty,
+    GraphQLTabType, GraphQLTabState,
+    GraphQLRequestDraft, GraphQLMockDraft,
+} from "@/components/graphql/graphqlTabReducer";
+import { useDraftPersist, loadDraft } from "@/lib/useDraftPersist";
+import CodeEditor from "@/components/common/CodeEditor";
+import HeaderTable from "@/components/editor/HeaderTable";
+import { KVRow, mkRowId, headersToRows, rowsToHeaders } from "@/lib/utils";
+import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
+import { strings } from "@/lib/strings";
+import { resolveVars, resolveHeaders } from "@/lib/resolveVars";
+import SchemaExplorer from "@/components/graphql/SchemaExplorer";
+
+// ── Public handle for imperative refresh ───────────────────────────────────
+
+export interface GraphQLTabHandle {
+    refresh(entity: SavedGraphQLRequest | SavedGraphQLMock): void;
+}
+
+// ── Props ──────────────────────────────────────────────────────────────────
+
+export interface GraphQLTabProps {
+    tabType: GraphQLTabType;
+    tabId: string;
+    draftTabId?: string | null;
+    initial?: SavedGraphQLRequest | SavedGraphQLMock | Partial<SavedGraphQLRequest> | Partial<SavedGraphQLMock> | null;
+    folders?: Folder[];
+    activeEnv?: Environment | null;
+    onSave(data: Omit<SavedGraphQLRequest, "id" | "createdAt" | "workspaceId"> | Omit<SavedGraphQLMock, "id" | "createdAt" | "workspaceId">): Promise<void>;
+    onClose(): void;
+    onDirtyChange?(dirty: boolean): void;
+    label?: string;
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+
+const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQLTab(
+    { tabType, tabId, draftTabId, initial, folders = [], activeEnv = null, onSave, onClose, onDirtyChange, label },
+    ref,
+) {
+    const draft = draftTabId
+        ? (tabType === "request"
+            ? loadDraft<GraphQLRequestDraft>(draftTabId)
+            : loadDraft<GraphQLMockDraft>(draftTabId))
+        : null;
+
+    const [state, dispatch] = useReducer(
+        graphqlTabReducer,
+        undefined,
+        () => initGraphQLState(initial ?? null, draft, tabType),
+    );
+
+    const [initialSnapshot] = useState(() => JSON.stringify(stateToDraft(initGraphQLState(initial ?? null, draft, tabType), tabType)));
+    useEffect(() => {
+        const current = JSON.stringify(stateToDraft(state, tabType));
+        onDirtyChange?.(current !== initialSnapshot);
+    }, [state, tabType, initialSnapshot, onDirtyChange]);
+
+    const { markSaved } = useDraftPersist(
+        draftTabId ?? null,
+        () => stateToDraft(state, tabType),
+        () => isDraftEmpty(state, tabType),
+    );
+
+    useImperativeHandle(ref, () => ({
+        refresh(entity: SavedGraphQLRequest | SavedGraphQLMock) {
+            dispatch({ type: "REFRESH", entity, tabType });
+        },
+    }), [tabType]);
+
+    // ── Request pane sub-tabs ──────────────────────────────────────────────
+
+    type ReqSubTab = "query" | "variables" | "headers" | "pre-script" | "post-script" | "schema";
+    const [reqSubTab, setReqSubTab] = useState<ReqSubTab>("query");
+    const [showSchemaExplorer, setShowSchemaExplorer] = useState(false);
+
+    const headerRows: KVRow[] = headersToRows(state.headers);
+
+    const handleHeadersChange = useCallback((rows: KVRow[]) => {
+        dispatch({ type: "SET_FIELD", field: "headers", value: rowsToHeaders(rows) });
+    }, []);
+
+    // Mock response headers
+    const resHeaderRows: KVRow[] = headersToRows(state.responseHeaders);
+    const handleResHeadersChange = useCallback((rows: KVRow[]) => {
+        dispatch({ type: "SET_FIELD", field: "responseHeaders", value: rowsToHeaders(rows) });
+    }, []);
+
+    // ── Send request ───────────────────────────────────────────────────────
+
+    const handleSend = useCallback(async () => {
+        if (!state.endpointUrl.trim()) return;
+        dispatch({ type: "SEND_START" });
+        try {
+            const url = resolveVars(state.endpointUrl, activeEnv);
+            const hdrs = resolveHeaders(state.headers, activeEnv);
+            const vars = resolveVars(state.variables, activeEnv);
+            const result = await window.api.graphqlExecute(
+                url,
+                hdrs,
+                state.query,
+                vars,
+                state.operationName,
+            );
+            dispatch({ type: "SEND_SUCCESS", status: result.status, headers: result.headers, body: result.body, durationMs: result.durationMs });
+        } catch (err: any) {
+            dispatch({ type: "SEND_ERROR", error: err.message ?? String(err) });
+        }
+    }, [state.endpointUrl, state.headers, state.query, state.variables, state.operationName, activeEnv]);
+
+    // ── Save ───────────────────────────────────────────────────────────────
+
+    const handleSave = useCallback(async () => {
+        dispatch({ type: "SAVE_START" });
+        try {
+            const data = tabType === "request" ? stateToRequestPayload(state) : stateToMockPayload(state);
+            await onSave(data);
+            dispatch({ type: "SAVE_SUCCESS" });
+            markSaved();
+        } catch {
+            dispatch({ type: "SAVE_ERROR" });
+        }
+    }, [state, tabType, onSave, markSaved]);
+
+    // ── Render: Request mode ───────────────────────────────────────────────
+
+    const reqTabs: { id: ReqSubTab; label: string }[] = [
+        { id: "query", label: "Query" },
+        { id: "variables", label: "Variables" },
+        { id: "headers", label: "Headers" },
+        { id: "pre-script", label: "Pre-Script" },
+        { id: "post-script", label: "Post-Script" },
+        { id: "schema", label: "Schema" },
+    ];
+
+    const mockReqTabs: { id: ReqSubTab; label: string }[] = [
+        { id: "query", label: "Match" },
+        { id: "headers", label: "Response Headers" },
+    ];
+
+    // ── Format response body ───────────────────────────────────────────────
+
+    const formattedResBody = (() => {
+        try { return JSON.stringify(JSON.parse(state.resBody), null, 2); } catch { return state.resBody; }
+    })();
+
+    // ── Render ─────────────────────────────────────────────────────────────
+
+    return (
+        <div className="flex flex-col h-full overflow-hidden">
+            <EditorTitleBar
+                label={label ?? (tabType === "request" ? "GRAPHQL REQUEST" : "GRAPHQL MOCK")}
+                namePlaceholder={tabType === "request" ? "Request name…" : "Mock name…"}
+                name={state.name}
+                onNameChange={(v) => dispatch({ type: "SET_FIELD", field: "name", value: v })}
+                onClose={onClose}
+            />
+
+            {/* URL bar — only for request mode */}
+            {tabType === "request" && (
+                <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex items-center gap-2">
+                    <div
+                        className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden flex-1"
+                        style={{ background: "var(--c-bg2)" }}
+                    >
+                        <span className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 flex-shrink-0 text-accent">
+                            POST
+                        </span>
+                        <input
+                            className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
+                            placeholder="https://api.example.com/graphql"
+                            value={state.endpointUrl}
+                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "endpointUrl", value: e.target.value })}
+                            onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+                        />
+                    </div>
+                    <button
+                        onClick={handleSend}
+                        disabled={state.sending || !state.endpointUrl.trim()}
+                        className="px-4 py-2.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
+                    >
+                        {state.sending
+                            ? <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />Sending</>
+                            : "Send"}
+                    </button>
+                </div>
+            )}
+
+            {/* Mock endpoint pattern */}
+            {tabType === "mock" && (
+                <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex items-center gap-2">
+                    <div
+                        className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden flex-1"
+                        style={{ background: "var(--c-bg2)" }}
+                    >
+                        <span className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 flex-shrink-0 text-text-dim">
+                            ENDPOINT
+                        </span>
+                        <input
+                            className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
+                            placeholder="/graphql or regex pattern…"
+                            value={state.endpointPattern}
+                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "endpointPattern", value: e.target.value })}
+                        />
+                    </div>
+                    <label className="flex items-center gap-1.5 text-xs text-text-dim cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={state.useRegex}
+                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "useRegex", value: e.target.checked })}
+                            className="accent-accent"
+                        />
+                        Regex
+                    </label>
+                </div>
+            )}
+
+            {/* Split panes */}
+            <PanelGroup orientation="horizontal" className="flex-1 overflow-hidden">
+                {/* Left pane */}
+                <Panel defaultSize={50} minSize={25}>
+                    <div className="flex flex-col h-full overflow-hidden">
+                        <TabStrip
+                            tabs={tabType === "request" ? reqTabs : mockReqTabs}
+                            active={reqSubTab}
+                            onChange={(t) => setReqSubTab(t as ReqSubTab)}
+                        />
+                        <div className="flex-1 overflow-hidden">
+                            {reqSubTab === "query" && tabType === "request" && (
+                                <CodeEditor
+                                    value={state.query}
+                                    onChange={(v) => dispatch({ type: "SET_FIELD", field: "query", value: v })}
+                                    language="text"
+                                    placeholder="query { ... }"
+                                />
+                            )}
+                            {reqSubTab === "query" && tabType === "mock" && (
+                                <div className="flex flex-col gap-3 p-4 overflow-y-auto h-full">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Operation Type</label>
+                                        <select
+                                            value={state.operationType}
+                                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "operationType", value: e.target.value })}
+                                            className="bg-bg2 border border-border rounded px-3 py-2 text-sm text-text-bright outline-none focus:border-accent"
+                                        >
+                                            <option value="any">Any</option>
+                                            <option value="query">Query</option>
+                                            <option value="mutation">Mutation</option>
+                                            <option value="subscription">Subscription</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Operation Name</label>
+                                        <input
+                                            className="bg-bg2 border border-border rounded px-3 py-2 text-sm text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
+                                            placeholder="Match operation name (leave empty to match all)"
+                                            value={state.operationNameMatch}
+                                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "operationNameMatch", value: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Response Status</label>
+                                        <input
+                                            type="number"
+                                            className="bg-bg2 border border-border rounded px-3 py-2 text-sm text-text-bright outline-none focus:border-accent w-24"
+                                            value={state.responseStatus}
+                                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "responseStatus", value: Number(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Response Delay (ms)</label>
+                                        <input
+                                            type="number"
+                                            className="bg-bg2 border border-border rounded px-3 py-2 text-sm text-text-bright outline-none focus:border-accent w-24"
+                                            value={state.responseDelay}
+                                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "responseDelay", value: Number(e.target.value) })}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            {reqSubTab === "variables" && (
+                                <CodeEditor
+                                    value={state.variables}
+                                    onChange={(v) => dispatch({ type: "SET_FIELD", field: "variables", value: v })}
+                                    language="json"
+                                    placeholder='{ "key": "value" }'
+                                />
+                            )}
+                            {reqSubTab === "headers" && tabType === "request" && (
+                                <HeaderTable rows={headerRows} onChange={handleHeadersChange} />
+                            )}
+                            {reqSubTab === "headers" && tabType === "mock" && (
+                                <HeaderTable rows={resHeaderRows} onChange={handleResHeadersChange} />
+                            )}
+                            {reqSubTab === "pre-script" && (
+                                <CodeEditor
+                                    value={state.preScript}
+                                    onChange={(v) => dispatch({ type: "SET_FIELD", field: "preScript", value: v })}
+                                    language="javascript"
+                                    placeholder="// Pre-request script"
+                                />
+                            )}
+                            {reqSubTab === "post-script" && (
+                                <CodeEditor
+                                    value={state.postScript}
+                                    onChange={(v) => dispatch({ type: "SET_FIELD", field: "postScript", value: v })}
+                                    language="javascript"
+                                    placeholder="// Post-response script"
+                                />
+                            )}
+                            {reqSubTab === "schema" && (
+                                <SchemaExplorer
+                                    schemaId={state.schemaId}
+                                    onInsertQuery={(q) => dispatch({ type: "SET_FIELD", field: "query", value: q })}
+                                    onInsertVariables={(v) => dispatch({ type: "SET_FIELD", field: "variables", value: v })}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </Panel>
+
+                <PanelResizeHandle className="w-px bg-border hover:bg-accent transition-colors cursor-col-resize" />
+
+                {/* Right pane */}
+                <Panel defaultSize={50} minSize={25}>
+                    <div className="flex flex-col h-full overflow-hidden">
+                        {tabType === "request" && (
+                            <>
+                                {/* Response header bar */}
+                                <div className="flex items-center gap-3 px-4 py-2 border-b border-border flex-shrink-0 bg-bg0/40">
+                                    <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Response</span>
+                                    {state.resStatus !== null && (
+                                        <>
+                                            <span className={`text-xs font-mono font-bold ${state.resStatus < 300 ? "text-green" : state.resStatus < 400 ? "text-yellow" : "text-red"}`}>
+                                                {state.resStatus}
+                                            </span>
+                                            <span className="text-xs text-text-dim">{state.resDuration}ms</span>
+                                        </>
+                                    )}
+                                    {state.resError && <span className="text-xs text-red">{state.resError}</span>}
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    <CodeEditor
+                                        value={formattedResBody}
+                                        language="json"
+                                        readOnly
+                                        placeholder="Send a request to see the response…"
+                                    />
+                                </div>
+                            </>
+                        )}
+                        {tabType === "mock" && (
+                            <>
+                                <div className="flex items-center gap-3 px-4 py-2 border-b border-border flex-shrink-0 bg-bg0/40">
+                                    <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Response Body</span>
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    <CodeEditor
+                                        value={state.responseBody}
+                                        onChange={(v) => dispatch({ type: "SET_FIELD", field: "responseBody", value: v })}
+                                        language="json"
+                                        placeholder='{"data": { ... }}'
+                                    />
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </Panel>
+            </PanelGroup>
+
+            {/* Bottom bar */}
+            <BottomBar
+                folders={folders}
+                folderId={state.folderId}
+                onFolderChange={(id) => dispatch({ type: "SET_FIELD", field: "folderId", value: id })}
+                onCancel={onClose}
+                onSave={handleSave}
+                saveLabel={draftTabId ? "Save" : "Update"}
+                saveDisabled={tabType === "request" ? !state.name && !state.endpointUrl : !state.name}
+                saving={state.saving}
+                savingLabel="Saving…"
+            />
+        </div>
+    );
+});
+
+export default GraphQLTab;

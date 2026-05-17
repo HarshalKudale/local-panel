@@ -1,0 +1,110 @@
+# ===== Dependencies =====
+node_modules/
+.pnp
+.pnp.js
+
+# ===== Build Outputs =====
+dist/
+build/
+release/
+out/
+*.app
+*.exe
+*.dmg
+*.deb
+*.rpm
+
+# ===== local-panel (Electron) =====
+local-panel/coverage/
+local-panel/test-results/
+local-panel/playwright-report/
+local-panel/userData/
+local-panel/*.asar
+local-panel/.vite/
+
+# ===== local-panel-website (Next.js) =====
+local-panel-website/.next/
+local-panel-website/*.tsbuildinfo
+local-panel-website/next-env.d.ts
+local-panel-website/.vercel
+
+# ===== local-panel-extension (Browser Extension) =====
+local-panel-extension/dist/
+local-panel-extension/*.zip
+local-panel-extension/node_modules/
+
+# ===== Test Coverage & Reports =====
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# ===== Environment Files =====
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ===== Logs =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ===== OS-specific Files =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+ehthumbs_vista.db
+*.swp
+*.swo
+*~
+.AppleDouble
+.LSOverride
+.directory
+.Trash-*
+
+# ===== IDE / Editor Files =====
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.classpath
+.c9/
+*.sublime-workspace
+
+# ===== Temporary / Cache Files =====
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+.npm
+.eslintcache
+.stylelintcache
+
+# ===== Certificate Files =====
+*.pem
+*.key
+*.crt
+*.cert
+!ca.pem
+
+# ===== Runtime Data =====
+local-panel/userData/
+*.asar.unpacked/
+
+# ===== Package Manager =====
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

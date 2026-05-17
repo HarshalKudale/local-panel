@@ -1,0 +1,737 @@
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { AppConfig, SavedWsConnection, Folder as FolderType, Environment } from "@/types";
+import SearchInput from "@/components/common/SearchInput";
+import FolderTree, { FolderTreeItem } from "@/components/sidebar/FolderTree";
+import EditorTitleBar from "@/components/editor/EditorTitleBar";
+import { UrlBar, TabStrip, BottomBar } from "@/components/editor/RequestTab";
+import HeaderTable from "@/components/editor/HeaderTable";
+import BodyEditor from "@/components/editor/BodyEditor";
+import CodeEditor from "@/components/common/CodeEditor";
+import EnvVarHint from "@/components/editor/EnvVarHint";
+import RandomizerHint from "@/components/editor/RandomizerHint";
+import { resolveVars } from "@/lib/resolveVars";
+import {
+  KVRow, mkRowId, headersToRows, rowsToHeaders, tryFormat, entityRelPath,
+} from "@/lib/utils";
+import { usePersistedState } from "@/lib/usePersistedState";
+import { useDraftPersist, loadDraft, clearDraft, getDraftIds } from "@/lib/useDraftPersist";
+import { useWebSocket, MAX_WS_CONNECTIONS, WsMessage } from "@/lib/useWebSocket";
+import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
+import { Plus, X, Folder, Zap, Play, Send } from "@/lib/icons";
+import TabBar from "@/components/editor/TabBar";
+import { SidebarLayout, SidebarHeader } from "@/components/ui";
+
+
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const DRAFT_PREFIX = "ws-draft-";
+const isDraft = (id: string) => id.startsWith(DRAFT_PREFIX);
+
+const WS_METHODS = ["WS"];
+
+// ── Draft type ─────────────────────────────────────────────────────────────
+
+interface WsDraft {
+  name: string;
+  url: string;
+  folderId: string | null;
+  headers: Record<string, string>;
+}
+
+// ── WebSocket editor ───────────────────────────────────────────────────────
+
+interface WsEditorProps {
+  tabId: string;
+  initial: Partial<SavedWsConnection> | null;
+  isNew: boolean;
+  onSave(data: Omit<SavedWsConnection, "id" | "createdAt" | "workspaceId">): Promise<void>;
+  onClose(): void;
+  folders?: FolderType[];
+  activeEnv?: Environment | null;
+}
+
+function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], activeEnv = null }: WsEditorProps) {
+  const draft = isDraft(tabId) ? loadDraft<WsDraft>(tabId) : null;
+  const src = draft ?? initial;
+
+  const [name, setName] = useState(src?.name ?? "");
+  const [url, setUrl] = useState(src?.url ?? "");
+  const [folderId, setFolderId] = useState<string | null>(() => (src as SavedWsConnection | null)?.folderId ?? null);
+  const [headers, setHeaders] = useState<KVRow[]>(() => headersToRows((draft?.headers ?? (initial as SavedWsConnection | null)?.headers) ?? {}));
+  const [reqTab, setReqTab] = useState<"headers">("headers");
+
+  const [outgoingInput, setOutgoingInput] = useState("");
+  const [sendErr, setSendErr] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveErr, setSaveErr] = useState<string | null>(null);
+
+  const [activePane, setActivePane] = useState<"outputstream" | "inputstream">("outputstream");
+
+  const { status, error: wsError, messages, connect, disconnect, send, clearMessages, isAtConnectionLimit } = useWebSocket({ tabId, activeEnv });
+
+  const outgoingMessages = useMemo(() => messages.filter((m) => m.direction === "sent"), [messages]);
+  const incomingMessages = useMemo(() => messages.filter((m) => m.direction === "received"), [messages]);
+
+  const isConnected = status === "connected";
+  const isConnecting = status === "connecting";
+  const isDisconnected = status === "disconnected" || status === "error";
+
+  // auto-scroll refs
+  const outEndRef = useRef<HTMLDivElement>(null);
+  const inEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { outEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [outgoingMessages.length]);
+  useEffect(() => { inEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [incomingMessages.length]);
+
+  // Draft persistence
+  const isEmptyDraft = useCallback(
+    () => !name.trim() && !url.trim() && headers.filter((r) => r.enabled && r.key.trim()).length === 0,
+    [name, url, headers],
+  );
+  const { markSaved } = useDraftPersist(
+    isDraft(tabId) ? tabId : null,
+    () => ({ name, url, folderId, headers: rowsToHeaders(headers) } satisfies WsDraft),
+    isEmptyDraft,
+  );
+
+  const handleConnect = useCallback(() => {
+    setSendErr(null);
+    connect(url.trim(), rowsToHeaders(headers));
+  }, [url, headers, connect]);
+
+  const handleDisconnect = useCallback(() => {
+    disconnect();
+  }, [disconnect]);
+
+  const handleSend = useCallback(() => {
+    if (!outgoingInput.trim()) return;
+    setSendErr(null);
+    try {
+      send(outgoingInput);
+      setOutgoingInput("");
+    } catch (e) {
+      setSendErr(e instanceof Error ? e.message : "Send failed");
+    }
+  }, [outgoingInput, send]);
+
+  const handleSave = useCallback(async () => {
+    if (!url.trim()) return;
+    setSaving(true); setSaveErr(null);
+    try {
+      await onSave({ name: name.trim(), url: url.trim(), headers: rowsToHeaders(headers), folderId: folderId ?? null });
+      markSaved();
+    } catch (e) {
+      setSaveErr(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }, [name, url, headers, folderId, onSave, markSaved]);
+
+  const headerCount = headers.filter((r) => r.enabled && r.key.trim()).length;
+
+  const resolvedUrl = useMemo(() => resolveVars(url.trim(), activeEnv), [url, activeEnv]);
+
+  // Status indicator
+  const statusDot = (
+    <span
+      style={{
+        display: "inline-block", width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+        background: isConnected ? "var(--c-green)" : status === "connecting" ? "var(--c-yellow)" : status === "error" ? "var(--c-red)" : "var(--c-text-dim)",
+      }}
+    />
+  );
+
+  const statusLabel = isConnected ? "Connected" : isConnecting ? "Connecting…" : status === "error" ? "Error" : "Disconnected";
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden bg-bg1">
+      {/* Title bar */}
+      <EditorTitleBar
+        label={isNew ? "New Socket" : "Edit Socket"}
+        namePlaceholder="Socket name (optional)"
+        name={name}
+        onNameChange={setName}
+        onClose={onClose}
+      />
+
+      {/* URL bar — Connect/Disconnect button inline */}
+      <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex items-center gap-2">
+        <div
+          className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden flex-1"
+          style={{ background: "var(--c-bg2)" }}
+        >
+          <span className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 flex-shrink-0 flex items-center" style={{ color: "var(--c-green)", minWidth: 56 }}>
+            WS
+          </span>
+          <input
+            className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
+            placeholder="ws://localhost:8080 or wss://…"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && isDisconnected) handleConnect(); }}
+            disabled={isConnected || isConnecting}
+          />
+        </div>
+
+        {/* Status dot + label */}
+        <div className="flex items-center gap-1.5 flex-shrink-0 text-[10px] text-text-dim">
+          {statusDot}
+          <span>{statusLabel}</span>
+        </div>
+
+        {isDisconnected ? (
+          <button
+            onClick={handleConnect}
+            disabled={!url.trim() || (isAtConnectionLimit && !isConnected)}
+            title={isAtConnectionLimit && !isConnected ? `Max ${MAX_WS_CONNECTIONS} active connections` : "Connect"}
+            className="px-4 py-2.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
+          >
+            <Play size={10} className="inline mr-1" fill="currentColor" /> Connect
+          </button>
+        ) : (
+          <button
+            onClick={handleDisconnect}
+            className="px-4 py-2.5 rounded bg-red/80 hover:bg-red text-white text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
+          >
+            Disconnect
+          </button>
+        )}
+      </div>
+
+      {/* Connection limit warning */}
+      {isAtConnectionLimit && isDisconnected && (
+        <div className="px-4 py-1.5 border-b border-border bg-yellow/5 flex-shrink-0">
+          <span className="text-[11px] text-yellow">
+            {MAX_WS_CONNECTIONS} connections active — disconnect another tab before connecting here.
+          </span>
+        </div>
+      )}
+
+      {/* Error / WS error */}
+      {(wsError || saveErr) && (
+        <div className="px-4 py-1.5 border-b border-border bg-red/5 flex-shrink-0">
+          <span className="text-xs text-red font-mono">{wsError ?? saveErr}</span>
+        </div>
+      )}
+
+      {/* Main 50/50 split: OutputStream (left) | InputStream (right) */}
+      <PanelGroup orientation="horizontal" className="flex flex-1 min-h-0 overflow-hidden">
+
+        {/* ── OutputStream (left) ─────────────────────────────────────────── */}
+        <Panel defaultSize={50} minSize={20} className="flex flex-col overflow-hidden">
+          <div className="flex flex-col h-full overflow-hidden">
+            <TabStrip
+              tabs={[
+                { id: "headers" as const, label: `Headers${headerCount > 0 ? ` (${headerCount})` : ""}` },
+              ]}
+              active={reqTab}
+              onChange={(t) => setReqTab(t as "headers")}
+              prefix={
+                <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-r border-border whitespace-nowrap">
+                  OutputStream
+                </span>
+              }
+            />
+
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {!(isConnected || isConnecting) && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/40 bg-bg0/10 flex-shrink-0 justify-end">
+                  <span className="text-[9px] text-text-dim/60 uppercase tracking-wider mr-1">Insert</span>
+                  <EnvVarHint
+                    env={activeEnv}
+                    onInsert={(token) => {
+                      setHeaders((prev) => {
+                        if (prev.length === 0) return [{ id: mkRowId(), enabled: true, key: "", value: token }];
+                        return prev.map((r, i) => i === prev.length - 1 ? { ...r, value: r.value + token } : r);
+                      });
+                    }}
+                  />
+                  <RandomizerHint
+                    onInsert={(token) => {
+                      setHeaders((prev) => {
+                        if (prev.length === 0) return [{ id: mkRowId(), enabled: true, key: "", value: token }];
+                        return prev.map((r, i) => i === prev.length - 1 ? { ...r, value: r.value + token } : r);
+                      });
+                    }}
+                  />
+                </div>
+              )}
+              <HeaderTable
+                rows={headers}
+                onChange={setHeaders}
+                readOnly={isConnected || isConnecting}
+                emptyMessage={isConnected || isConnecting ? "No headers" : undefined}
+              />
+            </div>
+
+            {/* Send message section */}
+            <div className="border-t border-border flex-shrink-0">
+              {/* Sent messages list */}
+              <div className="max-h-40 overflow-y-auto px-4 py-2 space-y-1">
+                {outgoingMessages.length === 0 ? (
+                  <p className="text-[10px] text-text-dim italic py-1">No messages sent yet</p>
+                ) : (
+                  outgoingMessages.map((m) => (
+                    <MessageRow key={m.id} msg={m} />
+                  ))
+                )}
+                <div ref={outEndRef} />
+              </div>
+
+              {/* Token hints for message input */}
+              {isConnected && (
+                <div className="flex items-center gap-1.5 px-3 py-1 border-t border-border/40 bg-bg0/10 justify-end">
+                  <span className="text-[9px] text-text-dim/60 uppercase tracking-wider mr-1">Insert</span>
+                  <EnvVarHint
+                    env={activeEnv}
+                    onInsert={(token) => setOutgoingInput((v) => v + token)}
+                  />
+                  <RandomizerHint
+                    onInsert={(token) => setOutgoingInput((v) => v + token)}
+                  />
+                </div>
+              )}
+
+              {/* Input row */}
+              <div className="flex items-center gap-2 px-4 py-2.5 border-t border-border">
+                <input
+                  className="flex-1 bg-bg2 border border-border focus:border-accent rounded px-3 py-2 text-xs font-mono text-text-bright outline-none placeholder:text-text-dim/60 transition-colors"
+                  placeholder={isConnected ? "Type a message…" : "Connect to send messages"}
+                  value={outgoingInput}
+                  onChange={(e) => setOutgoingInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+                  disabled={!isConnected}
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!isConnected || !outgoingInput.trim()}
+                  className="px-4 py-2 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
+                >
+                  <Send size={12} />
+                </button>
+              </div>
+              {sendErr && (
+                <div className="px-4 pb-2">
+                  <span className="text-[10px] text-red font-mono">{sendErr}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </Panel>
+
+        <PanelResizeHandle className="w-1 bg-border hover:bg-accent/40 active:bg-accent/60 transition-colors cursor-col-resize flex-shrink-0" />
+
+        {/* ── InputStream (right) ─────────────────────────────────────────── */}
+        <Panel defaultSize={50} minSize={20} className="flex flex-col overflow-hidden">
+          <div className="flex flex-col h-full overflow-hidden">
+            <TabStrip
+              tabs={[{ id: "inputstream" as const, label: "InputStream" }]}
+              active="inputstream"
+              onChange={() => { }}
+              prefix={
+                <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-r border-border whitespace-nowrap">
+                  {isConnected
+                    ? <span className="flex items-center gap-1.5">
+                      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--c-green)", boxShadow: "0 0 5px var(--c-green)" }} />
+                      Live
+                    </span>
+                    : "Waiting"}
+                </span>
+              }
+              suffix={
+                incomingMessages.length > 0
+                  ? <button
+                    onClick={clearMessages}
+                    className="px-3 text-[10px] text-text-dim hover:text-text-base cursor-pointer transition-colors"
+                    title="Clear all messages"
+                  >Clear</button>
+                  : undefined
+              }
+            />
+            <div className="flex-1 overflow-y-auto min-h-0 px-4 py-2 space-y-1">
+              {incomingMessages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8">
+                  <div className="text-3xl opacity-15">◎</div>
+                  <p className="text-xs text-text-dim">
+                    {isConnected ? "Waiting for messages…" : "Connect to receive messages"}
+                  </p>
+                </div>
+              ) : (
+                incomingMessages.map((m) => (
+                  <MessageRow key={m.id} msg={m} />
+                ))
+              )}
+              <div ref={inEndRef} />
+            </div>
+          </div>
+        </Panel>
+      </PanelGroup>
+
+      {/* Bottom bar */}
+      <BottomBar
+        folders={folders}
+        folderId={folderId}
+        onFolderChange={setFolderId}
+        onCancel={onClose}
+        onSave={handleSave}
+        saveLabel={isNew ? "Save Socket" : "Update Socket"}
+        saveDisabled={!url.trim()}
+        saving={saving}
+        savingLabel="Saving…"
+      />
+    </div>
+  );
+}
+
+// ── Message row ────────────────────────────────────────────────────────────
+
+function looksLikeJson(s: string): boolean {
+  const t = s.trimStart();
+  return (t.startsWith("{") || t.startsWith("[")) && t.length > 10;
+}
+
+function MessageRow({ msg }: { msg: WsMessage }) {
+  const time = new Date(msg.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const useEditor = looksLikeJson(msg.data) || msg.data.length > 200;
+  const displayData = looksLikeJson(msg.data) ? tryFormat(msg.data) : msg.data;
+  return (
+    <div className="flex items-start gap-2 py-1 border-b border-border/30 last:border-0 group">
+      <span className="text-[9px] font-mono text-text-dim flex-shrink-0 mt-0.5 w-16">{time}</span>
+      {useEditor
+        ? <div className="flex-1 overflow-hidden border border-border/30 rounded" style={{ maxHeight: 192 }}>
+          <CodeEditor
+            value={displayData}
+            readOnly
+            language={looksLikeJson(msg.data) ? "json" : "text"}
+            className="h-full"
+          />
+        </div>
+        : <pre className="text-[11px] font-mono text-text-bright flex-1 whitespace-pre-wrap break-all leading-relaxed">{msg.data}</pre>
+      }
+    </div>
+  );
+}
+
+// ── Tree sidebar ───────────────────────────────────────────────────────────
+
+// ── Props ──────────────────────────────────────────────────────────────────
+
+interface Props {
+  config: AppConfig;
+  onConfigChange(cfg: AppConfig): Promise<void>;
+  activeEnv?: Environment | null;
+  onHistoryOpen?: (filePath: string) => void;
+  onEntityPathChange?: (filePath: string) => void;
+  historyOpen?: boolean;
+  onAfterSave?: () => void;
+  entitySyncStatus?: Record<string, "clean" | "modified" | "new" | "deleted">;
+  onPublishItem?: (id: string) => void;
+  onPublishFolder?: (folderId: string | null) => void;
+  onRestoreItem?: (id: string) => void;
+}
+
+// ── WebSocketsPanel ────────────────────────────────────────────────────────
+
+export default function WebSocketsPanel({ config, onConfigChange, activeEnv = null, onHistoryOpen, onEntityPathChange, historyOpen = false, onAfterSave, entitySyncStatus, onPublishItem, onPublishFolder, onRestoreItem }: Props) {
+  const connections = config.wsConnections ?? [];
+  const folders = config.wsFolders ?? [];
+
+
+  const [search, setSearch] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const [openTabs, setOpenTabs] = usePersistedState<string[]>(
+    "ws:openTabs", [],
+    (tabs) => tabs.filter((id) => {
+      if (isDraft(id)) return getDraftIds(DRAFT_PREFIX).includes(id);
+      return connections.some((c) => c.id === id);
+    }),
+  );
+  const [activeTab, setActiveTab] = usePersistedState<string | null>(
+    "ws:activeTab", null,
+    (id) => {
+      if (id === null) return null;
+      if (isDraft(id)) return getDraftIds(DRAFT_PREFIX).includes(id) ? id : null;
+      return connections.some((c) => c.id === id) ? id : null;
+    },
+  );
+
+  // Full entity cache: loaded on-demand when tab is opened (config.wsConnections only has stubs)
+  const [loadedEntities, setLoadedEntities] = useState<Record<string, SavedWsConnection>>({});
+
+  useEffect(() => {
+    if (!activeTab || isDraft(activeTab)) return;
+    if (loadedEntities[activeTab]) return;
+    window.api.loadEntity(config.activeWorkspaceId, "sockets", activeTab).then((res) => {
+      if (res.ok && res.entity) setLoadedEntities((prev) => ({ ...prev, [activeTab]: res.entity as SavedWsConnection }));
+    }).catch(() => { });
+  }, [activeTab, config.activeWorkspaceId]);
+
+  const filteredConnections = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return connections;
+    return connections.filter((c) => c.name.toLowerCase().includes(q) || c.url.toLowerCase().includes(q));
+  }, [connections, search]);
+
+  const openTab = useCallback((id: string) => {
+    setOpenTabs((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setActiveTab(id);
+  }, []);
+
+  const openNewTab = useCallback(() => {
+    const existingEmpty = openTabs.find((id) => isDraft(id) && !loadDraft(id));
+    if (existingEmpty) { setActiveTab(existingEmpty); return; }
+    const tabId = `${DRAFT_PREFIX}${Date.now()}`;
+    setOpenTabs((p) => [...p, tabId]);
+    setActiveTab(tabId);
+  }, [openTabs]);
+
+  const closeTab = useCallback((tabId: string) => {
+    if (isDraft(tabId)) clearDraft(tabId);
+    setOpenTabs((prev) => {
+      const next = prev.filter((id) => id !== tabId);
+      setActiveTab((cur) => { if (cur !== tabId) return cur; return next.length > 0 ? next[next.length - 1] : null; });
+      return next;
+    });
+  }, []);
+
+  const reloadConnections = useCallback(async () => {
+    const fresh = await window.api.getConfig();
+    await onConfigChange(fresh);
+  }, [onConfigChange]);
+
+  const getEntityFilePath = useCallback((tabId: string): string => {
+    if (isDraft(tabId)) return "";
+    const c = connections.find((x) => x.id === tabId);
+    if (!c) return "";
+    return entityRelPath("sockets", c, folders);
+  }, [connections, folders]);
+
+  useEffect(() => {
+    if (!historyOpen || !activeTab) return;
+    const path = getEntityFilePath(activeTab);
+    if (path) onEntityPathChange?.(path);
+  }, [activeTab, historyOpen, getEntityFilePath, onEntityPathChange]);
+
+  const handleFoldersChange = useCallback(async () => {
+    const fresh = await window.api.getConfig();
+    await onConfigChange(fresh);
+  }, [onConfigChange]);
+
+  const handleNewSave = useCallback(async (tabId: string, data: Omit<SavedWsConnection, "id" | "createdAt" | "workspaceId">) => {
+    const created = await window.api.addWsConnection(data);
+    await reloadConnections();
+    setOpenTabs((prev) => [...prev.filter((id) => id !== tabId), created.id]);
+    setActiveTab(created.id);
+    onAfterSave?.();
+  }, [reloadConnections, onAfterSave]);
+
+  const handleTabSave = useCallback(async (tabId: string, data: Omit<SavedWsConnection, "id" | "createdAt" | "workspaceId">) => {
+    const conn = loadedEntities[tabId] ?? connections.find((c) => c.id === tabId);
+    if (!conn) return;
+    const updated = { ...conn, ...data };
+    setLoadedEntities((prev) => ({ ...prev, [tabId]: updated }));
+    await window.api.updateWsConnection(updated);
+    await reloadConnections();
+    onAfterSave?.();
+  }, [loadedEntities, connections, reloadConnections, onAfterSave]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    await window.api.deleteWsConnection(id);
+    await reloadConnections();
+    closeTab(id);
+  }, [reloadConnections, closeTab]);
+
+  const handleDuplicate = useCallback(async (id: string) => {
+    let c = loadedEntities[id];
+    if (!c) {
+      const res = await window.api.loadEntity(config.activeWorkspaceId, "sockets", id);
+      if (res.ok && res.entity) c = res.entity as SavedWsConnection;
+    }
+    if (!c) return;
+    const { id: _id, createdAt: _ca, workspaceId: _ws, ...rest } = c;
+    await window.api.addWsConnection({ ...rest, name: c.name ? `${c.name} (copy)` : "" });
+    await reloadConnections();
+  }, [loadedEntities, config.activeWorkspaceId, reloadConnections]);
+
+  const handleMoveItems = useCallback(async (ids: string[], folderId: string | null) => {
+    for (const id of ids) {
+      let c = loadedEntities[id] ?? connections.find((x) => x.id === id);
+      if (!c) {
+        const res = await window.api.loadEntity(config.activeWorkspaceId, "sockets", id);
+        if (res.ok && res.entity) c = res.entity as SavedWsConnection;
+      }
+      if (c) await window.api.updateWsConnection({ ...c, folderId: folderId ?? undefined });
+    }
+    await reloadConnections();
+  }, [loadedEntities, connections, config.activeWorkspaceId, reloadConnections]);
+
+  const tabLabel = (tabId: string) => {
+    if (isDraft(tabId)) {
+      const d = loadDraft<WsDraft>(tabId);
+      if (d?.url) {
+        try { const u = new URL(d.url); return d.name || u.host || d.url.slice(0, 20); }
+        catch { return d.name || d.url.slice(0, 20); }
+      }
+      return "New Socket";
+    }
+    const c = connections.find((x) => x.id === tabId);
+    if (!c) return "…";
+    return c.name || c.url.slice(0, 30);
+  };
+
+  // Folder view items
+  const folderViewItems: FolderTreeItem[] = useMemo(() =>
+    (search.trim()
+      ? connections.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.url.toLowerCase().includes(search.toLowerCase()))
+      : connections
+    ).map((c): FolderTreeItem => ({
+      id: c.id,
+      name: c.name || c.url.slice(0, 40),
+      folderId: c.folderId ?? null,
+      isActive: activeTab === c.id,
+      isEnabled: true,
+      relPath: entityRelPath("sockets", c, folders),
+    })),
+    [connections, folders, search, activeTab],
+  );
+
+  // ── Sidebar ──────────────────────────────────────────────────────────────
+
+  const sidebarContent = (
+    <>
+      <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle="Collapse sidebar">
+        <SearchInput value={search} onChange={setSearch} placeholder="Search sockets…" />
+      </SidebarHeader>
+
+      <div className="flex-1 overflow-y-auto overflow-x-auto min-w-0" style={{ display: "flex", flexDirection: "column" }}>
+        <FolderTree
+          kind="ws"
+          folders={folders}
+          items={folderViewItems}
+          onOpenItem={openTab}
+          onDeleteItem={handleDelete}
+          onFoldersChange={handleFoldersChange}
+          onDuplicateItem={handleDuplicate}
+          onMoveItems={handleMoveItems}
+          onOpenNewTab={openNewTab}
+          onHistoryItem={onHistoryOpen ? (id) => {
+            const path = getEntityFilePath(id);
+            if (path) onHistoryOpen(path);
+          } : undefined}
+          pathStatusMap={entitySyncStatus}
+          onPublishItem={onPublishItem}
+          onPublishFolder={onPublishFolder}
+          onRestoreItem={onRestoreItem}
+          onBeforeCreateFolder={() => true}
+        />
+      </div>
+
+    </>
+  );
+
+  // ── Main content ─────────────────────────────────────────────────────────
+
+  const mainContent = (
+    <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">
+      <TabBar
+        tabs={openTabs.map((id) => ({
+          id,
+          label: tabLabel(id),
+          isDraft: isDraft(id),
+          renderTab: (isActive) => (
+            <WsTabHeader
+              tabId={id}
+              label={tabLabel(id)}
+              isActive={isActive}
+              isDraft={isDraft(id)}
+              onClose={(e) => { e.stopPropagation(); closeTab(id); }}
+            />
+          ),
+        }))}
+        activeTab={activeTab}
+        onTabClick={setActiveTab}
+        onTabClose={closeTab}
+        onNewTab={openNewTab}
+        newTabTitle="New socket"
+        closeTabTitle="Close"
+      />
+
+      <div className="flex-1 overflow-hidden relative">
+        {openTabs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center gap-2">
+            <div className="opacity-10 mb-1"><Zap size={48} /></div>
+            <div className="text-sm font-medium text-text-base">No sockets open</div>
+            <p className="text-xs text-text-dim max-w-xs leading-relaxed">
+              Click a socket in the tree, or press <span className="text-accent font-semibold">+</span> to create one.
+            </p>
+          </div>
+        ) : (
+          openTabs.map((tabId) => {
+            const conn = isDraft(tabId) ? null : (loadedEntities[tabId] ?? connections.find((c) => c.id === tabId) ?? null);
+            if (!isDraft(tabId) && !conn) return null;
+            return (
+              <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
+                <WsEditor
+                  key={tabId}
+                  tabId={tabId}
+                  initial={conn}
+                  isNew={isDraft(tabId)}
+                  onSave={isDraft(tabId) ? (data) => handleNewSave(tabId, data) : (data) => handleTabSave(tabId, data)}
+                  onClose={() => closeTab(tabId)}
+                  folders={folders}
+                  activeEnv={activeEnv}
+                />
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <SidebarLayout
+        sidebarOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(true)}
+        sidebar={sidebarContent}
+        collapseTitle="Collapse sidebar"
+        expandTitle="Expand sidebar"
+        collapsedBadge={connections.length > 0 ? (
+          <span className="text-[9px] text-text-dim font-mono" title={`${connections.length} sockets`}
+            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{connections.length}</span>
+        ) : undefined}
+      >
+        {mainContent}
+      </SidebarLayout>
+    </>
+  );
+}
+
+// ── WsTabHeader — green/red dot based on connection status ─────────────────
+
+function WsTabHeader({ tabId, label, isDraft: draft, onClose }: {
+  tabId: string; label: string; isDraft: boolean; isActive?: boolean;
+  onClose(e: React.MouseEvent): void;
+}) {
+  const [dotColor, setDotColor] = useState("var(--c-text-dim)");
+
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ tabId: string; color: string }>) => {
+      if (e.detail.tabId === tabId) setDotColor(e.detail.color);
+    };
+    window.addEventListener("ws:statuscolor" as any, handler as any);
+    return () => window.removeEventListener("ws:statuscolor" as any, handler as any);
+  }, [tabId]);
+
+  return (
+    <>
+      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
+      {draft && <span className="text-[8px] text-yellow opacity-70 flex-shrink-0">●</span>}
+      <span className="max-w-[160px] truncate">{label}</span>
+      <button onClick={onClose}
+        className="w-4 h-4 flex items-center justify-center rounded hover:bg-bg3 text-text-dim hover:text-text-base ml-0.5 flex-shrink-0 cursor-pointer" title="Close"><X size={10} /></button>
+    </>
+  );
+}
+

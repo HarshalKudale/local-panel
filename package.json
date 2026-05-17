@@ -1,0 +1,53 @@
+{
+  "name": "local-panel-monorepo",
+  "version": "1.0.0",
+  "description": "LocalPanel - Localhost domain proxy manager and API development toolkit",
+  "private": true,
+  "author": {
+    "name": "Harshal Kudale",
+    "url": "https://harshalkudale.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HarshalKudale/local-panel.git"
+  },
+  "scripts": {
+    "install:all": "npm install --prefix local-panel",
+    "clean:app": "cd local-panel && rimraf dist build release coverage test-results playwright-report node_modules/.vite",
+    "build:app": "cd local-panel && npm run build",
+    "dev": "cd local-panel && npm run dev",
+    "start": "cd local-panel && npm start",
+    "test": "npm run test:app",
+    "test:app": "cd local-panel && npm test",
+    "test:watch": "cd local-panel && npm run test:watch",
+    "test:coverage": "cd local-panel && npm run test:coverage",
+    "test:e2e": "cd local-panel && npm run test:e2e",
+    "test:e2e:headed": "cd local-panel && npm run test:e2e:headed",
+    "test:all": "npm run test:coverage && npm run test:e2e",
+    "package:app": "cd local-panel && npm run package",
+    "typecheck": "cd local-panel && npm run typecheck",
+    "postinstall": "echo 'Run npm run install:all to install dependencies in all packages'"
+  },
+  "workspaces": [
+    "local-panel"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "electron",
+    "proxy",
+    "localhost",
+    "api",
+    "development",
+    "mock",
+    "rest",
+    "graphql",
+    "soap",
+    "grpc",
+    "testing",
+    "devtools"
+  ]
+}

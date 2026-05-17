@@ -1,0 +1,124 @@
+// Shared renderer utilities
+
+export interface KVRow {
+  id: string;
+  enabled: boolean;
+  key: string;
+  value: string;
+}
+
+let _rid = 0;
+export const mkRowId = () => `r${++_rid}`;
+
+export function headersToRows(h: Record<string, string>, skip?: Set<string>): KVRow[] {
+  return Object.entries(h)
+    .filter(([k]) => !skip || !skip.has(k.toLowerCase()))
+    .map(([key, value]) => ({ id: mkRowId(), enabled: true, key, value }));
+}
+
+export function rowsToHeaders(rows: KVRow[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const r of rows) {
+    if (r.enabled && r.key.trim()) out[r.key.trim()] = r.value;
+  }
+  return out;
+}
+
+export function b64ToText(b64: string): string {
+  if (!b64) return "";
+  try {
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+  } catch { return ""; }
+}
+
+export function textToB64(text: string): string {
+  if (!text.trim()) return "";
+  try {
+    const bytes = new TextEncoder().encode(text);
+    let bin = "";
+    bytes.forEach((b) => (bin += String.fromCharCode(b)));
+    return btoa(bin);
+  } catch { return ""; }
+}
+
+export function tryFormat(text: string): string {
+  if (!text.trim()) return text;
+  try { return JSON.stringify(JSON.parse(text), null, 2); } catch { return text; }
+}
+
+export function statusColor(code: number): string {
+  if (code < 300) return "var(--c-green)";
+  if (code < 400) return "var(--c-yellow)";
+  return "var(--c-red)";
+}
+
+export const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+
+export const MOCK_METHODS = ["*", ...METHODS];
+
+export const METHOD_HEX: Record<string, string> = {
+  "*": "var(--c-text-dim)",
+  GET: "var(--c-green)",
+  POST: "var(--c-yellow)",
+  PUT: "var(--c-accent)",
+  PATCH: "var(--c-yellow)",
+  DELETE: "var(--c-red)",
+  HEAD: "var(--c-method-head)",
+  OPTIONS: "var(--c-method-head)",
+};
+
+// Semi-transparent backgrounds for method badges (can't use hex+22 with CSS vars)
+const METHOD_BG: Record<string, string> = {
+  "*": "rgba(113,115,109,0.13)",
+  GET: "rgba(34,148,110,0.13)",
+  POST: "rgba(168,122,42,0.13)",
+  PUT: "rgba(202,238,122,0.13)",
+  PATCH: "rgba(168,122,42,0.13)",
+  DELETE: "rgba(156,33,33,0.13)",
+  HEAD: "var(--c-method-head-bg)",
+  OPTIONS: "var(--c-method-head-bg)",
+};
+
+export const methodColor = (m: string) => METHOD_HEX[m.toUpperCase()] ?? "var(--c-text-dim)";
+export const methodBg = (m: string) => METHOD_BG[m.toUpperCase()] ?? "rgba(113,115,109,0.13)";
+
+// ── Entity file path helpers (mirrors workspaceFs.ts logic, renderer-side) ─────
+
+function sanitizeDirName(name: string): string {
+  return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, "").trim() || "unnamed";
+}
+
+type HasFolderId = { id: string; folderId?: string | null };
+type FolderLike = { id: string; name: string };
+
+/** Compute the relative git path for a folder-based entity (mocks, requests, sockets, rules). */
+export function entityRelPath(
+  kind: "mocks" | "requests" | "sockets" | "webhooks" | "rules",
+  entity: HasFolderId,
+  folders: FolderLike[],
+): string {
+  const folder = entity.folderId ? folders.find((f) => f.id === entity.folderId) : null;
+  if (folder) return `${kind}/${sanitizeDirName(folder.name)}/${entity.id}.json`;
+  return `${kind}/${entity.id}.json`;
+}
+
+/** Compute the relative git path for a flat entity (mappings, environments). */
+export function flatEntityRelPath(kind: "mappings" | "environments", id: string): string {
+  return `${kind}/${id}.json`;
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  name: "name", domain: "domain", target: "target", enabled: "enabled",
+  pattern: "pattern", method: "method", urlPattern: "url pattern",
+  responseStatus: "status", responseBody: "body", responseHeaders: "headers",
+  capturedBody: "req body", capturedHeaders: "req headers",
+  url: "url", headers: "headers", body: "body",
+  variables: "variables", useRegex: "regex",
+};
+
+/** Turn a camelCase field key into a human-readable short label. */
+export function formatFieldLabel(key: string): string {
+  if (FIELD_LABELS[key]) return FIELD_LABELS[key];
+  return key.replace(/([A-Z])/g, " $1").toLowerCase().trim();
+}

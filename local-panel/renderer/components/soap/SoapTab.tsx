@@ -1,0 +1,380 @@
+import React, {
+    forwardRef, useImperativeHandle, useReducer, useCallback, useEffect, useState,
+} from "react";
+import { SavedSoapRequest, SavedSoapMock, Folder, Environment } from "@/types";
+import EditorTitleBar from "@/components/editor/EditorTitleBar";
+import { BottomBar, TabStrip } from "@/components/editor/RequestTab";
+import CodeEditor from "@/components/common/CodeEditor";
+import HeaderTable from "@/components/editor/HeaderTable";
+import {
+    soapTabReducer, initSoapState, soapStateToSavePayload, soapStateToDraft, isSoapDraftEmpty,
+    SoapTabType, SoapTabState, SoapRequestDraft, SoapMockDraft,
+} from "@/components/soap/soapTabReducer";
+import { useDraftPersist, loadDraft } from "@/lib/useDraftPersist";
+import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
+import { KVRow, mkRowId, headersToRows, rowsToHeaders, statusColor } from "@/lib/utils";
+import { resolveVars, resolveHeaders } from "@/lib/resolveVars";
+import { cn } from "@/components/ui/cn";
+import WsdlExplorer from "@/components/soap/WsdlExplorer";
+
+// ── Public handle for imperative refresh ───────────────────────────────────
+
+export interface SoapTabHandle {
+    refresh(entity: SavedSoapRequest | SavedSoapMock): void;
+}
+
+// ── Props ──────────────────────────────────────────────────────────────────
+
+export interface SoapTabProps {
+    tabType: SoapTabType;
+    tabId: string;
+    draftTabId?: string | null;
+    initial?: SavedSoapRequest | SavedSoapMock | Partial<SavedSoapRequest> | Partial<SavedSoapMock> | null;
+    folders?: Folder[];
+    activeEnv?: Environment | null;
+    onSave(data: Omit<SavedSoapRequest, "id" | "createdAt" | "workspaceId"> | Omit<SavedSoapMock, "id" | "createdAt" | "workspaceId">): Promise<void>;
+    onClose(): void;
+    label?: string;
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+
+const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
+    { tabType, tabId, draftTabId, initial, folders = [], activeEnv = null, onSave, onClose, label },
+    ref,
+) {
+    const draft = draftTabId
+        ? (tabType === "request"
+            ? loadDraft<SoapRequestDraft>(draftTabId)
+            : loadDraft<SoapMockDraft>(draftTabId))
+        : null;
+
+    const [state, dispatch] = useReducer(
+        soapTabReducer,
+        undefined,
+        () => initSoapState(initial ?? null, draft, tabType),
+    );
+
+    // Draft auto-save
+    const { markSaved } = useDraftPersist(
+        draftTabId ?? null,
+        () => soapStateToDraft(state, tabType),
+        () => isSoapDraftEmpty(state, tabType),
+    );
+
+    // Expose imperative refresh
+    useImperativeHandle(ref, () => ({
+        refresh(entity: SavedSoapRequest | SavedSoapMock) {
+            dispatch({ type: "REFRESH", entity, tabType });
+        },
+    }), [tabType]);
+
+    // ── Header rows helper ───────────────────────────────────────────────
+
+    const headerRows: KVRow[] = headersToRows(
+        tabType === "request" ? state.headers : state.responseHeaders,
+    );
+    const setHeaderRows = useCallback((rows: KVRow[]) => {
+        const field = tabType === "request" ? "headers" : "responseHeaders";
+        dispatch({ type: "SET_FIELD", field, value: rowsToHeaders(rows) });
+    }, [tabType]);
+
+    // ── Send request ─────────────────────────────────────────────────────
+
+    const handleSend = useCallback(async () => {
+        if (!state.endpointUrl) return;
+        dispatch({ type: "SEND_START" });
+        try {
+            const url = resolveVars(state.endpointUrl, activeEnv);
+            const action = resolveVars(state.soapAction, activeEnv);
+            const hdrs = resolveHeaders(state.headers, activeEnv);
+            const body = resolveVars(state.body, activeEnv);
+            const result = await window.api.soapExecute(
+                url,
+                action,
+                hdrs,
+                body,
+            );
+            dispatch({
+                type: "SEND_SUCCESS",
+                status: result.status,
+                headers: result.headers,
+                body: result.body,
+                durationMs: result.durationMs,
+            });
+        } catch (err: any) {
+            dispatch({ type: "SEND_ERROR", error: err?.message ?? "Request failed" });
+        }
+    }, [state.endpointUrl, state.soapAction, state.headers, state.body, activeEnv]);
+
+    // ── Save ─────────────────────────────────────────────────────────────
+
+    const handleSave = useCallback(async () => {
+        dispatch({ type: "SAVE_START" });
+        try {
+            const payload = soapStateToSavePayload(state, tabType);
+            await onSave(payload);
+            dispatch({ type: "SAVE_SUCCESS" });
+            markSaved();
+        } catch {
+            dispatch({ type: "SAVE_ERROR" });
+        }
+    }, [state, tabType, onSave, markSaved]);
+
+    // ── Request mode: left pane tabs ─────────────────────────────────────
+
+    const reqTabs = tabType === "request"
+        ? [
+            { id: "body" as const, label: "Body" },
+            { id: "headers" as const, label: "Headers" },
+            { id: "pre-script" as const, label: "Pre-Script" },
+            { id: "post-script" as const, label: "Post-Script" },
+            { id: "wsdl" as const, label: "WSDL" },
+        ]
+        : [
+            { id: "body" as const, label: "Response Body" },
+            { id: "headers" as const, label: "Response Headers" },
+        ];
+
+    const resTabs = [
+        { id: "body" as const, label: "Body" },
+        { id: "headers" as const, label: "Headers" },
+    ];
+
+    // ── Render ───────────────────────────────────────────────────────────
+
+    return (
+        <div className="flex flex-col h-full overflow-hidden">
+            {/* Title bar */}
+            <EditorTitleBar
+                label={label ?? (tabType === "request" ? "SOAP Request" : "SOAP Mock")}
+                namePlaceholder={tabType === "request" ? "Untitled Request" : "Untitled Mock"}
+                name={state.name}
+                onNameChange={(v) => dispatch({ type: "SET_FIELD", field: "name", value: v })}
+                onClose={onClose}
+            />
+
+            {/* URL / Endpoint bar (request mode) */}
+            {tabType === "request" && (
+                <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div
+                            className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden flex-1"
+                            style={{ background: "var(--c-bg2)" }}
+                        >
+                            <span className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 text-green flex-shrink-0">POST</span>
+                            <input
+                                className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
+                                placeholder="https://example.com/ws/service"
+                                value={state.endpointUrl}
+                                onChange={(e) => dispatch({ type: "SET_FIELD", field: "endpointUrl", value: e.target.value })}
+                                onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+                            />
+                        </div>
+                        <button
+                            onClick={handleSend}
+                            disabled={state.sending || !state.endpointUrl}
+                            className="px-4 py-2.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
+                        >
+                            {state.sending
+                                ? <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />Sending</>
+                                : "Send"}
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-text-dim flex-shrink-0">SOAPAction:</label>
+                        <input
+                            className="flex-1 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
+                            placeholder='"http://example.com/Action"'
+                            value={state.soapAction}
+                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "soapAction", value: e.target.value })}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Mock matching config */}
+            {tabType === "mock" && (
+                <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-text-dim flex-shrink-0 w-28">Endpoint Pattern:</label>
+                        <input
+                            className="flex-1 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
+                            placeholder="/ws/service"
+                            value={state.endpointPattern}
+                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "endpointPattern", value: e.target.value })}
+                        />
+                        <label className="flex items-center gap-1.5 text-xs text-text-dim cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={state.useRegex}
+                                onChange={(e) => dispatch({ type: "SET_FIELD", field: "useRegex", value: e.target.checked })}
+                                className="accent-accent"
+                            />
+                            Regex
+                        </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-text-dim flex-shrink-0 w-28">SOAPAction Match:</label>
+                        <input
+                            className="flex-1 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
+                            placeholder="*"
+                            value={state.soapActionPattern}
+                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "soapActionPattern", value: e.target.value })}
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-text-dim flex-shrink-0 w-28">Response Status:</label>
+                        <input
+                            type="number"
+                            className="w-20 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent"
+                            value={state.responseStatus}
+                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "responseStatus", value: parseInt(e.target.value) || 200 })}
+                        />
+                        <label className="text-xs text-text-dim flex-shrink-0 ml-4">Delay (ms):</label>
+                        <input
+                            type="number"
+                            className="w-20 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent"
+                            value={state.responseDelay}
+                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "responseDelay", value: parseInt(e.target.value) || 0 })}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Main split pane */}
+            <div className="flex-1 overflow-hidden">
+                {tabType === "request" ? (
+                    <PanelGroup orientation="horizontal">
+                        {/* Left: Request editor */}
+                        <Panel defaultSize={50} minSize={25}>
+                            <div className="flex flex-col h-full">
+                                <TabStrip
+                                    tabs={reqTabs}
+                                    active={state.reqTab}
+                                    onChange={(t) => dispatch({ type: "SET_FIELD", field: "reqTab", value: t })}
+                                />
+                                <div className="flex-1 overflow-hidden">
+                                    {state.reqTab === "body" && (
+                                        <CodeEditor
+                                            value={state.body}
+                                            onChange={(v) => dispatch({ type: "SET_FIELD", field: "body", value: v })}
+                                            language="xml"
+                                        />
+                                    )}
+                                    {state.reqTab === "headers" && (
+                                        <HeaderTable rows={headerRows} onChange={setHeaderRows} />
+                                    )}
+                                    {state.reqTab === "pre-script" && (
+                                        <CodeEditor
+                                            value={state.preScript}
+                                            onChange={(v) => dispatch({ type: "SET_FIELD", field: "preScript", value: v })}
+                                            language="javascript"
+                                        />
+                                    )}
+                                    {state.reqTab === "post-script" && (
+                                        <CodeEditor
+                                            value={state.postScript}
+                                            onChange={(v) => dispatch({ type: "SET_FIELD", field: "postScript", value: v })}
+                                            language="javascript"
+                                        />
+                                    )}
+                                    {state.reqTab === "wsdl" && (
+                                        <WsdlExplorer
+                                            wsdlId={state.wsdlId ?? null}
+                                            onInsertEnvelope={(body, soapAction) => {
+                                                dispatch({ type: "SET_FIELD", field: "body", value: body });
+                                                if (soapAction) dispatch({ type: "SET_FIELD", field: "soapAction", value: soapAction });
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        </Panel>
+
+                        <PanelResizeHandle className="w-1.5 bg-border hover:bg-accent transition-colors cursor-col-resize" />
+
+                        {/* Right: Response viewer */}
+                        <Panel defaultSize={50} minSize={25}>
+                            <div className="flex flex-col h-full">
+                                <TabStrip
+                                    tabs={resTabs}
+                                    active={state.resTab}
+                                    onChange={(t) => dispatch({ type: "SET_FIELD", field: "resTab", value: t })}
+                                    prefix={
+                                        state.resStatus != null ? (
+                                            <div className="flex items-center gap-2 px-3 text-xs">
+                                                <span className={cn("font-bold", statusColor(state.resStatus))}>{state.resStatus}</span>
+                                                {state.resDuration != null && <span className="text-text-dim">{state.resDuration}ms</span>}
+                                            </div>
+                                        ) : undefined
+                                    }
+                                />
+                                <div className="flex-1 overflow-hidden">
+                                    {state.resError ? (
+                                        <div className="p-4 text-red text-xs font-mono">{state.resError}</div>
+                                    ) : state.resTab === "body" ? (
+                                        <CodeEditor
+                                            value={state.resBody}
+                                            onChange={() => { }}
+                                            language="xml"
+                                            readOnly
+                                        />
+                                    ) : (
+                                        <div className="p-3 overflow-auto h-full">
+                                            {Object.entries(state.resHeaders).map(([k, v]) => (
+                                                <div key={k} className="flex gap-2 text-xs py-0.5 font-mono">
+                                                    <span className="text-accent">{k}:</span>
+                                                    <span className="text-text-base">{v}</span>
+                                                </div>
+                                            ))}
+                                            {Object.keys(state.resHeaders).length === 0 && (
+                                                <div className="text-text-dim text-xs">No response yet</div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </Panel>
+                    </PanelGroup>
+                ) : (
+                    /* Mock mode: response editor */
+                    <div className="flex flex-col h-full">
+                        <TabStrip
+                            tabs={reqTabs}
+                            active={state.reqTab}
+                            onChange={(t) => dispatch({ type: "SET_FIELD", field: "reqTab", value: t })}
+                        />
+                        <div className="flex-1 overflow-hidden">
+                            {state.reqTab === "body" && (
+                                <CodeEditor
+                                    value={state.responseBody}
+                                    onChange={(v) => dispatch({ type: "SET_FIELD", field: "responseBody", value: v })}
+                                    language="xml"
+                                />
+                            )}
+                            {state.reqTab === "headers" && (
+                                <HeaderTable rows={headerRows} onChange={setHeaderRows} />
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Bottom bar */}
+            <BottomBar
+                folders={folders}
+                folderId={state.folderId}
+                onFolderChange={(id) => dispatch({ type: "SET_FIELD", field: "folderId", value: id })}
+                onCancel={onClose}
+                onSave={handleSave}
+                saveLabel={draftTabId ? "Save" : "Update"}
+                saveDisabled={tabType === "request" ? !state.name && !state.endpointUrl : !state.name && !state.endpointPattern}
+                saving={state.saving}
+                savingLabel="Saving…"
+            />
+        </div>
+    );
+});
+
+export default SoapTab;

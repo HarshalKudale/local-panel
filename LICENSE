@@ -1,0 +1,79 @@
+# Local Panel Source-Available License
+
+Copyright (c) 2024 Harshal Kudale. All rights reserved.
+
+## Terms and Conditions
+
+### 1. Definitions
+
+- "Software" refers to Local Panel, including the desktop application, browser
+  extension, website source code, and all associated documentation.
+- "Commercial Use" means use of the Software for the benefit of any for-profit
+  entity, or in any revenue-generating activity, or by any team of more than one
+  person within an organization.
+- "Non-Commercial Use" means use by individual developers, students, hobbyists,
+  or for open-source projects that do not generate revenue.
+
+### 2. Grant of Rights
+
+#### Free Use (Non-Commercial)
+
+You are granted a perpetual, worldwide, non-exclusive, royalty-free license to:
+
+- **Use** the Software for personal, educational, or non-commercial purposes.
+- **View** and study the source code for learning and reference.
+- **Contribute** improvements back to the project under these same terms.
+
+This applies to:
+- Solo developers and indie developers
+- Students and educators
+- Non-profit organizations
+- Open-source projects
+
+#### Commercial Use
+
+Commercial use of this Software requires a separate commercial license. To
+obtain a commercial license, contact:
+
+**Email:** hello@harshalkudale.com
+
+### 3. Restrictions
+
+You may NOT:
+
+- Modify, adapt, or create derivative works of the Software for distribution.
+- Redistribute, sublicense, sell, or transfer the Software or any portion of it.
+- Use the Software or its source code in competing products or services.
+- Remove or alter any copyright notices or license terms.
+- Use the Software for commercial purposes without a valid commercial license.
+
+### 4. Source Code Visibility
+
+The source code is made available for transparency, security auditing, and
+community trust. Visibility of the source code does NOT grant permission to
+copy, modify, or redistribute it beyond what is explicitly stated above.
+
+### 5. Contributions
+
+By submitting contributions (pull requests, patches, issues) to this project,
+you agree that your contributions are licensed under these same terms and you
+assign copyright of such contributions to the project maintainer.
+
+### 6. No Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING
+FROM THE USE OF THE SOFTWARE.
+
+### 7. Termination
+
+This license terminates automatically if you violate any of its terms. Upon
+termination, you must destroy all copies of the Software in your possession.
+
+---
+
+For commercial licensing inquiries: hello@harshalkudale.com
+For contributions: See CONTRIBUTING.md
+For support: See SUPPORT.md
