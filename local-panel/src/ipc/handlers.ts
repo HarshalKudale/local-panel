@@ -1194,7 +1194,18 @@ export function registerIpcHandlers(): void {
       const oldDir = path.join(base, sanitizeDirName(oldName));
       const newDir = path.join(base, sanitizeDirName(name));
       if (fs.existsSync(oldDir) && oldDir !== newDir) {
-        fs.renameSync(oldDir, newDir);
+        try {
+          fs.renameSync(oldDir, newDir);
+        } catch (renameErr) {
+          // On Windows, renameSync fails with EPERM when any file inside is briefly locked.
+          // Fall back to recursive copy + delete so the rename always succeeds.
+          try {
+            fs.cpSync(oldDir, newDir, { recursive: true });
+            fs.rmSync(oldDir, { recursive: true, force: true });
+          } catch (copyErr) {
+            console.warn(`[folder:rename] Could not rename directory "${oldDir}" → "${newDir}":`, (copyErr as Error).message);
+          }
+        }
       }
       const idx = readIndex(f.workspaceId, fsKind);
       const fi = idx.folders.find((x: Folder) => x.id === id);
@@ -1207,63 +1218,63 @@ export function registerIpcHandlers(): void {
   ipcMain.handle("folder:delete", async (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock", id: string) => {
     const cfg = loadConfig();
     let folder: Folder | undefined;
-    let affectedEntities: Array<{ id: string; workspaceId: string }> = [];
+    let affectedEntityIds: string[] = [];
     if (kind === "mock") {
       folder = (cfg.mockFolders ?? []).find((f) => f.id === id);
-      affectedEntities = cfg.mocks.filter((m) => m.folderId === id).map((m) => ({ id: m.id, workspaceId: m.workspaceId ?? cfg.activeWorkspaceId }));
+      affectedEntityIds = cfg.mocks.filter((m) => m.folderId === id).map((m) => m.id);
       cfg.mockFolders = (cfg.mockFolders ?? []).filter((f) => f.id !== id);
-      cfg.mocks = cfg.mocks.map((m) => m.folderId === id ? { ...m, folderId: null } : m);
+      cfg.mocks = cfg.mocks.filter((m) => m.folderId !== id);
     } else if (kind === "ws") {
       folder = (cfg.wsFolders ?? []).find((f) => f.id === id);
-      affectedEntities = (cfg.wsConnections ?? []).filter((c) => c.folderId === id).map((c) => ({ id: c.id, workspaceId: c.workspaceId ?? cfg.activeWorkspaceId }));
+      affectedEntityIds = (cfg.wsConnections ?? []).filter((c) => c.folderId === id).map((c) => c.id);
       cfg.wsFolders = (cfg.wsFolders ?? []).filter((f) => f.id !== id);
-      cfg.wsConnections = (cfg.wsConnections ?? []).map((c) => c.folderId === id ? { ...c, folderId: null } : c);
+      cfg.wsConnections = (cfg.wsConnections ?? []).filter((c) => c.folderId !== id);
     } else if (kind === "webhook") {
       folder = (cfg.webhookFolders ?? []).find((f) => f.id === id);
-      affectedEntities = (cfg.webhooks ?? []).filter((h) => h.folderId === id).map((h) => ({ id: h.id, workspaceId: h.workspaceId ?? cfg.activeWorkspaceId }));
+      affectedEntityIds = (cfg.webhooks ?? []).filter((h) => h.folderId === id).map((h) => h.id);
       cfg.webhookFolders = (cfg.webhookFolders ?? []).filter((f) => f.id !== id);
-      cfg.webhooks = (cfg.webhooks ?? []).map((h) => h.folderId === id ? { ...h, folderId: null } : h);
+      cfg.webhooks = (cfg.webhooks ?? []).filter((h) => h.folderId !== id);
     } else if (kind === "rule") {
       folder = (cfg.ruleFolders ?? []).find((f) => f.id === id);
-      affectedEntities = (cfg.proxyRules ?? []).filter((r) => r.folderId === id).map((r) => ({ id: r.id, workspaceId: r.workspaceId ?? cfg.activeWorkspaceId }));
+      affectedEntityIds = (cfg.proxyRules ?? []).filter((r) => r.folderId === id).map((r) => r.id);
       cfg.ruleFolders = (cfg.ruleFolders ?? []).filter((f) => f.id !== id);
-      cfg.proxyRules = (cfg.proxyRules ?? []).map((r) => r.folderId === id ? { ...r, folderId: null } : r);
+      cfg.proxyRules = (cfg.proxyRules ?? []).filter((r) => r.folderId !== id);
     } else if (kind === "graphqlRequest") {
       const gqlReqFolders: Folder[] = (cfg as any).graphqlRequestFolders ?? [];
       folder = gqlReqFolders.find((f) => f.id === id);
+      affectedEntityIds = ((cfg as any).graphqlRequests ?? []).filter((r: any) => r.folderId === id).map((r: any) => r.id);
       (cfg as any).graphqlRequestFolders = gqlReqFolders.filter((f: Folder) => f.id !== id);
+      (cfg as any).graphqlRequests = ((cfg as any).graphqlRequests ?? []).filter((r: any) => r.folderId !== id);
     } else if (kind === "graphqlMock") {
       const gqlMockFolders: Folder[] = (cfg as any).graphqlMockFolders ?? [];
       folder = gqlMockFolders.find((f) => f.id === id);
+      affectedEntityIds = ((cfg as any).graphqlMocks ?? []).filter((m: any) => m.folderId === id).map((m: any) => m.id);
       (cfg as any).graphqlMockFolders = gqlMockFolders.filter((f: Folder) => f.id !== id);
+      (cfg as any).graphqlMocks = ((cfg as any).graphqlMocks ?? []).filter((m: any) => m.folderId !== id);
     } else {
       folder = (cfg.requestFolders ?? []).find((f) => f.id === id);
-      affectedEntities = (cfg.requests ?? []).filter((r) => r.folderId === id).map((r) => ({ id: r.id, workspaceId: r.workspaceId ?? cfg.activeWorkspaceId }));
+      affectedEntityIds = (cfg.requests ?? []).filter((r) => r.folderId === id).map((r) => r.id);
       cfg.requestFolders = (cfg.requestFolders ?? []).filter((f) => f.id !== id);
-      cfg.requests = (cfg.requests ?? []).map((r) => r.folderId === id ? { ...r, folderId: null } : r);
+      cfg.requests = (cfg.requests ?? []).filter((r) => r.folderId !== id);
     }
     saveConfig(cfg);
     if (folder) {
       const kindMap = { mock: "mocks", request: "requests", ws: "sockets", webhook: "webhooks", rule: "rules", graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks" } as const;
       const fsKind = kindMap[kind];
-      // Move affected entities from folder dir to root of kind dir
-      for (const entity of affectedEntities) {
-        const fullEntity = kind === "rule"
-          ? loadEntity<ProxyRule>(entity.workspaceId, "rules", entity.id)
-          : kind === "mock"
-            ? cfg.mocks.find((m) => m.id === entity.id)
-            : kind === "ws"
-              ? (cfg.wsConnections ?? []).find((c) => c.id === entity.id)
-              : kind === "webhook"
-                ? (cfg.webhooks ?? []).find((h) => h.id === entity.id)
-                : (cfg.requests ?? []).find((r) => r.id === entity.id);
-        if (fullEntity) writeEntity(entity.workspaceId, fsKind, entity.id, fullEntity, null);
+      const wsId = folder.workspaceId;
+      // Delete the physical folder directory (and all entity JSON files inside it) in one shot
+      deleteEntityDir(wsId, fsKind, folder.name);
+      // For requests: also clean up the runner config directory
+      if (kind === "request") {
+        const runnerDir = path.join(workspaceDir(wsId), "requests", ".runs", id);
+        if (fs.existsSync(runnerDir)) fs.rmSync(runnerDir, { recursive: true, force: true });
       }
-      // Remove the folder directory if now empty
-      deleteEntityDir(folder.workspaceId, fsKind, folder.name);
-      const idx = readIndex(folder.workspaceId, fsKind);
+      // Update the index: remove the folder entry and all affected entity IDs from order
+      const idx = readIndex(wsId, fsKind);
       idx.folders = idx.folders.filter((f) => f.id !== id);
-      writeIndex(folder.workspaceId, fsKind, idx);
+      const deletedSet = new Set(affectedEntityIds);
+      idx.order = (idx.order ?? []).filter((eid) => !deletedSet.has(eid));
+      writeIndex(wsId, fsKind, idx);
     }
     return { ok: true };
   });
@@ -1791,6 +1802,18 @@ export function registerIpcHandlers(): void {
       return JSON.parse(fs.readFileSync(file, "utf-8"));
     } catch {
       return null;
+    }
+  });
+
+  ipcMain.handle("runner:listFolderIds", (_e, wsId: string) => {
+    try {
+      const runsDir = path.join(workspaceDir(wsId), "requests", ".runs");
+      if (!fs.existsSync(runsDir)) return [];
+      return fs.readdirSync(runsDir, { withFileTypes: true })
+        .filter((e) => e.isDirectory() && fs.existsSync(path.join(runsDir, e.name, "runner.json")))
+        .map((e) => e.name);
+    } catch {
+      return [];
     }
   });
 }

@@ -572,6 +572,7 @@ declare global {
       exportRunnerReport(report: unknown): Promise<{ ok: boolean; filePath?: string; error?: string }>;
       saveRunnerConfig(wsId: string, folderId: string, config: { requestOrder: string[]; delayMs: number }): Promise<{ ok: boolean }>;
       loadRunnerConfig(wsId: string, folderId: string): Promise<{ requestOrder: string[]; delayMs: number } | null>;
+      listRunnerFolderIds(wsId: string): Promise<string[]>;
     };
   }
 }

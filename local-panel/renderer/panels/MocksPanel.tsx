@@ -123,10 +123,17 @@ export default function MocksPanel({
   }, [loadedEntities, mocks, reloadMocks, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
+    closeTab(id);
     await window.api.deleteMock(id);
     await reloadMocks();
-    closeTab(id);
   }, [reloadMocks, closeTab]);
+
+  // Close all open tabs for a folder's mocks before the folder is deleted
+  const handleBeforeDeleteFolder = useCallback((folderId: string) => {
+    mocks
+      .filter((m) => m.folderId === folderId)
+      .forEach((m) => closeTab(m.id));
+  }, [mocks, closeTab]);
 
   const handleDuplicate = useCallback(async (id: string) => {
     let m = loadedEntities[id];
@@ -251,6 +258,7 @@ export default function MocksPanel({
           onPublishItem={onPublishItem}
           onPublishFolder={onPublishFolder}
           onRestoreItem={onRestoreItem}
+          onBeforeDeleteFolder={handleBeforeDeleteFolder}
         />
       </div>
     </>

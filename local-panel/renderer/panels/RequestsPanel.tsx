@@ -50,9 +50,19 @@ export default function RequestsPanel({
   const requests = config.requests ?? [];
   const folders = config.requestFolders ?? [];
 
-
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [runnerFolderIds, setRunnerFolderIds] = useState<Set<string>>(new Set());
+
+  // Load which folders have saved runner configs — refresh when workspace changes
+  const loadRunnerFolderIds = useCallback(async () => {
+    try {
+      const ids = await window.api.listRunnerFolderIds(config.activeWorkspaceId);
+      setRunnerFolderIds(new Set(ids));
+    } catch { /* ignore */ }
+  }, [config.activeWorkspaceId]);
+
+  useEffect(() => { loadRunnerFolderIds(); }, [loadRunnerFolderIds]);
 
   const {
     openTabs, activeTab, setActiveTab,
@@ -121,10 +131,18 @@ export default function RequestsPanel({
   }, [loadedEntities, requests, reloadRequests, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
+    closeTab(id);
     await window.api.deleteRequest(id);
     await reloadRequests();
-    closeTab(id);
   }, [reloadRequests, closeTab]);
+
+  // Close all open tabs for a folder's requests before the folder is deleted
+  const handleBeforeDeleteFolder = useCallback((folderId: string) => {
+    requests
+      .filter((r) => r.folderId === folderId)
+      .forEach((r) => closeTab(r.id));
+    closeTab(`${RUNNER_PREFIX}${folderId}`);
+  }, [requests, closeTab]);
 
   const handleDuplicate = useCallback(async (id: string) => {
     let r = loadedEntities[id];
@@ -153,11 +171,18 @@ export default function RequestsPanel({
   const handleOpenRunner = useCallback((folderId: string) => {
     const tabId = `${RUNNER_PREFIX}${folderId}`;
     openTab(tabId);
-  }, [openTab]);
+    // Refresh runner folder IDs so the tree node appears once the runner saves its config
+    setTimeout(() => loadRunnerFolderIds(), 500);
+  }, [openTab, loadRunnerFolderIds]);
 
   const handleSaveRunnerReport = useCallback(async (report: any) => {
     await window.api.saveRunnerReport(config.activeWorkspaceId, report);
   }, [config.activeWorkspaceId]);
+
+  // After runner config is saved, refresh runner folder IDs so the tree node appears
+  const handleRunnerConfigSaved = useCallback(() => {
+    loadRunnerFolderIds();
+  }, [loadRunnerFolderIds]);
 
 
   const filteredRequests = useMemo(() => {
@@ -197,7 +222,7 @@ export default function RequestsPanel({
 
   const folderViewItems: FolderTreeItem[] = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return (q
+    const requestItems = (q
       ? requests.filter((r) => r.name.toLowerCase().includes(q) || r.url.toLowerCase().includes(q) || r.method.toLowerCase().includes(q))
       : requests
     ).map((r): FolderTreeItem => ({
@@ -212,7 +237,21 @@ export default function RequestsPanel({
       isEnabled: true,
       relPath: entityRelPath("requests", r, folders),
     }));
-  }, [requests, folders, search, activeTab]);
+
+    // Add a runner config node for each folder that has a saved runner.json
+    const runnerItems: FolderTreeItem[] = folders
+      .filter((f) => runnerFolderIds.has(f.id))
+      .map((f): FolderTreeItem => ({
+        id: `${RUNNER_PREFIX}${f.id}`,
+        name: "Run Collection",
+        folderId: f.id,
+        isActive: activeTab === `${RUNNER_PREFIX}${f.id}`,
+        isEnabled: true,
+        isRunner: true,
+      }));
+
+    return [...requestItems, ...runnerItems];
+  }, [requests, folders, search, activeTab, runnerFolderIds]);
 
   // ── Sidebar ────────────────────────────────────────────────────────────
 
@@ -252,6 +291,7 @@ export default function RequestsPanel({
           onPublishFolder={onPublishFolder}
           onRestoreItem={onRestoreItem}
           onOpenRunner={handleOpenRunner}
+          onBeforeDeleteFolder={handleBeforeDeleteFolder}
         />
       </div>
     </>

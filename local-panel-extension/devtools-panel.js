@@ -255,6 +255,94 @@ tbody.addEventListener("click", (e) => {
 document.getElementById("clearBtn").addEventListener("click", () => { allRequests.length = 0; render(); });
 document.getElementById("si").addEventListener("input", (e) => { search = e.target.value.toLowerCase(); render(); });
 document.getElementById("preserveLog").addEventListener("change", (e) => { preserve = e.target.checked; });
+
+// Pending one-shot callbacks keyed by message id (for folder:add responses)
+const pendingCallbacks = new Map();
+
+// Mockable types: only fetch/XHR and documents have meaningful structured responses
+function isMockable(r) {
+    return r.type === "xhr" || r.type === "doc";
+}
+
+function sendBulkMocks(visible, folderId) {
+    visible.forEach((r) => {
+        const urlObj = (() => { try { return new URL(r.url); } catch { return null; } })();
+        const name = urlObj ? r.method + " " + urlObj.pathname : r.method + " " + r.url;
+        const msgId = genId();
+        pendingMessages.set(msgId, { type: "mock", name });
+        safeRuntimeMessage({
+            type: "companion:send",
+            payload: {
+                id: msgId, action: "mock:add", payload: {
+                    name, method: r.method, urlPattern: r.url,
+                    useRegex: false, enabled: true,
+                    capturedHeaders: r.requestHeaders, capturedBody: r.requestBody,
+                    responseStatus: r.status || 200,
+                    responseHeaders: r.responseHeaders, responseBody: r.responseBody,
+                    folderId,
+                },
+            }
+        });
+    });
+}
+
+function sendBulkRequests(visible, folderId) {
+    visible.forEach((r) => {
+        const urlObj = (() => { try { return new URL(r.url); } catch { return null; } })();
+        const name = urlObj ? r.method + " " + urlObj.pathname : r.method + " " + r.url;
+        const msgId = genId();
+        pendingMessages.set(msgId, { type: "request", name });
+        safeRuntimeMessage({
+            type: "companion:send",
+            payload: {
+                id: msgId, action: "request:add", payload: {
+                    name, method: r.method, url: r.url,
+                    headers: r.requestHeaders, body: r.requestBody,
+                    folderId,
+                },
+            }
+        });
+    });
+}
+
+document.getElementById("mockAllBtn").addEventListener("click", () => {
+    const visible = getFiltered().filter(isMockable);
+    if (visible.length === 0) {
+        showToast("No mockable requests visible (need Fetch/XHR or Doc type)", true);
+        return;
+    }
+    const folderName = "Captured " + new Date().toLocaleString();
+    const folderMsgId = genId();
+    pendingCallbacks.set(folderMsgId, (resp) => {
+        const folderId = (resp && resp.ok && resp.data) ? resp.data.id : null;
+        sendBulkMocks(visible, folderId);
+        showToast(`Mocking ${visible.length} request${visible.length !== 1 ? "s" : ""} → "${folderName}"`);
+    });
+    safeRuntimeMessage({
+        type: "companion:send",
+        payload: { id: folderMsgId, action: "folder:add", payload: { kind: "mock", name: folderName } }
+    });
+});
+
+document.getElementById("saveAllBtn").addEventListener("click", () => {
+    const visible = getFiltered();
+    if (visible.length === 0) {
+        showToast("No requests in current view", true);
+        return;
+    }
+    const folderName = "Captured " + new Date().toLocaleString();
+    const folderMsgId = genId();
+    pendingCallbacks.set(folderMsgId, (resp) => {
+        const folderId = (resp && resp.ok && resp.data) ? resp.data.id : null;
+        sendBulkRequests(visible, folderId);
+        showToast(`Saving ${visible.length} request${visible.length !== 1 ? "s" : ""} → "${folderName}"`);
+    });
+    safeRuntimeMessage({
+        type: "companion:send",
+        payload: { id: folderMsgId, action: "folder:add", payload: { kind: "request", name: folderName } }
+    });
+});
+
 document.getElementById("fbar").addEventListener("click", (e) => {
     const tab = e.target.closest(".ftab");
     if (!tab) return;
@@ -283,6 +371,13 @@ chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === "ws:response") {
         const resp = msg.payload;
         console.log("[DevTools] WebSocket response:", resp);
+        // One-shot callbacks (e.g. folder:add responses for bulk operations)
+        if (pendingCallbacks.has(resp.id)) {
+            const cb = pendingCallbacks.get(resp.id);
+            pendingCallbacks.delete(resp.id);
+            cb(resp);
+            return;
+        }
         const pending = pendingMessages.get(resp.id);
         if (pending) {
             console.log("[DevTools] Found pending message:", pending);

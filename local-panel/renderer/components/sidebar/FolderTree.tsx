@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Folder as FolderType } from "@/types";
-import { ChevronDown, Folder, FolderOpen } from "@/lib/icons";
+import { ChevronDown, Folder, FolderOpen, Play } from "@/lib/icons";
 import { methodColor, methodBg } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -14,6 +14,8 @@ export interface FolderTreeItem {
   isEnabled?: boolean;
   /** Relative git path e.g. "mocks/FolderName/id.json" — used for path-keyed status lookup */
   relPath?: string;
+  /** True for special runner config nodes that open the collection runner when clicked */
+  isRunner?: boolean;
 }
 
 interface FolderNode {
@@ -61,7 +63,7 @@ function CtxMenu({ x, y, items, onClose }: { x: number; y: number; items: CtxMen
   );
 }
 
-// ── Inline rename input ────────────────────────────────────────────────────
+// ── Inline rename input (used only for new folder creation) ───────────────────
 
 function InlineInput({ value, onCommit, onCancel }: { value: string; onCommit(v: string): void; onCancel(): void }) {
   const [val, setVal] = useState(value);
@@ -80,6 +82,65 @@ function InlineInput({ value, onCommit, onCancel }: { value: string; onCommit(v:
       onBlur={() => { if (val.trim()) onCommit(val.trim()); else onCancel(); }}
       onClick={(e) => e.stopPropagation()}
     />
+  );
+}
+
+// ── Rename dialog modal ────────────────────────────────────────────────────
+
+function RenameDialog({ currentName, onSave, onCancel }: {
+  currentName: string;
+  onSave(name: string): void;
+  onCancel(): void;
+}) {
+  const [val, setVal] = useState(currentName);
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { ref.current?.focus(); ref.current?.select(); }, []);
+
+  const handleSave = () => {
+    const trimmed = val.trim();
+    if (trimmed && trimmed !== currentName) onSave(trimmed);
+    else onCancel();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.5)" }}
+      onClick={onCancel}
+    >
+      <div
+        className="bg-bg2 border border-border rounded-lg shadow-2xl p-4 w-72"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); handleSave(); }
+          if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+        }}
+      >
+        <div className="text-xs font-semibold text-text-base mb-3">Rename Folder</div>
+        <input
+          ref={ref}
+          className="w-full bg-bg3 border border-border focus:border-accent rounded px-2 py-1.5 text-xs text-text-bright outline-none mb-4"
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+        />
+        <div className="flex justify-end gap-2">
+          <button
+            className="px-3 py-1.5 text-xs rounded border border-border hover:bg-bg3 text-text-dim cursor-pointer"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-3 py-1.5 text-xs rounded font-semibold cursor-pointer"
+            style={{ background: "var(--c-accent)", color: "#fff", opacity: val.trim() ? 1 : 0.5 }}
+            disabled={!val.trim()}
+            onClick={handleSave}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -211,13 +272,15 @@ interface Props {
   onBeforeCreateFolder?: () => boolean;
   /** Called when user clicks "Open in Runner" for a folder */
   onOpenRunner?: (folderId: string) => void;
+  /** Called synchronously before a folder is deleted — lets the parent close open tabs for items in that folder */
+  onBeforeDeleteFolder?: (folderId: string) => void;
 }
 
 export default function FolderTree({
   kind, folders, items, onOpenItem, onDeleteItem, onToggleItem, onToggleFolderItems, onFoldersChange,
   onDuplicateItem, onMoveItems, onOpenNewTab, onHistoryItem,
   pathStatusMap, entitySyncStatus, onPublishItem, onPublishFolder, onRestoreItem,
-  onBeforeCreateFolder, onOpenRunner,
+  onBeforeCreateFolder, onOpenRunner, onBeforeDeleteFolder,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["__root__"]));
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: CtxMenuItem[] } | null>(null);
@@ -293,6 +356,7 @@ export default function FolderTree({
   };
 
   const handleDeleteFolder = async (id: string) => {
+    onBeforeDeleteFolder?.(id);
     await window.api.deleteFolder(kind, id);
     onFoldersChange();
   };
@@ -551,11 +615,9 @@ export default function FolderTree({
           {isExpanded ? <FolderOpen size={13} /> : <Folder size={13} />}
         </span>
         {renaming === nodeKey ? (
-          <InlineInput
-            value={node.folder?.name ?? ""}
-            onCommit={(v) => handleRenameFolder(node.folder!.id, v)}
-            onCancel={() => setRenaming(null)}
-          />
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-accent)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", fontStyle: "italic" }}>
+            {node.folder!.name}
+          </span>
         ) : (
           <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-text-bright)", flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>
             {isRoot ? "root" : node.folder!.name}
@@ -640,6 +702,12 @@ export default function FolderTree({
         }}
         onClick={(e) => {
           e.stopPropagation();
+          if (item.isRunner) {
+            clearSelection();
+            if (onOpenRunner && item.folderId) onOpenRunner(item.folderId);
+            else onOpenItem(item.id);
+            return;
+          }
           if (e.ctrlKey || e.metaKey) {
             setSelectedItemIds((p) => { const s = new Set(p); s.has(item.id) ? s.delete(item.id) : s.add(item.id); return s; });
           } else if (isDeleted) {
@@ -652,6 +720,7 @@ export default function FolderTree({
         }}
         onContextMenu={(e) => {
           e.preventDefault(); e.stopPropagation();
+          if (item.isRunner) return; // no context menu for runner items
           const total = selectedItemIds.size + selectedFolderIds.size;
           if (total > 1 && selectedItemIds.has(item.id)) {
             openMultiMenu(e.clientX, e.clientY);
@@ -673,25 +742,39 @@ export default function FolderTree({
         {depth > 0 && (
           <div style={{ position: "absolute", left: -CONNECTOR_W, top: "50%", width: CONNECTOR_W - 2, height: 1, background: LINE_COLOR, transform: "translateY(-50%)", pointerEvents: "none" }} />
         )}
-        {/* Enabled/disabled dot — at start, always visible */}
-        <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 12 }}>
-          <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: dotColor, opacity: dotOpacity }} />
-        </span>
-        {/* Method badge — shown when not hovered */}
-        {item.method && hoveredItemId !== item.id && (
-          <span style={{ flexShrink: 0, fontSize: 10, fontFamily: "monospace", fontWeight: 700, padding: "2px 4px", borderRadius: 3, lineHeight: 1, color: methodColor(item.method), background: methodBg(item.method) }}>
-            {item.method === "*" ? "ANY" : item.method}
-          </span>
+        {item.isRunner ? (
+          // Runner item: play icon + label, no dot/method badge
+          <>
+            <span style={{ flexShrink: 0, display: "flex", alignItems: "center", color: "var(--c-accent)", opacity: 0.8 }}>
+              <Play size={11} fill="currentColor" />
+            </span>
+            <span style={{ fontSize: 12, lineHeight: 1, flex: 1, overflow: "hidden", textOverflow: "ellipsis", color: "var(--c-accent)", fontStyle: "italic", opacity: 0.85 }}>
+              {item.name}
+            </span>
+          </>
+        ) : (
+          <>
+            {/* Enabled/disabled dot — at start, always visible */}
+            <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 12 }}>
+              <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: dotColor, opacity: dotOpacity }} />
+            </span>
+            {/* Method badge — shown when not hovered */}
+            {item.method && hoveredItemId !== item.id && (
+              <span style={{ flexShrink: 0, fontSize: 10, fontFamily: "monospace", fontWeight: 700, padding: "2px 4px", borderRadius: 3, lineHeight: 1, color: methodColor(item.method), background: methodBg(item.method) }}>
+                {item.method === "*" ? "ANY" : item.method}
+              </span>
+            )}
+            {/* Name — text color = git status, strikethrough = pending delete */}
+            <span style={{
+              fontSize: 13, lineHeight: 1, flex: 1, overflow: "hidden", textOverflow: "ellipsis",
+              color: textColor,
+              textDecoration: isDeleted ? "line-through" : "none",
+              opacity: !isEnabled ? 0.5 : 1,
+            }}>
+              {item.name}
+            </span>
+          </>
         )}
-        {/* Name — text color = git status, strikethrough = pending delete */}
-        <span style={{
-          fontSize: 13, lineHeight: 1, flex: 1, overflow: "hidden", textOverflow: "ellipsis",
-          color: textColor,
-          textDecoration: isDeleted ? "line-through" : "none",
-          opacity: !isEnabled ? 0.5 : 1,
-        }}>
-          {item.name}
-        </span>
       </div>
     );
   }
@@ -726,6 +809,16 @@ export default function FolderTree({
           onCancel={() => setPendingDelete(null)}
         />
       )}
+      {renaming && (() => {
+        const folder = folders.find((f) => f.id === renaming);
+        return folder ? (
+          <RenameDialog
+            currentName={folder.name}
+            onSave={(name) => handleRenameFolder(folder.id, name)}
+            onCancel={() => setRenaming(null)}
+          />
+        ) : null;
+      })()}
       {deletedItemPopup && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"

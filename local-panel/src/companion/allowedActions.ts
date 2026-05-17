@@ -5,5 +5,6 @@
 export const ALLOWED_ACTIONS: ReadonlySet<string> = new Set([
     "mock:add",
     "request:add",
+    "folder:add",
     "config:get",
 ]);

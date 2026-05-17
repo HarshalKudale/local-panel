@@ -513,15 +513,66 @@
             background: rgba(26, 115, 232, .08)
         }
 
-        #empty {
-            display: none;
-            flex-direction: column;
+        .ab-bulk {
+            display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 60px 24px;
+            gap: 4px;
+            padding: 0 8px;
+            height: 20px;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            font: 11px/1 inherit;
             color: var(--dim);
-            text-align: center
+            white-space: nowrap;
+            flex-shrink: 0
+        }
+
+        .ab-bulk:hover {
+            border-color: var(--dim);
+            color: var(--text);
+            background: rgba(128, 128, 128, .12)
+        }
+
+        .ab-bulk.bulk-mock {
+            border-color: rgba(129, 201, 149, .4);
+            color: var(--green)
+        }
+
+        .ab-bulk.bulk-mock:hover {
+            background: rgba(129, 201, 149, .1);
+            border-color: var(--green)
+        }
+
+        .ab-bulk.bulk-save {
+            border-color: rgba(138, 180, 248, .4);
+            color: var(--accent)
+        }
+
+        .ab-bulk.bulk-save:hover {
+            background: rgba(138, 180, 248, .1);
+            border-color: var(--accent)
+        }
+
+        body.light .ab-bulk.bulk-mock {
+            border-color: rgba(24, 128, 56, .4);
+            color: var(--green)
+        }
+
+        body.light .ab-bulk.bulk-save {
+            border-color: rgba(26, 115, 232, .4);
+            color: var(--accent)
+        }
+
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 60px 24px;
+        color: var(--dim);
+        text-align: center
         }
 
         #empty.show {
@@ -598,6 +649,24 @@
         <label class="t-label" title="Keep requests across page navigations">
             <input type="checkbox" id="preserveLog"> Preserve log
         </label>
+        <div class="t-sep"></div>
+        <button class="ab-bulk bulk-mock" id="mockAllBtn"
+            title="Mock all visible requests that have mockable response types (Fetch/XHR, Doc)">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            Mock All
+        </button>
+        <button class="ab-bulk bulk-save" id="saveAllBtn" title="Save all visible requests to the Requests panel">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+            </svg>
+            Save All
+        </button>
         <div class="spacer"></div>
         <div id="cb"><span class="dot" id="cdot"></span><span id="ctext">Disconnected</span></div>
     </div>

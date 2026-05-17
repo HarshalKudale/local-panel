@@ -15,7 +15,7 @@ import { BrowserWindow } from "electron";
 import { ALLOWED_ACTIONS } from "@/companion/allowedActions";
 import {
     loadConfig, saveConfig, generateId, AppConfig,
-    MockRule, SavedRequest,
+    MockRule, SavedRequest, Folder,
 } from "@/store/config";
 import {
     writeEntity, upsertNameEntry, findEntityRelPath,
@@ -92,6 +92,9 @@ async function handleAction(action: string, payload: any): Promise<any> {
         case "request:add":
             return handleRequestAdd(payload);
 
+        case "folder:add":
+            return handleFolderAdd(payload);
+
         default:
             throw new Error(`Unknown action: ${action}`);
     }
@@ -164,6 +167,30 @@ function handleRequestAdd(req: Omit<SavedRequest, "id" | "createdAt">): SavedReq
     broadcastEntityStatus(wsId);
     notifyRendererRefresh();
     return newReq;
+}
+
+function handleFolderAdd(payload: { kind: string; name: string; parentId?: string | null }): Folder {
+    const { kind, name, parentId = null } = payload;
+    if (!name || !name.trim()) throw new Error("name is required");
+    const validKinds = ["mock", "request", "ws", "webhook", "rule",
+        "graphqlRequest", "graphqlMock", "grpcRequest", "grpcMock", "soapRequest", "soapMock"];
+    if (!validKinds.includes(kind)) throw new Error(`Unknown folder kind: ${kind}`);
+
+    const cfg = loadConfig();
+    const wsId = cfg.activeWorkspaceId;
+    const folder: Folder = { id: generateId(), name: name.trim(), parentId, workspaceId: wsId, createdAt: Date.now() };
+    const kindMap: Record<string, string> = {
+        mock: "mockFolders", request: "requestFolders", ws: "wsFolders",
+        webhook: "webhookFolders", rule: "ruleFolders",
+        graphqlRequest: "graphqlRequestFolders", graphqlMock: "graphqlMockFolders",
+        grpcRequest: "grpcRequestFolders", grpcMock: "grpcMockFolders",
+        soapRequest: "soapRequestFolders", soapMock: "soapMockFolders",
+    };
+    const key = kindMap[kind];
+    (cfg as any)[key] = [...((cfg as any)[key] ?? []), folder];
+    saveConfig(cfg);
+    notifyRendererRefresh();
+    return folder;
 }
 
 // ── WebSocket message handler ─────────────────────────────────────────────────

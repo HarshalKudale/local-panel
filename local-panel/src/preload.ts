@@ -172,4 +172,5 @@ contextBridge.exposeInMainWorld("api", {
   exportRunnerReport: (report: unknown) => ipcRenderer.invoke("runner:exportReport", report),
   saveRunnerConfig: (wsId: string, folderId: string, config: unknown) => ipcRenderer.invoke("runner:saveConfig", wsId, folderId, config),
   loadRunnerConfig: (wsId: string, folderId: string) => ipcRenderer.invoke("runner:loadConfig", wsId, folderId),
+  listRunnerFolderIds: (wsId: string) => ipcRenderer.invoke("runner:listFolderIds", wsId),
 });

@@ -345,7 +345,6 @@ export function tabReducer(state: TabState, action: TabAction): TabState {
         reqBody: action.body ? tryFormat(action.body) : state.reqBody,
         reqMode,
         reqTab: newTab,
-        curlInput: "", // Clear curl input after applying
       };
     }
 
