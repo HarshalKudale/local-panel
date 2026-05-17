@@ -32,7 +32,7 @@ export interface TabState {
   reqBodyStash: Partial<Record<BodyMode, string>>;  // ephemeral — per-mode body content
 
   // Response (right) pane
-  resTab: "body" | "headers" | "post-script";
+  resTab: "body" | "headers" | "post-script" | "tests";
   resMode: BodyMode;
 
   // Mock response fields (editable)
@@ -48,6 +48,7 @@ export interface TabState {
   // Scripts (request only)
   preScript: string;
   postScript: string;
+  testScript: string;
 
   // cURL import
   curlInput: string;
@@ -58,6 +59,11 @@ export interface TabState {
   result: ReplayResult | null;
   sendErr: string | null;
   scriptErr: string | null;
+
+  // Runtime: test results
+  testResults: { name: string; passed: boolean; error?: string; durationMs: number }[];
+  testLogs: string[];
+  testRunning: boolean;
 
   // Runtime: save state
   saving: boolean;
@@ -73,7 +79,7 @@ export interface TabState {
 export interface RequestDraft {
   name: string; method: string; url: string; folderId: string | null;
   headers: Record<string, string>; body: string; reqMode: BodyMode;
-  preScript: string; postScript: string;
+  preScript: string; postScript: string; testScript: string;
 }
 
 export interface MockDraft {
@@ -139,6 +145,8 @@ export type TabAction =
   | { type: "TEST_START" }
   | { type: "TEST_SUCCESS"; resStatus: number; resHeaders: KVRow[]; resBody: string; resMode: BodyMode; resBodyEncoding?: "utf8" | "base64" }
   | { type: "TEST_ERROR"; error: string }
+  | { type: "RUN_TESTS_START" }
+  | { type: "RUN_TESTS_DONE"; results: { name: string; passed: boolean; error?: string; durationMs: number }[]; logs: string[] }
   | { type: "SAVE_START" }
   | { type: "SAVE_SUCCESS" }
   | { type: "SAVE_ERROR"; error: string }
@@ -161,9 +169,10 @@ function defaultState(): TabState {
     streamingMode: "none",
     streamingChunkDelay: 100,
     streamingChunkSeparator: "\n\n",
-    preScript: "", postScript: "",
+    preScript: "", postScript: "", testScript: "",
     curlInput: "", showCurl: false,
     loading: false, result: null, sendErr: null, scriptErr: null,
+    testResults: [], testLogs: [], testRunning: false,
     saving: false, saveErr: null,
     testLoading: false, testError: null,
   };
@@ -187,6 +196,7 @@ function entityFieldsFromRequest(req: Partial<SavedRequest>): Partial<TabState> 
     reqBodyStash: body ? { [mode]: body } : {},
     preScript: req.preScript ?? "",
     postScript: req.postScript ?? "",
+    testScript: req.testScript ?? "",
   };
 }
 
@@ -287,7 +297,7 @@ export function tabReducer(state: TabState, action: TabAction): TabState {
           reqHeaders: headersToRows(d.headers),
           reqBody: d.body, reqMode: d.reqMode,
           reqBodyStash: d.body && d.reqMode !== "none" ? { [d.reqMode]: d.body } : {},
-          preScript: d.preScript, postScript: d.postScript,
+          preScript: d.preScript, postScript: d.postScript, testScript: d.testScript,
         };
       } else {
         const d = action.draft as MockDraft;
@@ -366,6 +376,12 @@ export function tabReducer(state: TabState, action: TabAction): TabState {
     case "TEST_ERROR":
       return { ...state, testLoading: false, testError: action.error };
 
+    case "RUN_TESTS_START":
+      return { ...state, testRunning: true, testResults: [], testLogs: [] };
+
+    case "RUN_TESTS_DONE":
+      return { ...state, testRunning: false, testResults: action.results, testLogs: action.logs };
+
     case "SAVE_START":
       return { ...state, saving: true, saveErr: null };
 
@@ -420,6 +436,7 @@ export function stateToSavePayload(
       body: state.reqBody,
       preScript: state.preScript || undefined,
       postScript: state.postScript || undefined,
+      testScript: state.testScript || undefined,
       folderId: state.folderId ?? null,
     };
   } else {
@@ -450,7 +467,7 @@ export function stateToDraft(state: TabState, tabType: TabType): RequestDraft | 
     return {
       name: state.name, method: state.method, url: state.url, folderId: state.folderId,
       headers: rowsToHeaders(state.reqHeaders), body: state.reqBody, reqMode: state.reqMode,
-      preScript: state.preScript, postScript: state.postScript,
+      preScript: state.preScript, postScript: state.postScript, testScript: state.testScript,
     };
   } else {
     return {

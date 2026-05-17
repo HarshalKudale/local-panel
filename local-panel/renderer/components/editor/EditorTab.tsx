@@ -68,8 +68,8 @@ export interface RequestPaneProps {
 
 /** Props relevant to the response (right) pane — varies by mode */
 export interface ResponsePaneProps {
-  resTab: "body" | "headers" | "post-script";
-  onResTabChange(t: "body" | "headers" | "post-script"): void;
+  resTab: "body" | "headers" | "post-script" | "tests";
+  onResTabChange(t: "body" | "headers" | "post-script" | "tests"): void;
 
   // mock mode: editable response
   resBody?: string;
@@ -102,6 +102,12 @@ export interface ResponsePaneProps {
   postScript?: string;
   onPostScriptChange?(v: string): void;
   scriptErr?: string | null;
+  // test script
+  testScript?: string;
+  onTestScriptChange?(v: string): void;
+  testResults?: { name: string; passed: boolean; error?: string; durationMs: number }[];
+  testLogs?: string[];
+  testRunning?: boolean;
 }
 
 export interface EditorTabProps extends RequestPaneProps, ResponsePaneProps {
@@ -137,6 +143,8 @@ export default function EditorTab({
   loading, sendErr, result, resBodyText, onCreateMock,
   postScript, onPostScriptChange,
   scriptErr,
+  testScript, onTestScriptChange,
+  testResults, testLogs, testRunning,
 }: EditorTabProps) {
   const reqParamCount = reqParams.filter((r) => r.enabled && r.key.trim()).length;
   const reqHeaderCount = reqHeaders.filter((r) => r.enabled && r.key.trim()).length;
@@ -344,6 +352,10 @@ export default function EditorTab({
   } else {
     // Read-only live response (request mode)
     const postScriptDot = postScript?.trim() ? " ●" : "";
+    const testScriptDot = testScript?.trim() ? " ●" : "";
+    const testBadge = testResults && testResults.length > 0
+      ? ` (${testResults.filter(t => t.passed).length}/${testResults.length})`
+      : "";
     rightPane = (
       <div className="flex flex-col h-full overflow-hidden">
         <TabStrip
@@ -351,6 +363,7 @@ export default function EditorTab({
             { id: "body" as const, label: strings.editor.body },
             { id: "headers" as const, label: strings.editor.headers },
             { id: "post-script" as const, label: `${strings.editor.postScript}${postScriptDot}` },
+            { id: "tests" as const, label: `Tests${testScriptDot}${testBadge}` },
           ]}
           active={resTab}
           onChange={onResTabChange}
@@ -385,6 +398,14 @@ export default function EditorTab({
               onChange={onPostScriptChange ?? (() => { })}
               placeholder={strings.editor.postScriptPlaceholder}
               error={scriptErr ?? undefined}
+            />
+          ) : resTab === "tests" ? (
+            <TestsPanel
+              testScript={testScript ?? ""}
+              onTestScriptChange={onTestScriptChange ?? (() => { })}
+              testResults={testResults}
+              testLogs={testLogs}
+              testRunning={testRunning}
             />
           ) : (
             <>
@@ -548,4 +569,94 @@ function insertAtActiveInput(token: string): boolean {
   const cursorPos = start + token.length;
   setTimeout(() => el.setSelectionRange(cursorPos, cursorPos), 0);
   return true;
+}
+
+// ── TestsPanel ────────────────────────────────────────────────────────────────
+
+function TestsPanel({ testScript, onTestScriptChange, testResults, testLogs, testRunning }: {
+  testScript: string;
+  onTestScriptChange(v: string): void;
+  testResults?: { name: string; passed: boolean; error?: string; durationMs: number }[];
+  testLogs?: string[];
+  testRunning?: boolean;
+}) {
+  const [view, setView] = useState<"script" | "results">("script");
+
+  // Auto-switch to results when tests finish running
+  useEffect(() => {
+    if (testResults && testResults.length > 0 && !testRunning) {
+      setView("results");
+    }
+  }, [testResults, testRunning]);
+
+  const passCount = testResults?.filter(t => t.passed).length ?? 0;
+  const failCount = testResults?.filter(t => !t.passed).length ?? 0;
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Sub-tabs: Script / Results */}
+      <div className="flex items-center border-b border-border/40 bg-bg0/30 flex-shrink-0">
+        <button
+          onClick={() => setView("script")}
+          className={`px-3 py-1.5 text-[11px] font-medium cursor-pointer ${view === "script" ? "text-text-bright border-b-2 border-accent" : "text-text-dim hover:text-text-bright"}`}
+        >
+          Script
+        </button>
+        <button
+          onClick={() => setView("results")}
+          className={`px-3 py-1.5 text-[11px] font-medium cursor-pointer ${view === "results" ? "text-text-bright border-b-2 border-accent" : "text-text-dim hover:text-text-bright"}`}
+        >
+          Results
+          {testResults && testResults.length > 0 && (
+            <span className="ml-1.5 text-[10px]">
+              <span className="text-green">{passCount}</span>
+              {failCount > 0 && <span className="text-red ml-1">{failCount}</span>}
+            </span>
+          )}
+        </button>
+        {testRunning && (
+          <span className="ml-2 inline-block w-3 h-3 border-2 border-text-dim/30 border-t-accent rounded-full animate-spin" />
+        )}
+      </div>
+
+      {/* Content */}
+      {view === "script" ? (
+        <CodeEditor
+          value={testScript}
+          onChange={onTestScriptChange}
+          language="javascript"
+          placeholder={`// Write tests using lp.test() and lp.expect()\n// Example:\nlp.test("Status is 200", () => {\n  lp.expect(lp.response.status).to.equal(200);\n});\n\nlp.test("Response has data", () => {\n  const json = lp.response.json();\n  lp.expect(json).to.have.property("data");\n});`}
+          className="flex-1 overflow-hidden"
+        />
+      ) : (
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+          {(!testResults || testResults.length === 0) && !testRunning && (
+            <div className="flex items-center justify-center h-full text-center">
+              <p className="text-xs text-text-dim">No test results yet. Write tests and send the request.</p>
+            </div>
+          )}
+          {testResults && testResults.map((t, i) => (
+            <div key={i} className={`flex items-start gap-2 px-2.5 py-1.5 rounded text-xs font-mono ${t.passed ? "bg-green/5 border border-green/20" : "bg-red/5 border border-red/20"}`}>
+              <span className={`flex-shrink-0 mt-0.5 text-[10px] font-bold ${t.passed ? "text-green" : "text-red"}`}>
+                {t.passed ? "PASS" : "FAIL"}
+              </span>
+              <div className="flex-1 min-w-0">
+                <span className="text-text-bright">{t.name}</span>
+                {t.error && <div className="text-red/80 mt-0.5 break-words">{t.error}</div>}
+              </div>
+              <span className="text-text-dim text-[10px] flex-shrink-0">{t.durationMs}ms</span>
+            </div>
+          ))}
+          {testLogs && testLogs.length > 0 && (
+            <div className="mt-3 pt-2 border-t border-border/40">
+              <div className="text-[10px] text-text-dim uppercase tracking-wider mb-1">Console</div>
+              {testLogs.map((log, i) => (
+                <div key={i} className="text-[11px] font-mono text-text-dim px-2 py-0.5">{log}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }

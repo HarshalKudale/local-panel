@@ -78,6 +78,7 @@ export interface SavedRequest {
   body: string;
   preScript?: string;
   postScript?: string;
+  testScript?: string;
   createdAt: number;
   folderId?: string | null;
   workspaceId: string;

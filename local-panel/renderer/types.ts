@@ -76,6 +76,7 @@ export interface SavedRequest {
   body: string;    // plain text
   preScript?: string;
   postScript?: string;
+  testScript?: string;
   createdAt: number;
   folderId?: string | null;
   workspaceId: string;
@@ -114,6 +115,7 @@ export interface SavedGrpcRequest {
   streamingType: "unary" | "server" | "client" | "bidi";
   preScript?: string;
   postScript?: string;
+  testScript?: string;
   createdAt: number;
   folderId?: string | null;
   workspaceId: string;
@@ -157,6 +159,7 @@ export interface SavedSoapRequest {
   operationName?: string;
   preScript?: string;
   postScript?: string;
+  testScript?: string;
   createdAt: number;
   folderId?: string | null;
   workspaceId: string;
@@ -200,6 +203,7 @@ export interface SavedGraphQLRequest {
   operationName: string;
   preScript?: string;
   postScript?: string;
+  testScript?: string;
   schemaId?: string | null;
   createdAt: number;
   folderId?: string | null;
@@ -464,15 +468,17 @@ declare global {
       onEntitySyncStatus(cb: (data: { wsId: string; status: Record<string, "clean" | "modified" | "new" | "deleted"> }) => void): () => void;
       executeScript(opts: {
         script: string;
-        context: "pre" | "post";
+        context: "pre" | "post" | "test";
         request?: { method: string; url: string; headers: Record<string, string>; body: string };
-        response?: { status: number; headers: Record<string, string>; body: string };
+        response?: { status: number; headers: Record<string, string>; body: string; responseTime?: number };
         envVars: Record<string, string>;
       }): Promise<{
         request?: { method: string; url: string; headers: Record<string, string>; body: string };
         response?: { status: number; headers: Record<string, string>; body: string };
         envVars: Record<string, string>;
         error?: string;
+        testResults?: { name: string; passed: boolean; error?: string; durationMs: number }[];
+        testLogs?: string[];
       }>;
       onLogEntry(cb: (entry: RequestLogEntry) => void): () => void;
       onServerError(cb: (error: string) => void): () => void;
@@ -560,6 +566,12 @@ declare global {
       // ── First-launch ─────────────────────────────────────────────────────────
       isFirstLaunch(): Promise<boolean>;
       completeFirstLaunch(): Promise<{ ok: boolean }>;
+      // ── Collection Runner ────────────────────────────────────────────────────
+      saveRunnerReport(wsId: string, report: unknown): Promise<{ ok: boolean; error?: string }>;
+      getRunHistory(wsId: string, folderId: string): Promise<{ timestamp: number; summary: { total: number; passed: number; failed: number } }[]>;
+      exportRunnerReport(report: unknown): Promise<{ ok: boolean; filePath?: string; error?: string }>;
+      saveRunnerConfig(wsId: string, folderId: string, config: { requestOrder: string[]; delayMs: number }): Promise<{ ok: boolean }>;
+      loadRunnerConfig(wsId: string, folderId: string): Promise<{ requestOrder: string[]; delayMs: number } | null>;
     };
   }
 }

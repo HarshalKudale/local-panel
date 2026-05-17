@@ -209,13 +209,15 @@ interface Props {
    * Return false to cancel folder creation (e.g. to show an upgrade modal).
    */
   onBeforeCreateFolder?: () => boolean;
+  /** Called when user clicks "Open in Runner" for a folder */
+  onOpenRunner?: (folderId: string) => void;
 }
 
 export default function FolderTree({
   kind, folders, items, onOpenItem, onDeleteItem, onToggleItem, onToggleFolderItems, onFoldersChange,
   onDuplicateItem, onMoveItems, onOpenNewTab, onHistoryItem,
   pathStatusMap, entitySyncStatus, onPublishItem, onPublishFolder, onRestoreItem,
-  onBeforeCreateFolder,
+  onBeforeCreateFolder, onOpenRunner,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["__root__"]));
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: CtxMenuItem[] } | null>(null);
@@ -344,6 +346,9 @@ export default function FolderTree({
         { label: "Rename Folder", action: () => { setRenaming(folderId); closeMenu(); } },
         { label: "Delete Folder", danger: true, action: () => { handleDeleteFolder(folderId); clearSelection(); closeMenu(); } },
       );
+    }
+    if (folderId !== null && onOpenRunner) {
+      menuItems.push({ label: "Run Collection", action: () => { onOpenRunner(folderId); closeMenu(); } });
     }
     menuItems.push(sep, expandAllItem, collapseAllItem);
     setCtxMenu({ x, y, items: menuItems });

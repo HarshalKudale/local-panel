@@ -105,7 +105,7 @@ function removeExistingEntityFile(wsId: string, kind: string, id: string): void 
   const rootFile = path.join(dir, `${id}.json`);
   if (fs.existsSync(rootFile)) { fs.unlinkSync(rootFile); return; }
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture") {
+    if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture" && entry.name !== ".runs") {
       const f = path.join(dir, entry.name, `${id}.json`);
       if (fs.existsSync(f)) { fs.unlinkSync(f); return; }
     }
@@ -191,7 +191,7 @@ export function readAllEntities<T>(wsId: string, kind: string): T[] {
   if (!fs.existsSync(dir)) return [];
   const results: T[] = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture") {
+    if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture" && entry.name !== ".runs") {
       const subdir = path.join(dir, entry.name);
       for (const f of fs.readdirSync(subdir)) {
         if (f.endsWith(".json") && !SKIP_FILES.has(f)) {
@@ -224,7 +224,7 @@ export function readEnabledEntities<T extends { id: string }>(
       if (enabledIds.has(id)) {
         try { results.push(JSON.parse(fs.readFileSync(path.join(dir, entry.name), "utf-8")) as T); } catch { }
       }
-    } else if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture") {
+    } else if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture" && entry.name !== ".runs") {
       const subdir = path.join(dir, entry.name);
       for (const f of fs.readdirSync(subdir)) {
         if (f.endsWith(".json") && !SKIP_FILES.has(f)) {
@@ -309,7 +309,7 @@ export function readEntityStubs(
       const id = entry.name.slice(0, -5);
       stubs.push({ id, folderId: null });
       seenIds.add(id);
-    } else if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture") {
+    } else if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture" && entry.name !== ".runs") {
       const folderId = folderDirToId.get(entry.name) ?? null;
       const subdir = path.join(dir, entry.name);
       for (const f of fs.readdirSync(subdir)) {
@@ -363,7 +363,7 @@ export function findEntityRelPath(wsId: string, kind: string, id: string): strin
   if (!fs.existsSync(dir)) return null;
   if (fs.existsSync(path.join(dir, `${id}.json`))) return `${kind}/${id}.json`;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture") {
+    if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture" && entry.name !== ".runs") {
       if (fs.existsSync(path.join(dir, entry.name, `${id}.json`))) {
         return `${kind}/${entry.name}/${id}.json`;
       }
@@ -390,7 +390,7 @@ export function autoSyncFsDirectories(wsId: string, kind: string, makeId: () => 
   if (!fs.existsSync(dir)) return idx;
 
   const subDirs = fs.readdirSync(dir, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && e.name !== "drafts" && e.name !== "capture")
+    .filter((e) => e.isDirectory() && e.name !== "drafts" && e.name !== "capture" && e.name !== ".runs")
     .map((e) => e.name);
 
   let changed = false;
@@ -474,7 +474,7 @@ export function findEntityFile(wsId: string, kind: string, id: string): string |
   const rootFile = path.join(dir, `${id}.json`);
   if (fs.existsSync(rootFile)) return rootFile;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture") {
+    if (entry.isDirectory() && entry.name !== "drafts" && entry.name !== "capture" && entry.name !== ".runs") {
       const f = path.join(dir, entry.name, `${id}.json`);
       if (fs.existsSync(f)) return f;
     }

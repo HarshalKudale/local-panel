@@ -166,4 +166,10 @@ contextBridge.exposeInMainWorld("api", {
   // ── First-launch ───────────────────────────────────────────────────────────
   isFirstLaunch: () => ipcRenderer.invoke("app:isFirstLaunch"),
   completeFirstLaunch: () => ipcRenderer.invoke("app:completeFirstLaunch"),
+  // ── Collection Runner ─────────────────────────────────────────────────────
+  saveRunnerReport: (wsId: string, report: unknown) => ipcRenderer.invoke("runner:saveReport", wsId, report),
+  getRunHistory: (wsId: string, folderId: string) => ipcRenderer.invoke("runner:getHistory", wsId, folderId),
+  exportRunnerReport: (report: unknown) => ipcRenderer.invoke("runner:exportReport", report),
+  saveRunnerConfig: (wsId: string, folderId: string, config: unknown) => ipcRenderer.invoke("runner:saveConfig", wsId, folderId, config),
+  loadRunnerConfig: (wsId: string, folderId: string) => ipcRenderer.invoke("runner:loadConfig", wsId, folderId),
 });

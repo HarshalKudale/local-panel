@@ -16,7 +16,8 @@ import { rowsToHeaders, b64ToText, textToB64, tryFormat, METHODS, MOCK_METHODS }
 import { parseCurl, SKIP_CURL_HEADERS } from "@/lib/curlParser";
 import { contentTypeToMode, isBinaryContentType } from "@/lib/bodyUtils";
 import { strings } from "@/lib/strings";
-import { runPreScript, runPostScript, makeSendRequest } from "@/lib/scriptRunner";
+import { runPreScript, runPostScript } from "@/lib/scriptRunner";
+import { runTestScript } from "@/lib/testRunner";
 import { ChevronDown } from "@/lib/icons";
 
 // ── Public handle for imperative refresh ───────────────────────────────────
@@ -35,8 +36,6 @@ export interface RestTabProps {
   initial?: SavedRequest | MockRule | Partial<SavedRequest> | Partial<MockRule> | null;
   folders?: Folder[];
   activeEnv?: Environment | null;
-  /** Saved requests in workspace — used for pm.sendRequest() in scripts */
-  allRequests?: SavedRequest[];
   /** Called with the data to persist. Parent handles add vs update. */
   onSave(data: Omit<SavedRequest, "id" | "createdAt" | "workspaceId"> | Omit<MockRule, "id" | "createdAt" | "workspaceId">): Promise<void>;
   onClose(): void;
@@ -54,7 +53,7 @@ export interface RestTabProps {
 
 const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
   {
-    tabType, tabId, draftTabId, initial, folders = [], activeEnv = null, allRequests = [],
+    tabType, tabId, draftTabId, initial, folders = [], activeEnv = null,
     onSave, onClose, onCreateMock, onDirtyChange, showCurlImport = false, label,
   },
   ref,
@@ -140,8 +139,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
       let scriptEnv = activeEnv;
 
       if (state.preScript.trim()) {
-        const sendReq = makeSendRequest(allRequests, activeEnv ? Object.fromEntries(activeEnv.variables.map((v) => [v.key, v.value])) : {});
-        const pre = await runPreScript(state.preScript, { method: state.method, url: finalUrl, headers: finalHeaders, body: finalBody }, activeEnv, sendReq);
+        const pre = await runPreScript(state.preScript, { method: state.method, url: finalUrl, headers: finalHeaders, body: finalBody }, activeEnv);
         if (pre.error) dispatch({ type: "SET_FIELD", field: "scriptErr", value: `Pre-script: ${pre.error}` });
         finalUrl = pre.req.url;
         finalHeaders = pre.req.headers;
@@ -151,28 +149,39 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         }
       }
 
+      const sendStart = Date.now();
       const res: ReplayResult = await window.api.replayRequest(state.method, finalUrl, finalHeaders, textToB64(finalBody));
+      const responseTime = Date.now() - sendStart;
       const ct = res.headers["content-type"];
       const resMode = ct ? contentTypeToMode(ct) : state.resMode;
       dispatch({ type: "SEND_SUCCESS", result: res, resMode });
 
       if (state.postScript.trim()) {
-        const sendReq = makeSendRequest(allRequests, scriptEnv ? Object.fromEntries(scriptEnv.variables.map((v) => [v.key, v.value])) : {});
         const post = await runPostScript(
           state.postScript,
           { status: res.status, headers: res.headers, body: b64ToText(res.body) },
           scriptEnv,
-          sendReq,
         );
         if (post.error) {
           const existing = state.scriptErr;
           dispatch({ type: "SET_FIELD", field: "scriptErr", value: existing ? `${existing}; Post-script: ${post.error}` : `Post-script: ${post.error}` });
         }
       }
+
+      // Run test script if present
+      if (state.testScript.trim()) {
+        dispatch({ type: "RUN_TESTS_START" });
+        const testResult = await runTestScript(
+          state.testScript,
+          { status: res.status, headers: res.headers, body: b64ToText(res.body), responseTime },
+          scriptEnv,
+        );
+        dispatch({ type: "RUN_TESTS_DONE", results: testResult.tests, logs: testResult.logs });
+      }
     } catch (e) {
       dispatch({ type: "SEND_ERROR", error: e instanceof Error ? e.message : "Request failed" });
     }
-  }, [state.url, state.method, state.reqHeaders, state.reqBody, state.preScript, state.postScript, state.resMode, state.scriptErr, activeEnv, allRequests]);
+  }, [state.url, state.method, state.reqHeaders, state.reqBody, state.preScript, state.postScript, state.testScript, state.resMode, state.scriptErr, activeEnv]);
 
   // ── Test (mock mode) ───────────────────────────────────────────────────
 
@@ -383,7 +392,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         reqReadOnly={tabType === "mock"}
         preScript={tabType === "request" ? state.preScript : undefined}
         onPreScriptChange={tabType === "request" ? (v) => dispatch({ type: "SET_FIELD", field: "preScript", value: v }) : undefined}
-        resTab={state.resTab as "body" | "headers" | "post-script"}
+        resTab={state.resTab as "body" | "headers" | "post-script" | "tests"}
         onResTabChange={(v) => dispatch({ type: "SET_FIELD", field: "resTab", value: v })}
         resMode={state.resMode}
         // Request-mode response (read-only)
@@ -395,6 +404,11 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         postScript={tabType === "request" ? state.postScript : undefined}
         onPostScriptChange={tabType === "request" ? (v) => dispatch({ type: "SET_FIELD", field: "postScript", value: v }) : undefined}
         scriptErr={tabType === "request" ? state.scriptErr : undefined}
+        testScript={tabType === "request" ? state.testScript : undefined}
+        onTestScriptChange={tabType === "request" ? (v) => dispatch({ type: "SET_FIELD", field: "testScript", value: v }) : undefined}
+        testResults={tabType === "request" ? state.testResults : undefined}
+        testLogs={tabType === "request" ? state.testLogs : undefined}
+        testRunning={tabType === "request" ? state.testRunning : undefined}
         // Mock-mode response (editable)
         resBody={tabType === "mock" ? state.resBody : undefined}
         onResBodyChange={tabType === "mock" ? (v) => dispatch({ type: "SET_FIELD", field: "resBody", value: v }) : undefined}

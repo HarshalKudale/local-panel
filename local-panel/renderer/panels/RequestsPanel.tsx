@@ -3,6 +3,7 @@ import { AppConfig, SavedRequest, MockRule, Folder, Environment } from "@/types"
 import SearchInput from "@/components/common/SearchInput";
 import FolderTree, { FolderTreeItem } from "@/components/sidebar/FolderTree";
 import RestTab from "@/components/rest/RestTab";
+import CollectionRunner from "@/components/rest/CollectionRunner";
 import DraftsFolder from "@/components/sidebar/DraftsFolder";
 import { loadDraft } from "@/lib/useDraftPersist";
 import { useEntityTabs } from "@/lib/useEntityTabs";
@@ -16,7 +17,9 @@ import { SidebarLayout, SidebarHeader } from "@/components/ui";
 // ── Draft tab prefix ───────────────────────────────────────────────────────
 
 const DRAFT_PREFIX = "req-draft-";
+const RUNNER_PREFIX = "runner-";
 const isDraft = (id: string) => id.startsWith(DRAFT_PREFIX) || id.startsWith("pending-");
+const isRunner = (id: string) => id.startsWith(RUNNER_PREFIX);
 
 // ── Props ──────────────────────────────────────────────────────────────────
 
@@ -59,7 +62,7 @@ export default function RequestsPanel({
   } = useEntityTabs<SavedRequest>({
     storageKey: "requests",
     draftPrefix: DRAFT_PREFIX,
-    extraDraftPrefixes: ["pending-"],
+    extraDraftPrefixes: ["pending-", RUNNER_PREFIX],
     workspaceId: config.activeWorkspaceId,
     entityKind: "requests",
     entities: requests,
@@ -147,6 +150,15 @@ export default function RequestsPanel({
     await reloadRequests();
   }, [loadedEntities, config.activeWorkspaceId, reloadRequests]);
 
+  const handleOpenRunner = useCallback((folderId: string) => {
+    const tabId = `${RUNNER_PREFIX}${folderId}`;
+    openTab(tabId);
+  }, [openTab]);
+
+  const handleSaveRunnerReport = useCallback(async (report: any) => {
+    await window.api.saveRunnerReport(config.activeWorkspaceId, report);
+  }, [config.activeWorkspaceId]);
+
 
   const filteredRequests = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -160,6 +172,11 @@ export default function RequestsPanel({
   interface RequestDraftSnapshot { name?: string; method?: string; url?: string; }
 
   const tabLabel = (tabId: string) => {
+    if (isRunner(tabId)) {
+      const fId = tabId.slice(RUNNER_PREFIX.length);
+      const folder = folders.find((f) => f.id === fId);
+      return `Runner: ${folder?.name ?? "Collection"}`;
+    }
     if (isDraft(tabId)) {
       const draft = loadDraft<RequestDraftSnapshot>(tabId);
       if (draft?.url) {
@@ -234,6 +251,7 @@ export default function RequestsPanel({
           onPublishItem={onPublishItem}
           onPublishFolder={onPublishFolder}
           onRestoreItem={onRestoreItem}
+          onOpenRunner={handleOpenRunner}
         />
       </div>
     </>
@@ -266,6 +284,26 @@ export default function RequestsPanel({
           </div>
         ) : (
           openTabs.map((tabId) => {
+            // Runner tab
+            if (isRunner(tabId)) {
+              const fId = tabId.slice(RUNNER_PREFIX.length);
+              const folder = folders.find((f) => f.id === fId);
+              const folderRequests = requests.filter((r) => r.folderId === fId);
+              return (
+                <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
+                  <CollectionRunner
+                    folderId={fId}
+                    folderName={folder?.name ?? "Collection"}
+                    requests={folderRequests}
+                    activeEnv={activeEnv}
+                    wsId={config.activeWorkspaceId}
+                    onClose={() => closeTab(tabId)}
+                    onSaveReport={handleSaveRunnerReport}
+                  />
+                </div>
+              );
+            }
+
             const isUnsaved = isDraft(tabId);
             const req = isUnsaved ? null : (loadedEntities[tabId] ?? requests.find((r) => r.id === tabId) ?? null);
             const initialData = isUnsaved ? (pendingData[tabId] ?? null) : req;
@@ -280,7 +318,6 @@ export default function RequestsPanel({
                   initial={initialData}
                   folders={folders}
                   activeEnv={activeEnv}
-                  allRequests={requests}
                   onSave={(data) => isUnsaved
                     ? handleNewSave(tabId, data as Omit<SavedRequest, "id" | "createdAt" | "workspaceId">)
                     : handleTabSave(tabId, data as Omit<SavedRequest, "id" | "createdAt" | "workspaceId">)
