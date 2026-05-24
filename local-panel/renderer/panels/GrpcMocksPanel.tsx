@@ -6,6 +6,7 @@ import GrpcTab from "@/components/grpc/GrpcTab";
 import DraftsFolder from "@/components/sidebar/DraftsFolder";
 import { loadDraft } from "@/lib/useDraftPersist";
 import { useEntityTabs } from "@/lib/useEntityTabs";
+import { calculateFolderStatus } from "@/lib/utils";
 import { Network, Play, Square } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
@@ -155,6 +156,8 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
         }));
     }, [mocks, search, activeTab]);
 
+    const folderStatusMap = useMemo(() => calculateFolderStatus(mocks, folders), [mocks, folders]);
+
     const draftTabIds = openTabs.filter(isDraft);
 
     // ── Sidebar ────────────────────────────────────────────────────────────
@@ -202,6 +205,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                     kind="grpcMock"
                     folders={folders}
                     items={folderViewItems}
+                    folderStatusMap={folderStatusMap}
                     onOpenItem={openTab}
                     onDeleteItem={handleDelete}
                     onFoldersChange={handleFoldersChange}

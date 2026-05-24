@@ -7,7 +7,7 @@ import DraftsFolder from "@/components/sidebar/DraftsFolder";
 import { loadDraft } from "@/lib/useDraftPersist";
 import { useEntityTabs } from "@/lib/useEntityTabs";
 import { strings } from "@/lib/strings";
-import { entityRelPath } from "@/lib/utils";
+import { entityRelPath, calculateFolderStatus } from "@/lib/utils";
 import { Settings } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
@@ -150,6 +150,8 @@ export default function ProxyRulesPanel({
     }));
   }, [rules, folders, search, activeTab]);
 
+  const folderStatusMap = useMemo(() => calculateFolderStatus(rules, folders), [rules, folders]);
+
   const draftTabIds = openTabs.filter(isDraft);
 
   // ── Sidebar ────────────────────────────────────────────────────────────
@@ -174,6 +176,7 @@ export default function ProxyRulesPanel({
           kind="rule"
           folders={folders}
           items={folderViewItems}
+          folderStatusMap={folderStatusMap}
           onOpenItem={openTab}
           onDeleteItem={handleDelete}
           onToggleItem={(id) => { const r = rules.find((x) => x.id === id); if (r) handleToggle(r); }}

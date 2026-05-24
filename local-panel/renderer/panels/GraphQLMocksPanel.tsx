@@ -6,6 +6,7 @@ import GraphQLTab from "@/components/graphql/GraphQLTab";
 import DraftsFolder from "@/components/sidebar/DraftsFolder";
 import { loadDraft } from "@/lib/useDraftPersist";
 import { useEntityTabs } from "@/lib/useEntityTabs";
+import { calculateFolderStatus } from "@/lib/utils";
 import { Braces } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
@@ -131,6 +132,8 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
         }));
     }, [filteredMocks, activeTab]);
 
+    const folderStatusMap = useMemo(() => calculateFolderStatus(mocks, folders), [mocks, folders]);
+
     // ── Sidebar ────────────────────────────────────────────────────────────
 
     const sidebarContent = (
@@ -153,6 +156,7 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
                     kind="graphqlMock"
                     folders={folders}
                     items={folderViewItems}
+                    folderStatusMap={folderStatusMap}
                     onOpenItem={openTab}
                     onDeleteItem={handleDelete}
                     onFoldersChange={handleFoldersChange}

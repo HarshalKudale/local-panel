@@ -7,7 +7,7 @@ import DraftsFolder from "@/components/sidebar/DraftsFolder";
 import { loadDraft } from "@/lib/useDraftPersist";
 import { useEntityTabs } from "@/lib/useEntityTabs";
 import { strings } from "@/lib/strings";
-import { entityRelPath } from "@/lib/utils";
+import { entityRelPath, calculateFolderStatus } from "@/lib/utils";
 import { Zap } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
@@ -217,6 +217,8 @@ export default function MocksPanel({
     }));
   }, [mocks, folders, search, activeTab]);
 
+  const folderStatusMap = useMemo(() => calculateFolderStatus(mocks, folders), [mocks, folders]);
+
   const draftTabIds = openTabs.filter(isDraft);
 
   // ── Sidebar ────────────────────────────────────────────────────────────
@@ -255,6 +257,7 @@ export default function MocksPanel({
             if (path) onHistoryOpen(path);
           } : undefined}
           pathStatusMap={entitySyncStatus}
+          folderStatusMap={folderStatusMap}
           onPublishItem={onPublishItem}
           onPublishFolder={onPublishFolder}
           onRestoreItem={onRestoreItem}

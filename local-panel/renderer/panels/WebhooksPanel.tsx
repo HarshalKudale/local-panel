@@ -5,7 +5,7 @@ import FolderTree, { FolderTreeItem } from "@/components/sidebar/FolderTree";
 import DraftsFolder from "@/components/sidebar/DraftsFolder";
 import { loadDraft, useDraftPersist, clearDraft, getDraftIds } from "@/lib/useDraftPersist";
 import { usePersistedState } from "@/lib/usePersistedState";
-import { entityRelPath } from "@/lib/utils";
+import { entityRelPath, calculateFolderStatus } from "@/lib/utils";
 import { Plus, X, Play, Square } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
@@ -523,6 +523,15 @@ export default function WebhooksPanel({
     [webhooks, folders, search, activeTab, activeTabs],
   );
 
+  const folderStatusMap = useMemo(() => {
+    // For webhooks, isEnabled means "is active" (registered/listening)
+    const itemsWithEnabled = webhooks.map((h) => ({
+      ...h,
+      isEnabled: activeTabs.has(h.id),
+    }));
+    return calculateFolderStatus(itemsWithEnabled, folders);
+  }, [webhooks, folders, activeTabs]);
+
   // ── Sidebar ───────────────────────────────────────────────────────────────
 
   const sidebarContent = (
@@ -530,6 +539,34 @@ export default function WebhooksPanel({
       <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle="Collapse sidebar">
         <SearchInput value={search} onChange={setSearch} placeholder="Search webhooks…" />
       </SidebarHeader>
+      {/* Webhook server toggle */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+        <button
+          onClick={handleServerToggle}
+          disabled={serverLoading}
+          className={`flex items-center justify-center w-6 h-6 rounded border transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 ${serverRunning
+            ? "border-green/40 bg-green/10 hover:bg-red/15 hover:border-red/40 text-green hover:text-red"
+            : "border-border bg-bg2 hover:bg-green/15 hover:border-green/40 text-text-dim hover:text-green"
+            }`}
+          title={serverRunning ? "Stop webhook server" : "Start webhook server"}
+        >
+          {serverLoading ? (
+            <span className="inline-block w-2.5 h-2.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+          ) : serverRunning ? (
+            <Square size={8} fill="currentColor" />
+          ) : (
+            <Play size={8} fill="currentColor" />
+          )}
+        </button>
+        <span className="text-[10px] text-text-dim">
+          {serverRunning ? `Webhook server :${webhookPort}` : "Webhook server stopped"}
+        </span>
+        {serverError && (
+          <span className="text-[9px] text-red truncate max-w-[120px]" title={serverError}>
+            {serverError}
+          </span>
+        )}
+      </div>
 
       <div className="flex-1 overflow-y-auto overflow-x-auto min-w-0" style={{ display: "flex", flexDirection: "column" }}>
         {openTabs.some(isDraftId) && (
@@ -550,6 +587,7 @@ export default function WebhooksPanel({
           items={folderViewItems}
           folders={folders}
           pathStatusMap={entitySyncStatus}
+          folderStatusMap={folderStatusMap}
           onOpenItem={openTab}
           onDeleteItem={handleDelete}
           onDuplicateItem={handleDuplicate}
@@ -570,45 +608,10 @@ export default function WebhooksPanel({
     </>
   );
 
-  // ── Panel header (server toggle) ──────────────────────────────────────────
-
-  const panelHeader = (
-    <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border flex-shrink-0 bg-bg1">
-      <span className="text-sm font-semibold text-text-bright">Webhooks</span>
-      <div className="flex-1" />
-      {/* Webhook server status */}
-      <div className={`flex items-center gap-1.5 text-[11px] ${serverRunning ? "text-green" : "text-text-dim"}`}>
-        <span
-          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-          style={{
-            background: serverRunning ? "var(--c-green)" : "var(--c-text-dim)",
-            boxShadow: serverRunning ? "0 0 6px var(--c-green)" : undefined,
-          }}
-        />
-        {serverRunning ? `Webhook server :${webhookPort}` : "Webhook server stopped"}
-      </div>
-      {serverError && (
-        <span className="text-[10px] text-red truncate max-w-xs">{serverError}</span>
-      )}
-      <button
-        onClick={handleServerToggle}
-        disabled={serverLoading}
-        title={serverRunning ? "Stop webhook server" : "Start webhook server"}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 ${serverRunning
-          ? "bg-red/10 hover:bg-red/20 text-red border border-red/20"
-          : "bg-green/10 hover:bg-green/20 text-green border border-green/20"
-          }`}
-      >
-        {serverRunning ? <><Square size={11} fill="currentColor" /> Stop</> : <><Play size={11} fill="currentColor" /> Start</>}
-      </button>
-    </div>
-  );
-
   // ── Main content area ─────────────────────────────────────────────────────
 
   const mainContent = (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {panelHeader}
       {openTabs.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 gap-4 text-center py-16 px-8">
           <div className="text-5xl opacity-10">⬇</div>

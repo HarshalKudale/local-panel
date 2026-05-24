@@ -32,6 +32,7 @@ export const strings = {
     startServer: "Start server",
     portInUse: "Port {port} in use",
     active: "Active :{port}",
+    stopped: "Stopped :{port}",
     serverRunning: "Server running",
     switchWorkspace: "Switch workspace",
     createWorkspace: "Create Workspace",

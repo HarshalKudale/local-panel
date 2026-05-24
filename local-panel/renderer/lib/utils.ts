@@ -122,3 +122,64 @@ export function formatFieldLabel(key: string): string {
   if (FIELD_LABELS[key]) return FIELD_LABELS[key];
   return key.replace(/([A-Z])/g, " $1").toLowerCase().trim();
 }
+
+/** 
+ * Calculate folder status based on items with isEnabled or enabled property.
+ * Returns "enabled" if all items are enabled, "disabled" if all are disabled, "mixed" otherwise.
+ * Only returns status for folders that contain enableable items.
+ */
+export type FolderStatus = "enabled" | "mixed" | "disabled";
+
+export function calculateFolderStatus<T extends { folderId?: string | null; isEnabled?: boolean; enabled?: boolean }>(
+  items: T[],
+  folders: { id: string; parentId?: string | null }[]
+): Record<string, FolderStatus> {
+  const result: Record<string, FolderStatus> = {};
+
+  // Get all descendant folder IDs for a given folder (including itself)
+  const getDescendantFolderIds = (folderId: string): string[] => {
+    const descendants = [folderId];
+    const children = folders.filter((f) => f.parentId === folderId);
+    for (const child of children) {
+      descendants.push(...getDescendantFolderIds(child.id));
+    }
+    return descendants;
+  };
+
+  // Calculate status for each folder
+  for (const folder of folders) {
+    const descendantFolderIds = new Set(getDescendantFolderIds(folder.id));
+
+    // Get all items in this folder and its descendants
+    const folderItems = items.filter((item) => {
+      const itemFolderId = item.folderId ?? null;
+      return itemFolderId === folder.id || (itemFolderId && descendantFolderIds.has(itemFolderId));
+    });
+
+    // Only calculate status if items have isEnabled or enabled property
+    const enableableItems = folderItems.filter((item) =>
+      item.isEnabled !== undefined || item.enabled !== undefined
+    );
+    if (enableableItems.length === 0) continue;
+
+    // Check enabled status (support both isEnabled and enabled properties)
+    const getEnabledStatus = (item: T): boolean => {
+      if (item.isEnabled !== undefined) return item.isEnabled;
+      if (item.enabled !== undefined) return item.enabled;
+      return false;
+    };
+
+    const enabledCount = enableableItems.filter((item) => getEnabledStatus(item) === true).length;
+    const disabledCount = enableableItems.filter((item) => getEnabledStatus(item) === false).length;
+
+    if (enabledCount === enableableItems.length) {
+      result[folder.id] = "enabled";
+    } else if (disabledCount === enableableItems.length) {
+      result[folder.id] = "disabled";
+    } else {
+      result[folder.id] = "mixed";
+    }
+  }
+
+  return result;
+}

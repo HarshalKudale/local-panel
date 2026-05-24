@@ -6,6 +6,7 @@ import SoapTab, { SoapTabHandle } from "@/components/soap/SoapTab";
 import DraftsFolder from "@/components/sidebar/DraftsFolder";
 import { loadDraft } from "@/lib/useDraftPersist";
 import { useEntityTabs } from "@/lib/useEntityTabs";
+import { calculateFolderStatus } from "@/lib/utils";
 import { FileCode } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
@@ -127,9 +128,11 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
             name: m.name || m.soapActionPattern || "SOAP Mock",
             folderId: m.folderId ?? null,
             isActive: activeTab === m.id,
-            isEnabled: true,
+            isEnabled: m.enabled,
         }));
     }, [mocks, search, activeTab]);
+
+    const folderStatusMap = useMemo(() => calculateFolderStatus(mocks, folders), [mocks, folders]);
 
     // ── Sidebar ────────────────────────────────────────────────────────────
 
@@ -153,6 +156,7 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
                     kind="soapMock"
                     folders={folders}
                     items={folderViewItems}
+                    folderStatusMap={folderStatusMap}
                     onOpenItem={openTab}
                     onDeleteItem={handleDelete}
                     onFoldersChange={handleFoldersChange}

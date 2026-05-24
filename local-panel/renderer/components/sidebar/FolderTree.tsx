@@ -239,6 +239,7 @@ const CONNECTOR_W = 12;
 // ── FolderTree ─────────────────────────────────────────────────────────────
 
 export type EntitySyncStatus = "clean" | "modified" | "new" | "deleted";
+export type FolderStatus = "enabled" | "mixed" | "disabled";
 
 interface Props {
   kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "soapRequest" | "soapMock" | "grpcRequest" | "grpcMock";
@@ -259,6 +260,8 @@ interface Props {
   pathStatusMap?: Record<string, EntitySyncStatus>;
   /** @deprecated use pathStatusMap (entity-ID-keyed fallback, kept for flat entities like mappings) */
   entitySyncStatus?: Record<string, EntitySyncStatus>;
+  /** Map of folder ID → enable status (green=all enabled, orange=mixed, red=all disabled). Only for folders with enableable items. */
+  folderStatusMap?: Record<string, FolderStatus>;
   /** Called when user publishes a single entity via context menu */
   onPublishItem?: (id: string) => void;
   /** Called when user publishes all items in a folder (null = root) */
@@ -279,7 +282,7 @@ interface Props {
 export default function FolderTree({
   kind, folders, items, onOpenItem, onDeleteItem, onToggleItem, onToggleFolderItems, onFoldersChange,
   onDuplicateItem, onMoveItems, onOpenNewTab, onHistoryItem,
-  pathStatusMap, entitySyncStatus, onPublishItem, onPublishFolder, onRestoreItem,
+  pathStatusMap, entitySyncStatus, folderStatusMap, onPublishItem, onPublishFolder, onRestoreItem,
   onBeforeCreateFolder, onOpenRunner, onBeforeDeleteFolder,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["__root__"]));
@@ -611,6 +614,21 @@ export default function FolderTree({
         <span style={{ flexShrink: 0, width: 14, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--c-text-dim)", transition: "transform 0.15s ease", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}>
           <ChevronDown size={12} />
         </span>
+        {/* Folder status dot (only for folders with enableable items) */}
+        {folderStatusMap && !isRoot && node.folder && folderStatusMap[node.folder.id] && (
+          <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 12 }}>
+            <span style={{
+              display: "inline-block",
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: folderStatusMap[node.folder.id] === "enabled" ? "var(--c-green)" :
+                folderStatusMap[node.folder.id] === "mixed" ? "var(--c-yellow)" :
+                  "var(--c-red)",
+              opacity: 1
+            }} />
+          </span>
+        )}
         <span style={{ display: "flex", alignItems: "center", flexShrink: 0, color: "var(--c-text-dim)" }}>
           {isExpanded ? <FolderOpen size={13} /> : <Folder size={13} />}
         </span>

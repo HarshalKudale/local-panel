@@ -146,21 +146,36 @@ export default function TitleBar({
           <span className="rounded-full flex-shrink-0" style={{ width: 6, height: 6, background: "var(--c-red)" }} />
           <span className="truncate">{strings.titleBar.portInUse.replace("{port}", String(config.port))}</span>
         </div>
-      ) : (
+      ) : serverRunning ? (
         <div
           className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-green bg-green/10 text-green text-xs font-medium"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
           <span
-            className={`rounded-full flex-shrink-0 ${serverRunning ? "animate-pulse-dot" : ""}`}
+            className="rounded-full flex-shrink-0 animate-pulse-dot"
             style={{
               width: 6,
               height: 6,
               background: "var(--c-green)",
-              boxShadow: serverRunning ? "0 0 6px var(--c-green)" : "none",
+              boxShadow: "0 0 6px var(--c-green)",
             }}
           />
           {strings.titleBar.active.replace("{port}", String(config.port))}
+        </div>
+      ) : (
+        <div
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-red bg-red/10 text-red text-xs font-medium"
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+        >
+          <span
+            className="rounded-full flex-shrink-0"
+            style={{
+              width: 6,
+              height: 6,
+              background: "var(--c-red)",
+            }}
+          />
+          {strings.titleBar.stopped.replace("{port}", String(config.port))}
         </div>
       )}
     </div>
