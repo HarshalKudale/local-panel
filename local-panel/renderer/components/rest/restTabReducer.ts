@@ -458,6 +458,7 @@ export function stateToSavePayload(
       method: state.method,
       urlPattern: state.url.trim(),
       useRegex: state.useRegex,
+      enabled: true,
       capturedHeaders: rowsToHeaders(state.reqHeaders),
       capturedBody: textToB64(state.reqBody),
       responseStatus: state.resStatus,

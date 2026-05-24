@@ -382,6 +382,7 @@ export default function RequestsPanel({
         sidebar={sidebarContent}
         collapseTitle={strings.mocks.collapseSidebar}
         expandTitle={strings.mocks.expandSidebar}
+        storageKey="requests-panel-sidebar"
         collapsedBadge={requests.length > 0 ? (
           <span className="text-[9px] text-text-dim font-mono" title={`${requests.length} requests`}
             style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{requests.length}</span>

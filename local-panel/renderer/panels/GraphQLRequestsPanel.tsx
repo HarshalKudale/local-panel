@@ -226,6 +226,7 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
                 sidebar={sidebarContent}
                 collapseTitle="Collapse sidebar"
                 expandTitle="Expand sidebar"
+                storageKey="graphql-requests-panel-sidebar"
                 collapsedBadge={requests.length > 0 ? (
                     <span className="text-[9px] text-text-dim font-mono" title={`${requests.length} requests`}
                         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{requests.length}</span>

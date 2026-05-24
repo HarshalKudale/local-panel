@@ -697,6 +697,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
         sidebar={sidebarContent}
         collapseTitle="Collapse sidebar"
         expandTitle="Expand sidebar"
+        storageKey="websockets-panel-sidebar"
         collapsedBadge={connections.length > 0 ? (
           <span className="text-[9px] text-text-dim font-mono" title={`${connections.length} sockets`}
             style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{connections.length}</span>

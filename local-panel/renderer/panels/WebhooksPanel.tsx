@@ -692,6 +692,7 @@ export default function WebhooksPanel({
         sidebarOpen={sidebarOpen}
         onToggle={() => setSidebarOpen((v) => !v)}
         sidebar={sidebarContent}
+        storageKey="webhooks-panel-sidebar"
         collapsedBadge={
           <span className="text-[10px] text-text-dim rotate-90 whitespace-nowrap" style={{ writingMode: "vertical-rl" }}>
             Webhooks

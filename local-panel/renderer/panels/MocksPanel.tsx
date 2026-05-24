@@ -329,6 +329,7 @@ export default function MocksPanel({
         sidebar={sidebarContent}
         collapseTitle={strings.mocks.collapseSidebar}
         expandTitle={strings.mocks.expandSidebar}
+        storageKey="mocks-panel-sidebar"
         collapsedBadge={mocks.length > 0 ? (
           <span className="text-[9px] text-text-dim font-mono" title={`${mocks.length} mocks`}
             style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{mocks.length}</span>

@@ -615,11 +615,11 @@ export default function FolderTree({
           {isExpanded ? <FolderOpen size={13} /> : <Folder size={13} />}
         </span>
         {renaming === nodeKey ? (
-          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-accent)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", fontStyle: "italic" }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-accent)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", fontStyle: "italic" }}>
             {node.folder!.name}
           </span>
         ) : (
-          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-text-bright)", flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-text-bright)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
             {isRoot ? "root" : node.folder!.name}
           </span>
         )}
@@ -748,7 +748,7 @@ export default function FolderTree({
             <span style={{ flexShrink: 0, display: "flex", alignItems: "center", color: "var(--c-accent)", opacity: 0.8 }}>
               <Play size={11} fill="currentColor" />
             </span>
-            <span style={{ fontSize: 12, lineHeight: 1, flex: 1, overflow: "hidden", textOverflow: "ellipsis", color: "var(--c-accent)", fontStyle: "italic", opacity: 0.85 }}>
+            <span style={{ fontSize: 12, lineHeight: 1, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", color: "var(--c-accent)", fontStyle: "italic", opacity: 0.85 }}>
               {item.name}
             </span>
           </>
@@ -766,7 +766,7 @@ export default function FolderTree({
             )}
             {/* Name — text color = git status, strikethrough = pending delete */}
             <span style={{
-              fontSize: 13, lineHeight: 1, flex: 1, overflow: "hidden", textOverflow: "ellipsis",
+              fontSize: 13, lineHeight: 1, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis",
               color: textColor,
               textDecoration: isDeleted ? "line-through" : "none",
               opacity: !isEnabled ? 0.5 : 1,
@@ -788,7 +788,7 @@ export default function FolderTree({
         openEmptySpaceMenu(e.clientX, e.clientY);
       }}
     >
-      <div style={{ minWidth: "max-content" }}>
+      <div style={{ width: "100%", overflow: "hidden" }}>
         {renderNode(tree, 0)}
       </div>
       <div style={{ flex: 1, minHeight: 24 }} onClick={clearSelection} />

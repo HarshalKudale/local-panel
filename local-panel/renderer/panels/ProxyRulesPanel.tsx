@@ -254,6 +254,7 @@ export default function ProxyRulesPanel({
         sidebar={sidebarContent}
         collapseTitle={strings.proxyRules.collapseSidebar}
         expandTitle={strings.proxyRules.expandSidebar}
+        storageKey="proxy-rules-panel-sidebar"
         collapsedBadge={rules.length > 0 ? (
           <span className="text-[9px] text-text-dim font-mono" title={`${rules.length} rules`}
             style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{rules.length}</span>
