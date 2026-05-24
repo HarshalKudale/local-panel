@@ -10,6 +10,8 @@
  *   Server → Client: { id: string, ok: boolean, data?: any, error?: string }
  */
 
+import * as fs from "fs";
+import * as path from "path";
 import { WebSocketServer, WebSocket } from "ws";
 import { BrowserWindow } from "electron";
 import { ALLOWED_ACTIONS } from "@/companion/allowedActions";
@@ -20,6 +22,7 @@ import {
 import {
     writeEntity, upsertNameEntry, findEntityRelPath,
     readEnabledSet, writeEnabledSet, bootstrapEnabledSet,
+    readIndex, writeIndex, sanitizeDirName, wsDir,
 } from "@/store/workspaceFs";
 import { getWorkspaceSyncStatus, invalidateCache } from "@/sync/statusTracker";
 import { reloadConfig } from "@/proxy/server";
@@ -186,9 +189,24 @@ function handleFolderAdd(payload: { kind: string; name: string; parentId?: strin
         grpcRequest: "grpcRequestFolders", grpcMock: "grpcMockFolders",
         soapRequest: "soapRequestFolders", soapMock: "soapMockFolders",
     };
+    const fsKindMap: Record<string, string> = {
+        mock: "mocks", request: "requests", ws: "sockets",
+        webhook: "webhooks", rule: "rules",
+        graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks",
+        grpcRequest: "grpcRequests", grpcMock: "grpcMocks",
+        soapRequest: "soapRequests", soapMock: "soapMocks",
+    };
     const key = kindMap[kind];
+    const fsKind = fsKindMap[kind];
     (cfg as any)[key] = [...((cfg as any)[key] ?? []), folder];
     saveConfig(cfg);
+    // Create the physical directory on disk
+    const folderDir = path.join(wsDir(wsId), fsKind, sanitizeDirName(folder.name));
+    fs.mkdirSync(folderDir, { recursive: true });
+    // Persist folder to index.json so subsequent entity writes can resolve folderId
+    const idx = readIndex(wsId, fsKind);
+    idx.folders.push(folder);
+    writeIndex(wsId, fsKind, idx);
     notifyRendererRefresh();
     return folder;
 }

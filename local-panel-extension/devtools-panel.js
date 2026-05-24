@@ -259,11 +259,6 @@ document.getElementById("preserveLog").addEventListener("change", (e) => { prese
 // Pending one-shot callbacks keyed by message id (for folder:add responses)
 const pendingCallbacks = new Map();
 
-// Mockable types: only fetch/XHR and documents have meaningful structured responses
-function isMockable(r) {
-    return r.type === "xhr" || r.type === "doc";
-}
-
 function sendBulkMocks(visible, folderId) {
     visible.forEach((r) => {
         const urlObj = (() => { try { return new URL(r.url); } catch { return null; } })();
@@ -306,9 +301,9 @@ function sendBulkRequests(visible, folderId) {
 }
 
 document.getElementById("mockAllBtn").addEventListener("click", () => {
-    const visible = getFiltered().filter(isMockable);
+    const visible = getFiltered();
     if (visible.length === 0) {
-        showToast("No mockable requests visible (need Fetch/XHR or Doc type)", true);
+        showToast("No requests in current view", true);
         return;
     }
     const folderName = "Captured " + new Date().toLocaleString();

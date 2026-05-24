@@ -692,7 +692,7 @@ describe("src/ipc/handlers.ts", () => {
   // ── folder:delete ─────────────────────────────────────────────────────
 
   describe("folder:delete handler", () => {
-    it("removes a mock folder and unsets folderId on contained mocks", () => {
+    it("removes a mock folder and deletes all contained mocks (cascade delete)", () => {
       currentConfig.mockFolders = [{ id: "f1", name: "F", parentId: null, createdAt: 1 }];
       currentConfig.mocks = [
         { id: "m1", name: "mock", method: "GET", urlPattern: "http://x.com", useRegex: false, enabled: true, capturedHeaders: {}, capturedBody: "", responseStatus: 200, responseHeaders: {}, responseBody: "{}", createdAt: 1, folderId: "f1" },
@@ -701,10 +701,10 @@ describe("src/ipc/handlers.ts", () => {
       getHandler("folder:delete")(EVENT, "mock", "f1");
 
       expect(currentConfig.mockFolders).toHaveLength(0);
-      expect(currentConfig.mocks[0].folderId).toBeNull();
+      expect(currentConfig.mocks).toHaveLength(0);
     });
 
-    it("removes a request folder and unsets folderId on contained requests", () => {
+    it("removes a request folder and deletes all contained requests (cascade delete)", () => {
       currentConfig.requestFolders = [{ id: "f2", name: "F", parentId: null, createdAt: 1 }];
       currentConfig.requests = [
         { id: "r1", name: "req", method: "GET", url: "http://x.com", headers: {}, body: "", createdAt: 1, folderId: "f2" },
@@ -713,7 +713,7 @@ describe("src/ipc/handlers.ts", () => {
       getHandler("folder:delete")(EVENT, "request", "f2");
 
       expect(currentConfig.requestFolders).toHaveLength(0);
-      expect(currentConfig.requests[0].folderId).toBeNull();
+      expect(currentConfig.requests).toHaveLength(0);
     });
 
     it("returns { ok: true }", async () => {
@@ -1111,12 +1111,12 @@ describe("src/ipc/handlers.ts", () => {
   });
 
   describe("folder:delete handler — ws kind", () => {
-    it("removes ws folder and unsets folderId on ws connections", () => {
+    it("removes ws folder and deletes all contained ws connections (cascade delete)", () => {
       currentConfig.wsFolders = [{ id: "f1", name: "F", parentId: null, createdAt: 1, workspaceId: "default" }];
       currentConfig.wsConnections = [{ id: "c1", name: "c", url: "ws://x", headers: {}, createdAt: 1, folderId: "f1", workspaceId: "default" }];
       getHandler("folder:delete")(EVENT, "ws", "f1");
       expect(currentConfig.wsFolders).toHaveLength(0);
-      expect(currentConfig.wsConnections[0].folderId).toBeNull();
+      expect(currentConfig.wsConnections).toHaveLength(0);
     });
   });
 

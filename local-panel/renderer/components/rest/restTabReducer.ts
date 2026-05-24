@@ -6,6 +6,17 @@ import {
 import { BodyMode, contentTypeToMode, modeToContentType } from "@/lib/bodyUtils";
 import { SKIP_CURL_HEADERS } from "@/lib/curlParser";
 
+// ── Helper for case-insensitive header lookup ─────────────────────────────
+
+function getHeaderCaseInsensitive(headers: Record<string, string> | undefined, key: string): string | undefined {
+  if (!headers) return undefined;
+  const lowerKey = key.toLowerCase();
+  for (const [k, v] of Object.entries(headers)) {
+    if (k.toLowerCase() === lowerKey) return v;
+  }
+  return undefined;
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export type TabType = "request" | "mock";
@@ -209,6 +220,9 @@ function buildMockReqHeaders(mock: Partial<MockRule>): KVRow[] {
 }
 
 function entityFieldsFromMock(mock: Partial<MockRule>): Partial<TabState> {
+  const reqContentType = getHeaderCaseInsensitive(mock.capturedHeaders, "content-type");
+  const resContentType = getHeaderCaseInsensitive(mock.responseHeaders, "content-type");
+
   return {
     name: mock.name ?? "",
     method: mock.method ?? "*",
@@ -217,11 +231,11 @@ function entityFieldsFromMock(mock: Partial<MockRule>): Partial<TabState> {
     folderId: mock.folderId ?? null,
     reqHeaders: buildMockReqHeaders(mock),
     reqBody: tryFormat(b64ToText(mock.capturedBody ?? "")),
-    reqMode: contentTypeToMode((mock.capturedHeaders ?? {})["content-type"]),
+    reqMode: contentTypeToMode(reqContentType),
     resStatus: mock.responseStatus ?? 200,
     resHeaders: headersToRows(mock.responseHeaders ?? { "content-type": "application/json" }),
     resBody: mock.responseBodyEncoding === "base64" ? (mock.responseBody ?? "") : tryFormat(mock.responseBody ?? ""),
-    resMode: contentTypeToMode((mock.responseHeaders ?? {})["content-type"]),
+    resMode: contentTypeToMode(resContentType),
     resDelay: mock.responseDelay ?? 0,
     resBodyEncoding: mock.responseBodyEncoding ?? "utf8",
     streamingMode: mock.streamingMode ?? "none",
