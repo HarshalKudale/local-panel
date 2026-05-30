@@ -5,7 +5,7 @@ import PanelHeader from "@/components/layout/PanelHeader";
 import CapturePreviewModal from "@/components/capture/CapturePreviewModal";
 import ViaBadge, { VIA_LABEL } from "@/components/common/ViaBadge";
 import { strings } from "@/lib/strings";
-import { Play, Pause, ArrowUpRight, Zap, Clipboard } from "@/lib/icons";
+import { Play, Pause, ArrowUpRight, Zap, Clipboard, Download } from "@/lib/icons";
 import { Button } from "@/components/ui";
 import { isBinaryContentType } from "@/lib/bodyUtils";
 
@@ -172,6 +172,59 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
     [entries, q],
   );
 
+  const handleMockAll = useCallback(async () => {
+    const items = filtered.length > 0 ? filtered : entries;
+    if (items.length === 0) return;
+    const folderName = `Capture ${new Date().toLocaleString().replace(/[/:]/g, "-")}`;
+    const folder = await window.api.addFolder("mock", { name: folderName, parentId: null });
+    for (const entry of items) {
+      const mock = buildMockInitial(entry);
+      await window.api.addMock({
+        name: `${entry.method} ${entry.url}`,
+        method: mock.method ?? "GET",
+        urlPattern: mock.urlPattern ?? entry.url,
+        useRegex: mock.useRegex ?? false,
+        responseStatus: mock.responseStatus ?? 200,
+        responseHeaders: mock.responseHeaders ?? {},
+        responseBody: mock.responseBody ?? "",
+        responseBodyEncoding: mock.responseBodyEncoding,
+        enabled: true,
+        folderId: folder.id,
+      } as any);
+    }
+    window.api.getConfig();
+  }, [filtered, entries]);
+
+  const handleSaveAll = useCallback(async () => {
+    const items = filtered.length > 0 ? filtered : entries;
+    if (items.length === 0) return;
+    const folderName = `Capture ${new Date().toLocaleString().replace(/[/:]/g, "-")}`;
+    const folder = await window.api.addFolder("request", { name: folderName, parentId: null });
+    for (const entry of items) {
+      const SKIP = new Set(["host", "proxy-connection", "connection", "content-length", "transfer-encoding"]);
+      const headers: Record<string, string> = {};
+      for (const [k, v] of Object.entries(entry.reqHeaders)) {
+        if (!SKIP.has(k.toLowerCase())) headers[k] = v;
+      }
+      let body = "";
+      if (entry.reqBody) {
+        try {
+          const bytes = Uint8Array.from(atob(entry.reqBody), (c) => c.charCodeAt(0));
+          body = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+        } catch { body = ""; }
+      }
+      await window.api.addRequest({
+        name: `${entry.method} ${entry.url}`,
+        method: entry.method,
+        url: entry.url,
+        headers,
+        body,
+        folderId: folder.id,
+      } as any);
+    }
+    window.api.getConfig();
+  }, [filtered, entries]);
+
   // Notify parent of current stats so the global footer can display them
   useEffect(() => {
     onStatsChange?.({ total: entries.length, shown: filtered.length, paused });
@@ -196,6 +249,12 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
               {paused ? <><Play size={10} fill="currentColor" /> Start</> : <><Pause size={10} fill="currentColor" /> Pause</>}
             </button>
             <Button variant="secondary" onClick={clear}>Clear</Button>
+            {(filtered.length > 0 || entries.length > 0) && (
+              <>
+                <Button variant="secondary" onClick={handleMockAll} icon={<Zap size={10} />}>Mock All</Button>
+                <Button variant="secondary" onClick={handleSaveAll} icon={<Download size={10} />}>Save All</Button>
+              </>
+            )}
           </>
         }
       />

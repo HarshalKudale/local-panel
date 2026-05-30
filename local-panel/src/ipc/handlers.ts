@@ -62,6 +62,13 @@ function syncEnabledSet(wsId: string, kind: string, id: string, enabled: boolean
   writeEnabledSet(wsId, kind, set);
 }
 
+function notifyRendererRefresh(): void {
+  const windows = BrowserWindow.getAllWindows();
+  for (const w of windows) {
+    if (!w.isDestroyed()) w.webContents.send("companion:refresh");
+  }
+}
+
 import { registerImportExportHandlers } from "@/ipc/importExport/index";
 import { registerApplicationHandlers } from "@/ipc/applicationHandlers";
 
@@ -387,6 +394,7 @@ export function registerIpcHandlers(): void {
     syncEnabledSet(wsId, "mocks", newMock.id, newMock.enabled);
     upsertNameEntry(wsId, "mocks", newMock.id, { name: newMock.name, method: newMock.method, url: newMock.urlPattern });
     broadcastEntityStatus(wsId);
+    notifyRendererRefresh();
     return newMock;
   });
 
@@ -444,6 +452,7 @@ export function registerIpcHandlers(): void {
     writeEntity(wsId, "requests", newReq.id, newReq, folderName);
     upsertNameEntry(wsId, "requests", newReq.id, { name: newReq.name, method: newReq.method, url: newReq.url });
     broadcastEntityStatus(wsId);
+    notifyRendererRefresh();
     return newReq;
   });
 
@@ -1157,6 +1166,7 @@ export function registerIpcHandlers(): void {
     const idx = readIndex(wsId, fsKind);
     idx.folders.push(newFolder);
     writeIndex(wsId, fsKind, idx);
+    notifyRendererRefresh();
     return newFolder;
   });
 
