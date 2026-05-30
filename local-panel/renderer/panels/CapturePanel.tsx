@@ -124,12 +124,12 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
       responseBody: isBinaryRes
         ? e.resBody
         : (() => {
-            if (!e.resBody) return "{}";
-            try {
-              const bytes = Uint8Array.from(atob(e.resBody), (c) => c.charCodeAt(0));
-              return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-            } catch { return "{}"; }
-          })(),
+          if (!e.resBody) return "{}";
+          try {
+            const bytes = Uint8Array.from(atob(e.resBody), (c) => c.charCodeAt(0));
+            return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+          } catch { return "{}"; }
+        })(),
       responseBodyEncoding: isBinaryRes ? "base64" : undefined,
     };
   };
@@ -160,14 +160,14 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
     () =>
       q
         ? entries.filter(
-            (e) =>
-              e.url.toLowerCase().includes(q) ||
-              e.method.toLowerCase().includes(q) ||
-              e.host.toLowerCase().includes(q) ||
-              (e.target ?? "").toLowerCase().includes(q) ||
-              String(e.status ?? "").includes(q) ||
-              VIA_LABEL[e.via].toLowerCase().includes(q),
-          )
+          (e) =>
+            e.url.toLowerCase().includes(q) ||
+            e.method.toLowerCase().includes(q) ||
+            e.host.toLowerCase().includes(q) ||
+            (e.target ?? "").toLowerCase().includes(q) ||
+            String(e.status ?? "").includes(q) ||
+            VIA_LABEL[e.via].toLowerCase().includes(q),
+        )
         : entries,
     [entries, q],
   );
@@ -189,8 +189,8 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
             <button
               onClick={() => setPaused((v) => !v)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${paused
-                  ? "border-yellow bg-yellow/10 text-yellow"
-                  : "border-green/40 bg-green/10 text-green hover:bg-green/20"
+                ? "border-yellow bg-yellow/10 text-yellow"
+                : "border-green/40 bg-green/10 text-green hover:bg-green/20"
                 }`}
             >
               {paused ? <><Play size={10} fill="currentColor" /> Start</> : <><Pause size={10} fill="currentColor" /> Pause</>}
@@ -217,13 +217,13 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
           <table className="w-full border-collapse">
             <thead className="sticky top-0 bg-bg0 z-10">
               <tr className="border-b border-border">
+                <th className="px-3 py-2 w-24" />
                 <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim">Time</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim whitespace-nowrap">URL</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim">URL</th>
                 <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-12">Mth</th>
                 <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-10">St</th>
                 <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-16">Via</th>
                 <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-14">Dur</th>
-                <th className="px-3 py-2 w-36" />
               </tr>
             </thead>
             <tbody>
@@ -234,22 +234,8 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
                   title="Click to preview request details"
                   onClick={() => setPreviewEntry(e)}
                 >
-                  <td className="px-3 py-1.5 text-text-base">
-                    <span className="block">{fmtTime(e.ts)}</span>
-                  </td>
-                  <td className="px-3 py-1.5 text-text-dim whitespace-nowrap">{e.url}</td>
-                  <td className="px-3 py-1.5 text-accent whitespace-nowrap">{e.method}</td>
-                  <td className={`px-3 py-1.5 whitespace-nowrap font-semibold ${statusColor(e.status)}`}>
-                    {e.status ?? "—"}
-                  </td>
-                  <td className="px-3 py-1.5 whitespace-nowrap">
-                    <ViaBadge via={e.via} />
-                  </td>
-                  <td className="px-3 py-1.5 text-right text-text-dim whitespace-nowrap">
-                    {fmtDur(e.durationMs)}
-                  </td>
-                  <td className="px-3 py-1.5 text-right whitespace-nowrap">
-                    <div className="flex gap-1 justify-end" onClick={(ev) => ev.stopPropagation()}>
+                  <td className="px-3 py-1.5 whitespace-nowrap" onClick={(ev) => ev.stopPropagation()}>
+                    <div className="flex gap-1">
                       <button
                         onClick={() => handleOpenClick(e)}
                         className="px-2 py-0.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-accent text-[10px] font-medium transition-all cursor-pointer"
@@ -272,6 +258,22 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
                         ✕
                       </button>
                     </div>
+                  </td>
+                  <td className="px-3 py-1.5 text-text-base">
+                    <span className="block">{fmtTime(e.ts)}</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-text-dim max-w-[320px]">
+                    <span className="block truncate" title={e.url}>{e.url}</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-accent whitespace-nowrap">{e.method}</td>
+                  <td className={`px-3 py-1.5 whitespace-nowrap font-semibold ${statusColor(e.status)}`}>
+                    {e.status ?? "—"}
+                  </td>
+                  <td className="px-3 py-1.5 whitespace-nowrap">
+                    <ViaBadge via={e.via} />
+                  </td>
+                  <td className="px-3 py-1.5 text-right text-text-dim whitespace-nowrap">
+                    {fmtDur(e.durationMs)}
                   </td>
                 </tr>
               ))}
