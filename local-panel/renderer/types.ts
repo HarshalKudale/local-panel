@@ -401,6 +401,18 @@ export interface ImportRequest {
   collisionStrategy: CollisionStrategy;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  displayName?: string | null;
+}
+
+export interface SubscriptionState {
+  active: boolean;
+  plan: string | null;
+  expiresAt: number | null;
+}
+
 declare const __APP_VERSION__: string;
 
 declare global {

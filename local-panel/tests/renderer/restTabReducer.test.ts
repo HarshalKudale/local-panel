@@ -330,8 +330,8 @@ describe("stateToSavePayload()", () => {
     expect(payload.urlPattern).toBe("/api/user");
     expect(payload.responseStatus).toBe(200);
     expect(payload.responseBody).toBe('{\n  "mocked": true\n}');
-    // enabled is not part of save payload — it's managed via entity:setEnabled
-    expect((payload as any).enabled).toBeUndefined();
+    // new mocks default to enabled:true; existing mocks preserve enabled via entity spread
+    expect((payload as any).enabled).toBe(true);
     expect((payload as any).url).toBeUndefined();
   });
 

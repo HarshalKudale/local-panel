@@ -2,121 +2,15 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { AppConfig, MockRule, SavedRequest, ServiceInfo, Folder, SyncStatus } from "@/types";
 import { entityRelPath, flatEntityRelPath } from "@/lib/utils";
 
-import ServicesPanel from "@/panels/ServicesPanel";
-import MappingsPanel from "@/panels/MappingsPanel";
-import ProxyRulesPanel from "@/panels/ProxyRulesPanel";
-import SettingsPanel from "@/panels/SettingsPanel";
-import CapturePanel, { CaptureStats } from "@/panels/CapturePanel";
-import MocksPanel from "@/panels/MocksPanel";
-import RequestsPanel from "@/panels/RequestsPanel";
-import WebSocketsPanel from "@/panels/WebSocketsPanel";
-import WebhooksPanel from "@/panels/WebhooksPanel";
-import EnvironmentsPanel from "@/panels/EnvironmentsPanel";
-import AuditLogPanel from "@/panels/AuditLogPanel";
-import WorkspacePanel from "@/panels/WorkspacePanel";
-import HealthBarPanel from "@/panels/HealthBarPanel";
-import ApplicationsPanel from "@/panels/ApplicationsPanel";
+import { CaptureStats } from "@/panels/CapturePanel";
 
 import HistorySidebar from "@/components/sidebar/HistorySidebar";
-import NavItem from "@/components/sidebar/NavItem";
-import NavSection from "@/components/sidebar/NavSection";
+import AppSidebar from "@/components/sidebar/AppSidebar";
 import TitleBar from "@/components/layout/TitleBar";
 import GlobalFooter from "@/components/layout/GlobalFooter";
-import PlaceholderPanel from "@/panels/PlaceholderPanel";
-import GraphQLRequestsPanel from "@/panels/GraphQLRequestsPanel";
-import GraphQLMocksPanel from "@/panels/GraphQLMocksPanel";
-import GrpcRequestsPanel from "@/panels/GrpcRequestsPanel";
-import GrpcMocksPanel from "@/panels/GrpcMocksPanel";
-import SoapRequestsPanel from "@/panels/SoapRequestsPanel";
-import SoapMocksPanel from "@/panels/SoapMocksPanel";
-import { strings } from "@/lib/strings";
 import { useTheme } from "@/lib/useTheme";
-import { Zap, ArrowLeftRight, Settings, Clipboard, ArrowUpRight, Radio, Globe, ClipboardList, History, Layers, Activity, Webhook, Network, FileCode, Braces, Play } from "@/lib/icons";
-
-type Panel = "services" | "mappings" | "rules" | "capture" | "mock-rest" | "mock-graphql" | "mock-soap" | "mock-grpc" | "req-rest" | "req-graphql" | "req-soap" | "req-grpc" | "sockets" | "environments" | "settings" | "audit" | "workspace" | "healthbar" | "webhooks" | "applications";
-
-const PANEL_HELP: Record<Panel, string> = {
-  services: strings.services.helpText,
-  mappings: strings.mappings.helpText,
-  rules: strings.proxyRules.helpText,
-  capture: strings.capture.helpText,
-  "mock-rest": strings.mocks.helpText,
-  "mock-graphql": "Create GraphQL mock operations. Match incoming queries and mutations by operation name and return configured responses.",
-  "mock-soap": "Create SOAP mock services. Match incoming requests by SOAPAction header and return configured XML responses.",
-  "mock-grpc": "Create gRPC mock services. Run a local gRPC server that returns configured responses for matched methods.",
-  "req-rest": strings.requests.helpText,
-  "req-graphql": "Send GraphQL queries and mutations. Import schemas via introspection or SDL files for query generation.",
-  "req-soap": "Send SOAP requests. Import WSDL files to discover operations and auto-generate request envelopes.",
-  "req-grpc": "Make gRPC calls. Import .proto files or use server reflection to discover services and methods.",
-  sockets: strings.sockets.helpText,
-  environments: strings.environments.helpText,
-  settings: strings.settings.helpText,
-  audit: "A complete history of every configuration change in this workspace.",
-  workspace: strings.workspace.helpText,
-  healthbar: "Monitor health check endpoints for your services. Responses are fetched live from the main process.",
-  webhooks: "Create and manage webhooks. Open a webhook in a tab to activate it and receive POST requests on the webhook server.",
-  applications: strings.applications.helpText,
-};
-
-const NAV_FLAT_SECTIONS = [
-  {
-    label: strings.nav.routing,
-    items: [
-      { id: "mappings" as Panel, label: strings.nav.mappings, icon: <ArrowLeftRight size={14} /> },
-      { id: "rules" as Panel, label: strings.nav.proxyRules, icon: <Settings size={14} /> },
-      { id: "capture" as Panel, label: strings.nav.capture, icon: <Clipboard size={14} /> },
-    ],
-  },
-];
-
-const NAV_MOCK_ITEMS = [
-  { id: "mock-rest" as Panel, label: "REST", icon: <ArrowUpRight size={14} /> },
-  { id: "mock-graphql" as Panel, label: "GraphQL", icon: <Braces size={14} /> },
-  { id: "mock-soap" as Panel, label: "SOAP", icon: <FileCode size={14} /> },
-  { id: "mock-grpc" as Panel, label: "gRPC", icon: <Network size={14} /> },
-];
-
-const NAV_REQUEST_ITEMS = [
-  { id: "req-rest" as Panel, label: "REST", icon: <ArrowUpRight size={14} /> },
-  { id: "req-graphql" as Panel, label: "GraphQL", icon: <Braces size={14} /> },
-  { id: "req-soap" as Panel, label: "SOAP", icon: <FileCode size={14} /> },
-  { id: "req-grpc" as Panel, label: "gRPC", icon: <Network size={14} /> },
-  { id: "sockets" as Panel, label: "WebSocket", icon: <Radio size={14} /> },
-  { id: "webhooks" as Panel, label: "Webhooks", icon: <Webhook size={14} /> },
-];
-
-const NAV_BOTTOM_SECTIONS = [
-  {
-    label: strings.nav.tools,
-    items: [
-      { id: "environments" as Panel, label: strings.nav.environments, icon: <Globe size={14} /> },
-    ],
-  },
-  {
-    label: "Applications",
-    items: [
-      { id: "applications" as Panel, label: "Run Configs", icon: <Play size={14} /> },
-    ],
-  },
-  {
-    label: strings.nav.discovery,
-    items: [{ id: "services" as Panel, label: strings.nav.services, icon: <Zap size={14} /> }],
-  },
-  {
-    label: "Monitoring",
-    items: [
-      { id: "healthbar" as Panel, label: "Health Bar", icon: <Activity size={14} /> },
-    ],
-  },
-  {
-    label: strings.nav.config,
-    items: [
-      { id: "workspace" as Panel, label: "Workspace", icon: <Layers size={14} /> },
-      { id: "audit" as Panel, label: "Audit Log", icon: <ClipboardList size={14} /> },
-      { id: "settings" as Panel, label: strings.nav.settings, icon: <Settings size={14} /> },
-    ],
-  },
-];
+import { Panel, enabledPanels, PANEL_HELP } from "@/lib/panelRegistry";
+import { renderPanel, PanelRenderContext } from "@/lib/panelFactory";
 
 const EMPTY_CONFIG: AppConfig = {
   port: 80,
@@ -522,6 +416,71 @@ export default function App() {
     }
   }, [panel, captureStats, wsConfig, services]);
 
+  // ── Panel render context — single bag for the panel factory ────────────────
+  const panelRenderCtx: PanelRenderContext = useMemo(() => ({
+    wsConfig,
+    config,
+    wsId,
+    services,
+    serverRunning,
+    serverError,
+    theme,
+    setTheme,
+    activeEnv,
+    openHistory,
+    handleEntityPathChange,
+    historyOpen,
+    bumpHistoryReload,
+    entitySyncStatus,
+    refreshEntitySyncStatus,
+    handleConfigChange,
+    handleWsConfigChange,
+    setConfig,
+    refreshServices,
+    mappingPrefill,
+    onPrefillConsumed: () => setMappingPrefill(undefined),
+    setPanel,
+    setMappingPrefill,
+    pendingOpenRequest,
+    onPendingRequestConsumed: () => setPendingOpenRequest(null),
+    pendingMockInitial,
+    onPendingMockConsumed: () => setPendingMockInitial(null),
+    handleOpenMockEditor,
+    handleOpenInRequests,
+    onStatsChange: setCaptureStats,
+    makePublishItem,
+    makePublishFolder,
+    makeFlatPublish,
+    makeFlatRevert,
+    makeRestoreItem,
+    handlePublishHealthBar,
+    onWorkspaceRename: async (id: string, name: string) => {
+      await window.api.renameWorkspace(id, name);
+      const fresh = await window.api.getConfig();
+      setConfig(fresh);
+    },
+    onWorkspaceDelete: async (id: string) => {
+      localStorage.removeItem(`capture:entries:${id}`);
+      await window.api.deleteWorkspace(id);
+      const fresh = await window.api.getConfig();
+      setConfig(fresh);
+      setPanel("services");
+    },
+    onServerRestart: async () => {
+      await window.api.restartServer();
+      const status = await window.api.serverStatus();
+      setServerRunning(status.running);
+      setServerError(status.error);
+    },
+  }), [
+    wsConfig, config, wsId, services, serverRunning, serverError, theme, setTheme,
+    activeEnv, openHistory, handleEntityPathChange, historyOpen, bumpHistoryReload,
+    entitySyncStatus, refreshEntitySyncStatus, handleConfigChange, handleWsConfigChange,
+    refreshServices, mappingPrefill, pendingOpenRequest, pendingMockInitial,
+    handleOpenMockEditor, handleOpenInRequests, makePublishItem, makePublishFolder,
+    makeFlatPublish, makeFlatRevert, makeRestoreItem, handlePublishHealthBar,
+  ]);
+
   if (wsLoading) {
     return (
       <div className="flex flex-col h-screen bg-bg0 text-text-base select-none overflow-hidden items-center justify-center gap-3">
@@ -602,270 +561,17 @@ export default function App() {
           className="bg-bg1 border-r border-border flex flex-col flex-shrink-0 overflow-hidden sidebar-collapse"
           style={{ width: sidebarOpen ? "192px" : "0px", opacity: sidebarOpen ? 1 : 0 }}
         >
-          <div className="w-48 flex flex-col p-2 gap-0.5 overflow-y-auto overflow-x-hidden">
-            {/* Routing (flat section) */}
-            {NAV_FLAT_SECTIONS.map((section) => (
-              <React.Fragment key={section.label}>
-                <div className="text-[10px] font-semibold uppercase tracking-widest text-text-dim px-2.5 pt-3 pb-1 whitespace-nowrap">
-                  {section.label}
-                </div>
-                {section.items.map((n) => (
-                  <NavItem
-                    key={n.id}
-                    {...n}
-                    active={panel === n.id}
-                    badge={navBadges[n.id]}
-                    onClick={() => setPanel(n.id)}
-                  />
-                ))}
-              </React.Fragment>
-            ))}
-
-            {/* Mock section (collapsible) */}
-            <NavSection
-              label="Mock"
-              items={NAV_MOCK_ITEMS}
-              activePanel={panel}
-              badges={navBadges as Record<string, number | undefined>}
-              onSelect={(id) => setPanel(id as Panel)}
-              storageKey="mock"
-            />
-
-            {/* Request section (collapsible) */}
-            <NavSection
-              label="Request"
-              items={NAV_REQUEST_ITEMS}
-              activePanel={panel}
-              badges={navBadges as Record<string, number | undefined>}
-              onSelect={(id) => setPanel(id as Panel)}
-              storageKey="request"
-            />
-
-            {/* Bottom flat sections */}
-            {NAV_BOTTOM_SECTIONS.map((section) => (
-              <React.Fragment key={section.label}>
-                <div className="text-[10px] font-semibold uppercase tracking-widest text-text-dim px-2.5 pt-3 pb-1 whitespace-nowrap">
-                  {section.label}
-                </div>
-                {section.items.map((n) => (
-                  <NavItem
-                    key={n.id}
-                    {...n}
-                    active={panel === n.id}
-                    badge={navBadges[n.id]}
-                    onClick={() => setPanel(n.id)}
-                  />
-                ))}
-              </React.Fragment>
-            ))}
-          </div>
+          <AppSidebar
+            entries={enabledPanels}
+            activePanel={panel}
+            onPanelSelect={setPanel}
+            badges={navBadges}
+          />
         </nav>
 
         {/* Main content */}
         <main className="flex-1 overflow-hidden flex flex-col min-w-0">
-          {panel === "services" && (
-            <ServicesPanel
-              services={services}
-              config={wsConfig}
-              onRefresh={refreshServices}
-              onQuickMap={(target) => { setMappingPrefill(target); setPanel("mappings"); }}
-            />
-          )}
-          {panel === "mappings" && (
-            <MappingsPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              onRefreshServices={refreshServices}
-              prefillTarget={mappingPrefill}
-              onPrefillConsumed={() => setMappingPrefill(undefined)}
-              onHistoryOpen={openHistory}
-              entitySyncStatus={entitySyncStatus}
-              onPublish={makeFlatPublish("mappings")}
-              onRevert={makeFlatRevert("mappings")}
-            />
-          )}
-          {panel === "rules" && (
-            <ProxyRulesPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              onHistoryOpen={openHistory}
-              entitySyncStatus={entitySyncStatus}
-              onPublishItem={makePublishItem("rules", wsConfig.ruleFolders ?? [])}
-              onPublishFolder={makePublishFolder("rules", wsConfig.ruleFolders ?? [])}
-              onRestoreItem={makeRestoreItem("rules", wsConfig.ruleFolders ?? [])}
-            />
-          )}
-          {panel === "capture" && (
-            <CapturePanel
-              activeWorkspaceId={wsId}
-              onOpenInMocks={handleOpenMockEditor}
-              onOpenInRequests={handleOpenInRequests}
-              onStatsChange={setCaptureStats}
-            />
-          )}
-          {panel === "req-rest" && (
-            <RequestsPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              pendingOpenRequest={pendingOpenRequest}
-              onPendingConsumed={() => setPendingOpenRequest(null)}
-              onOpenMockEditor={handleOpenMockEditor}
-              activeEnv={activeEnv}
-              onHistoryOpen={openHistory}
-              onEntityPathChange={handleEntityPathChange}
-              historyOpen={historyOpen}
-              onAfterSave={bumpHistoryReload}
-              entitySyncStatus={entitySyncStatus}
-              onPublishItem={makePublishItem("requests", wsConfig.requestFolders ?? [])}
-              onPublishFolder={makePublishFolder("requests", wsConfig.requestFolders ?? [])}
-              onRestoreItem={makeRestoreItem("requests", wsConfig.requestFolders ?? [])}
-            />
-          )}
-          {panel === "mock-rest" && (
-            <MocksPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              pendingMockInitial={pendingMockInitial}
-              onPendingConsumed={() => setPendingMockInitial(null)}
-              activeEnv={activeEnv}
-              onHistoryOpen={openHistory}
-              onEntityPathChange={handleEntityPathChange}
-              historyOpen={historyOpen}
-              onAfterSave={bumpHistoryReload}
-              entitySyncStatus={entitySyncStatus}
-              onPublishItem={makePublishItem("mocks", wsConfig.mockFolders ?? [])}
-              onPublishFolder={makePublishFolder("mocks", wsConfig.mockFolders ?? [])}
-              onRestoreItem={makeRestoreItem("mocks", wsConfig.mockFolders ?? [])}
-            />
-          )}
-          {panel === "req-graphql" && (
-            <GraphQLRequestsPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              activeEnv={activeEnv}
-            />
-          )}
-          {panel === "mock-graphql" && (
-            <GraphQLMocksPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              activeEnv={activeEnv}
-            />
-          )}
-          {panel === "req-soap" && (
-            <SoapRequestsPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              activeEnv={activeEnv}
-            />
-          )}
-          {panel === "mock-soap" && (
-            <SoapMocksPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              activeEnv={activeEnv}
-            />
-          )}
-          {panel === "req-grpc" && (
-            <GrpcRequestsPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              activeEnv={activeEnv}
-            />
-          )}
-          {panel === "mock-grpc" && (
-            <GrpcMocksPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              activeEnv={activeEnv}
-            />
-          )}
-          {panel === "sockets" && (
-            <WebSocketsPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              activeEnv={activeEnv}
-              onHistoryOpen={openHistory}
-              onEntityPathChange={handleEntityPathChange}
-              historyOpen={historyOpen}
-              onAfterSave={bumpHistoryReload}
-              entitySyncStatus={entitySyncStatus}
-              onPublishItem={makePublishItem("sockets", wsConfig.wsFolders ?? [])}
-              onPublishFolder={makePublishFolder("sockets", wsConfig.wsFolders ?? [])}
-              onRestoreItem={makeRestoreItem("sockets", wsConfig.wsFolders ?? [])}
-            />
-          )}
-          {panel === "webhooks" && (
-            <WebhooksPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              onHistoryOpen={openHistory}
-              onEntityPathChange={handleEntityPathChange}
-              historyOpen={historyOpen}
-              onAfterSave={bumpHistoryReload}
-              entitySyncStatus={entitySyncStatus}
-              onPublishItem={makePublishItem("webhooks", wsConfig.webhookFolders ?? [])}
-              onPublishFolder={makePublishFolder("webhooks", wsConfig.webhookFolders ?? [])}
-              onRestoreItem={makeRestoreItem("webhooks", wsConfig.webhookFolders ?? [])}
-            />
-          )}
-          {panel === "environments" && (
-            <EnvironmentsPanel
-              config={wsConfig}
-              onConfigChange={handleWsConfigChange}
-              onHistoryOpen={openHistory}
-              onAfterSave={bumpHistoryReload}
-            />
-          )}
-          {panel === "audit" && (
-            <AuditLogPanel activeWorkspaceId={wsId} />
-          )}
-          {panel === "settings" && (
-            <SettingsPanel
-              config={config}
-              serverRunning={serverRunning}
-              serverError={serverError}
-              onConfigChange={handleConfigChange}
-              theme={theme}
-              onThemeChange={setTheme}
-              onServerRestart={async () => {
-                await window.api.restartServer();
-                const status = await window.api.serverStatus();
-                setServerRunning(status.running);
-                setServerError(status.error);
-              }}
-            />
-          )}
-          {panel === "workspace" && (
-            <WorkspacePanel
-              config={config}
-              onConfigChange={(fresh) => setConfig(fresh)}
-              onWorkspaceRename={async (id, name) => {
-                await window.api.renameWorkspace(id, name);
-                const fresh = await window.api.getConfig();
-                setConfig(fresh);
-              }}
-              onWorkspaceDelete={async (id) => {
-                localStorage.removeItem(`capture:entries:${id}`);
-                await window.api.deleteWorkspace(id);
-                const fresh = await window.api.getConfig();
-                setConfig(fresh);
-                setPanel("services");
-              }}
-            />
-          )}
-          {panel === "healthbar" && (
-            <HealthBarPanel
-              config={wsConfig}
-              entitySyncStatus={entitySyncStatus}
-              onPublish={handlePublishHealthBar}
-              onAfterSave={() => refreshEntitySyncStatus(wsId)}
-            />
-          )}
-          {panel === "applications" && (
-            <ApplicationsPanel config={wsConfig} />
-          )}
-
+          {renderPanel(panel, panelRenderCtx)}
         </main>
 
         {/* Right History Sidebar — always mounted so close animates */}
