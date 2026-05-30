@@ -1,8 +1,7 @@
 import React, { useRef, useState } from "react";
-import { AppConfig, Workspace } from "@/types";
+import { AppConfig } from "@/types";
 import ServerToggle from "@/components/layout/ServerToggle";
 import EnvSelector from "@/components/sidebar/EnvSelector";
-import WorkspaceSelector from "@/components/sidebar/WorkspaceSelector";
 import { strings } from "@/lib/strings";
 import { Menu, ChevronRight } from "@/lib/icons";
 import iconUrl from "@/icon.png";
@@ -18,10 +17,6 @@ interface Props {
   onServerStop: () => Promise<void>;
   onEnvChange: (id: string | null) => Promise<void>;
   onManageEnvs: () => void;
-  onWorkspaceChange: (id: string) => Promise<void>;
-  onWorkspaceCreate: () => Promise<void>;
-  onWorkspaceRename: (id: string, name: string) => Promise<void>;
-  onWorkspaceDelete: (id: string) => Promise<void>;
 }
 
 export default function TitleBar({
@@ -35,15 +30,10 @@ export default function TitleBar({
   onServerStop,
   onEnvChange,
   onManageEnvs,
-  onWorkspaceChange,
-  onWorkspaceCreate,
-  onWorkspaceRename,
-  onWorkspaceDelete,
 }: Props) {
   const [envDropdownOpen, setEnvDropdownOpen] = useState(false);
   const envDropdownRef = useRef<HTMLDivElement>(null);
 
-  const workspaces: Workspace[] = config.workspaces ?? [];
   const activeWorkspaceId = config.activeWorkspaceId ?? "";
 
   const wsEnvironments = (config.environments ?? []).filter(
@@ -80,16 +70,6 @@ export default function TitleBar({
       <span className="text-sm font-semibold text-text-bright tracking-wide select-none">
         {strings.titleBar.appName}
       </span>
-
-      {/* Workspace selector */}
-      <WorkspaceSelector
-        workspaces={workspaces}
-        activeId={activeWorkspaceId}
-        onSelect={onWorkspaceChange}
-        onCreate={onWorkspaceCreate}
-        onRename={onWorkspaceRename}
-        onDelete={onWorkspaceDelete}
-      />
 
       <div className="flex-1" />
 

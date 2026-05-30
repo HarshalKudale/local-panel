@@ -51,6 +51,9 @@ export interface PanelEntry {
     section: string;
     sectionType: "flat" | "collapsible";
     enabled: boolean;
+    /** When false, the panel is functional but hidden from the sidebar nav.
+     *  Use the three-dot workspace menu to access workspace/audit panels. */
+    showInSidebar?: boolean;
     helpText: string;
 }
 
@@ -234,6 +237,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         section: strings.nav.config,
         sectionType: "flat",
         enabled: true,
+        showInSidebar: false,   // accessed via the sticky workspace footer three-dot menu
         helpText: strings.workspace.helpText,
     },
     {
@@ -243,6 +247,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         section: strings.nav.config,
         sectionType: "flat",
         enabled: true,
+        showInSidebar: false,   // accessed via the sticky workspace footer three-dot menu
         helpText: "A complete history of every configuration change in this workspace.",
     },
     {
@@ -258,8 +263,10 @@ export const PANEL_REGISTRY: PanelEntry[] = [
 
 // ── Derived helpers ─────────────────────────────────────────────────────────
 
-/** All enabled panel entries */
-export const enabledPanels = PANEL_REGISTRY.filter((e) => e.enabled);
+/** Panel entries that are both enabled and visible in the sidebar nav.
+ *  Panels with showInSidebar: false (workspace, audit) are still functional
+ *  but accessed via the sticky workspace footer menu instead. */
+export const enabledPanels = PANEL_REGISTRY.filter((e) => e.enabled && e.showInSidebar !== false);
 
 /** Quick lookup: is a given panel enabled? */
 export function isPanelEnabled(id: Panel): boolean {

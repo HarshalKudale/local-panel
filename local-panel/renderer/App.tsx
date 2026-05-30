@@ -515,44 +515,6 @@ export default function App() {
           setConfig(fresh);
         }}
         onManageEnvs={() => setPanel("environments")}
-        onWorkspaceChange={async (id) => {
-          clearWorkspaceContext("Switching workspace…");
-          try {
-            const result = await window.api.setActiveWorkspace(id);
-            if (result.ok) {
-              setConfig(result.config);
-              refreshEntitySyncStatus(id);
-            }
-          } finally {
-            setWsLoading(null);
-          }
-        }}
-        onWorkspaceCreate={async () => {
-          clearWorkspaceContext("Creating workspace…");
-          try {
-            const ws = await window.api.addWorkspace("");
-            const result = await window.api.setActiveWorkspace(ws.id);
-            if (result.ok) { setConfig(result.config); setPanel("workspace"); }
-          } finally {
-            setWsLoading(null);
-          }
-        }}
-        onWorkspaceRename={async (id, name) => {
-          await window.api.renameWorkspace(id, name);
-          const fresh = await window.api.getConfig();
-          setConfig(fresh);
-        }}
-        onWorkspaceDelete={async (id) => {
-          clearWorkspaceContext("Switching workspace…");
-          localStorage.removeItem(`capture:entries:${id}`);
-          try {
-            await window.api.deleteWorkspace(id);
-            const fresh = await window.api.getConfig();
-            setConfig(fresh);
-          } finally {
-            setWsLoading(null);
-          }
-        }}
       />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -566,6 +528,46 @@ export default function App() {
             activePanel={panel}
             onPanelSelect={setPanel}
             badges={navBadges}
+            workspaces={config.workspaces ?? []}
+            activeWorkspaceId={config.activeWorkspaceId}
+            onWorkspaceChange={async (id) => {
+              clearWorkspaceContext("Switching workspace…");
+              try {
+                const result = await window.api.setActiveWorkspace(id);
+                if (result.ok) {
+                  setConfig(result.config);
+                  refreshEntitySyncStatus(id);
+                }
+              } finally {
+                setWsLoading(null);
+              }
+            }}
+            onWorkspaceCreate={async () => {
+              clearWorkspaceContext("Creating workspace…");
+              try {
+                const ws = await window.api.addWorkspace("");
+                const result = await window.api.setActiveWorkspace(ws.id);
+                if (result.ok) { setConfig(result.config); setPanel("workspace"); }
+              } finally {
+                setWsLoading(null);
+              }
+            }}
+            onWorkspaceRename={async (id, name) => {
+              await window.api.renameWorkspace(id, name);
+              const fresh = await window.api.getConfig();
+              setConfig(fresh);
+            }}
+            onWorkspaceDelete={async (id) => {
+              clearWorkspaceContext("Switching workspace…");
+              localStorage.removeItem(`capture:entries:${id}`);
+              try {
+                await window.api.deleteWorkspace(id);
+                const fresh = await window.api.getConfig();
+                setConfig(fresh);
+              } finally {
+                setWsLoading(null);
+              }
+            }}
           />
         </nav>
 
