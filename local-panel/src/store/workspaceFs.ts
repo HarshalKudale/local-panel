@@ -81,6 +81,7 @@ export function initWorkspaceDir(wsId: string, name: string): void {
     entityDir(wsId, "soapMocks"),
     entityDir(wsId, "grpcRequests"),
     entityDir(wsId, "grpcMocks"),
+    entityDir(wsId, "applications"),
   ];
   for (const d of dirs) fs.mkdirSync(d, { recursive: true });
 

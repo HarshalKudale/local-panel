@@ -550,6 +550,9 @@ declare global {
       tlsCertStatus(): Promise<{ generated: boolean; certPath: string | null; keyPath: string | null }>;
       onCompanionRefresh(cb: () => void): () => void;
       openFileDialog(): Promise<{ name: string; size: number; base64: string; mimeType: string } | { error: string } | null>;
+      pickFilePath(title: string, filters?: { name: string; extensions: string[] }[]): Promise<string | null>;
+      pickFolderPath(title: string): Promise<string | null>;
+      platform: string;
       onLogChunk(cb: (chunk: LogChunk) => void): () => void;
       // ── Auth ─────────────────────────────────────────────────────────────────
       authConfigured(): Promise<boolean>;
@@ -573,6 +576,17 @@ declare global {
       saveRunnerConfig(wsId: string, folderId: string, config: { requestOrder: string[]; delayMs: number }): Promise<{ ok: boolean }>;
       loadRunnerConfig(wsId: string, folderId: string): Promise<{ requestOrder: string[]; delayMs: number } | null>;
       listRunnerFolderIds(wsId: string): Promise<string[]>;
+      // ── Applications ────────────────────────────────────────────────────────
+      listApplications(wsId: string): Promise<any[]>;
+      saveApplication(app: unknown): Promise<any>;
+      deleteApplication(wsId: string, id: string): Promise<{ ok: boolean }>;
+      startApplication(wsId: string, appId: string, mode: "run" | "debug"): Promise<any>;
+      stopApplication(appId: string): Promise<{ ok: boolean }>;
+      getApplicationState(appId: string): Promise<any>;
+      getAllApplicationStates(): Promise<any[]>;
+      getApplicationLogs(appId: string): Promise<any[]>;
+      onAppLog(cb: (chunk: unknown) => void): () => void;
+      onAppStatusChange(cb: (data: unknown) => void): () => void;
     };
   }
 }

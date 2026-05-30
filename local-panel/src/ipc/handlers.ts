@@ -63,9 +63,11 @@ function syncEnabledSet(wsId: string, kind: string, id: string, enabled: boolean
 }
 
 import { registerImportExportHandlers } from "@/ipc/importExport/index";
+import { registerApplicationHandlers } from "@/ipc/applicationHandlers";
 
 export function registerIpcHandlers(): void {
   registerImportExportHandlers();
+  registerApplicationHandlers();
   // Forward sync status events to every open window
   onSyncStatusChange((wsId, state) => {
     BrowserWindow.getAllWindows().forEach((w) => {
@@ -1590,6 +1592,28 @@ export function registerIpcHandlers(): void {
   ipcMain.handle("shell:openExternal", (_e, url: string) => {
     const { shell } = require("electron");
     shell.openExternal(url);
+  });
+
+  // ── Path pickers for run configurations ────────────────────────────────
+  ipcMain.handle("dialog:pickFilePath", async (_evt, title: string, filters?: Electron.FileFilter[]) => {
+    const win = BrowserWindow.getFocusedWindow();
+    if (!win) return null;
+    const { filePaths, canceled } = await dialog.showOpenDialog(win, {
+      title: title || "Select File",
+      filters: filters ?? [{ name: "All Files", extensions: ["*"] }],
+      properties: ["openFile"],
+    });
+    return canceled || !filePaths[0] ? null : filePaths[0];
+  });
+
+  ipcMain.handle("dialog:pickFolderPath", async (_evt, title: string) => {
+    const win = BrowserWindow.getFocusedWindow();
+    if (!win) return null;
+    const { filePaths, canceled } = await dialog.showOpenDialog(win, {
+      title: title || "Select Folder",
+      properties: ["openDirectory", "createDirectory"],
+    });
+    return canceled || !filePaths[0] ? null : filePaths[0];
   });
 
   // ── File picker for binary body uploads ────────────────────────────────

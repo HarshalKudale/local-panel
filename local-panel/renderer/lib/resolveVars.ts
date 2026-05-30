@@ -1,11 +1,11 @@
 import { Environment } from "@/types";
 import { resolveRandomizers } from "@/lib/randomizer";
 
-/** Replace {{KEY}} tokens with values from the active environment, then resolve {{random.*}} tokens. */
+/** Replace {{KEY}} with env vars, then {{random.*}}. */
 export function resolveVars(text: string, env: Environment | null): string {
   if (!text) return text;
-  // First resolve env vars
   let result = text;
+  // Resolve env vars: {{KEY}}
   if (env) {
     result = result.replace(/\{\{(\w+)\}\}/g, (_match, key) => {
       // Skip random.* tokens — handled separately below

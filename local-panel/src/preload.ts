@@ -157,6 +157,9 @@ contextBridge.exposeInMainWorld("api", {
     return () => ipcRenderer.off("companion:refresh", handler);
   },
   openFileDialog: () => ipcRenderer.invoke("dialog:openFile"),
+  pickFilePath: (title: string, filters?: unknown) => ipcRenderer.invoke("dialog:pickFilePath", title, filters),
+  pickFolderPath: (title: string) => ipcRenderer.invoke("dialog:pickFolderPath", title),
+  platform: process.platform,
   onLogChunk: (cb: (chunk: unknown) => void) => {
     const handler = (_: unknown, chunk: unknown) => cb(chunk);
     ipcRenderer.on("log:chunk", handler);
@@ -173,4 +176,25 @@ contextBridge.exposeInMainWorld("api", {
   saveRunnerConfig: (wsId: string, folderId: string, config: unknown) => ipcRenderer.invoke("runner:saveConfig", wsId, folderId, config),
   loadRunnerConfig: (wsId: string, folderId: string) => ipcRenderer.invoke("runner:loadConfig", wsId, folderId),
   listRunnerFolderIds: (wsId: string) => ipcRenderer.invoke("runner:listFolderIds", wsId),
+
+  // ── Applications ────────────────────────────────────────────────────────────
+  listApplications: (wsId: string) => ipcRenderer.invoke("applications:list", wsId),
+  saveApplication: (app: unknown) => ipcRenderer.invoke("applications:save", app),
+  deleteApplication: (wsId: string, id: string) => ipcRenderer.invoke("applications:delete", wsId, id),
+  startApplication: (wsId: string, appId: string, mode: "run" | "debug") =>
+    ipcRenderer.invoke("applications:start", wsId, appId, mode),
+  stopApplication: (appId: string) => ipcRenderer.invoke("applications:stop", appId),
+  getApplicationState: (appId: string) => ipcRenderer.invoke("applications:getState", appId),
+  getAllApplicationStates: () => ipcRenderer.invoke("applications:getAllStates"),
+  getApplicationLogs: (appId: string) => ipcRenderer.invoke("applications:getLogs", appId),
+  onAppLog: (cb: (chunk: unknown) => void) => {
+    const handler = (_: unknown, chunk: unknown) => cb(chunk);
+    ipcRenderer.on("app:log", handler);
+    return () => ipcRenderer.off("app:log", handler);
+  },
+  onAppStatusChange: (cb: (data: unknown) => void) => {
+    const handler = (_: unknown, data: unknown) => cb(data);
+    ipcRenderer.on("app:statusChange", handler);
+    return () => ipcRenderer.off("app:statusChange", handler);
+  },
 });

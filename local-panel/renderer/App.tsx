@@ -15,6 +15,7 @@ import EnvironmentsPanel from "@/panels/EnvironmentsPanel";
 import AuditLogPanel from "@/panels/AuditLogPanel";
 import WorkspacePanel from "@/panels/WorkspacePanel";
 import HealthBarPanel from "@/panels/HealthBarPanel";
+import ApplicationsPanel from "@/panels/ApplicationsPanel";
 
 import HistorySidebar from "@/components/sidebar/HistorySidebar";
 import NavItem from "@/components/sidebar/NavItem";
@@ -30,9 +31,9 @@ import SoapRequestsPanel from "@/panels/SoapRequestsPanel";
 import SoapMocksPanel from "@/panels/SoapMocksPanel";
 import { strings } from "@/lib/strings";
 import { useTheme } from "@/lib/useTheme";
-import { Zap, ArrowLeftRight, Settings, Clipboard, ArrowUpRight, Radio, Globe, ClipboardList, History, Layers, Activity, Webhook, Network, FileCode, Braces } from "@/lib/icons";
+import { Zap, ArrowLeftRight, Settings, Clipboard, ArrowUpRight, Radio, Globe, ClipboardList, History, Layers, Activity, Webhook, Network, FileCode, Braces, Play } from "@/lib/icons";
 
-type Panel = "services" | "mappings" | "rules" | "capture" | "mock-rest" | "mock-graphql" | "mock-soap" | "mock-grpc" | "req-rest" | "req-graphql" | "req-soap" | "req-grpc" | "sockets" | "environments" | "settings" | "audit" | "workspace" | "healthbar" | "webhooks";
+type Panel = "services" | "mappings" | "rules" | "capture" | "mock-rest" | "mock-graphql" | "mock-soap" | "mock-grpc" | "req-rest" | "req-graphql" | "req-soap" | "req-grpc" | "sockets" | "environments" | "settings" | "audit" | "workspace" | "healthbar" | "webhooks" | "applications";
 
 const PANEL_HELP: Record<Panel, string> = {
   services: strings.services.helpText,
@@ -54,6 +55,7 @@ const PANEL_HELP: Record<Panel, string> = {
   workspace: strings.workspace.helpText,
   healthbar: "Monitor health check endpoints for your services. Responses are fetched live from the main process.",
   webhooks: "Create and manage webhooks. Open a webhook in a tab to activate it and receive POST requests on the webhook server.",
+  applications: strings.applications.helpText,
 };
 
 const NAV_FLAT_SECTIONS = [
@@ -88,6 +90,12 @@ const NAV_BOTTOM_SECTIONS = [
     label: strings.nav.tools,
     items: [
       { id: "environments" as Panel, label: strings.nav.environments, icon: <Globe size={14} /> },
+    ],
+  },
+  {
+    label: "Applications",
+    items: [
+      { id: "applications" as Panel, label: "Run Configs", icon: <Play size={14} /> },
     ],
   },
   {
@@ -853,6 +861,9 @@ export default function App() {
               onPublish={handlePublishHealthBar}
               onAfterSave={() => refreshEntitySyncStatus(wsId)}
             />
+          )}
+          {panel === "applications" && (
+            <ApplicationsPanel config={wsConfig} />
           )}
 
         </main>

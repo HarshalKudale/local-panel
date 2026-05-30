@@ -3,6 +3,7 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 // Load .env before anything else so SUPABASE_* are available
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
+import { processSpawner } from "@/applications/processSpawner";
 import { registerIpcHandlers } from "@/ipc/handlers";
 import { loadConfig, generateId } from "@/store/config";
 import { loadSettings, saveSettings } from "@/store/appSettings";
@@ -104,6 +105,7 @@ function createWindow(): void {
   mainWindow.loadFile(path.join(__dirname, "renderer/index.html"));
   mainWindow.once("ready-to-show", () => mainWindow!.show());
 
+  processSpawner.setMainWindow(mainWindow);
 
   mainWindow.on("close", (e) => {
     if (!quitting && loadConfig().minimizeToTray) {
@@ -188,6 +190,7 @@ app.whenReady().then(async () => {
 
 app.on("before-quit", () => {
   quitting = true;
+  processSpawner.stopAll();
   stopAllAutoSync();
   stopCompanionServer();
   stopServer();

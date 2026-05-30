@@ -31,6 +31,7 @@ export {
   AlertCircle,   // error
   CheckCircle2,  // success
   MoreHorizontal,// context menu overflow
+  MoreVertical,  // card context menu
   Pencil,        // rename
   Trash2,        // delete
   Copy,          // copy
@@ -61,4 +62,16 @@ export {
   Network,       // gRPC nav
   FileCode,      // SOAP nav
   Braces,        // GraphQL nav (curly braces representing query syntax)
+  Wrench,
+  Package,       // npm
+  Package2,      // maven
+  Hammer,        // gradle
+  Leaf,          // spring-boot
+  Code2,         // python
+  Gauge,         // go
+  Box,           // docker
+  Server,        // java / dotnet
+  FileText,      // bat / vbs scripts
+  Bug,           // debug
+  FolderSearch2, // browse for folder/file
 } from "lucide-react";
