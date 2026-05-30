@@ -288,7 +288,10 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
         />
     ),
     applications: (ctx) => (
-        <ApplicationsPanel config={ctx.wsConfig} />
+        <ApplicationsPanel
+            config={ctx.wsConfig}
+            onAddMapping={(target) => { ctx.setMappingPrefill(target); ctx.setPanel("mappings"); }}
+        />
     ),
 };
 

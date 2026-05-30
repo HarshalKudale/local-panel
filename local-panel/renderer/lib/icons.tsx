@@ -74,4 +74,6 @@ export {
   FileText,      // bat / vbs scripts
   Bug,           // debug
   FolderSearch2, // browse for folder/file
+  ExternalLink,  // open in browser
+  Link2,         // add mapping / link
 } from "lucide-react";

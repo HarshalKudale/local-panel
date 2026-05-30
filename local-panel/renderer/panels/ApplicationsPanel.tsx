@@ -4,7 +4,7 @@ import {
     Play, Square, RefreshCw, Plus, Trash2, Pencil, Terminal, Bug, X,
     Box, Layers, Braces, Package, Package2, Hammer, Leaf, Code2,
     Gauge, Cpu, Server, FileText, FileCode, FolderSearch2, ChevronDown, ChevronRight,
-    Settings, MoreVertical,
+    Settings, MoreVertical, ExternalLink, Link2,
 } from "@/lib/icons";
 import { Button, IconButton, EmptyState, PanelLayout } from "@/components/ui";
 import { strings } from "@/lib/strings";
@@ -22,7 +22,7 @@ import {
     type AppProcessStatus,
     type RunConfigCategory,
 } from "@/lib/applicationUtils";
-import type { AppConfig } from "@/types";
+import type { AppConfig, LocalMapping } from "@/types";
 
 // â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -143,6 +143,42 @@ interface AppProcessState {
     error?: string;
     debugPort?: number;
     startedAt?: number;
+}
+
+interface AppLogChunk {
+    appId: string;
+    stream: "stdout" | "stderr" | "system";
+    data: string;
+    ts: number;
+}
+
+// -- Localhost URL detection --------------------------------------------------
+
+const LOCALHOST_URL_RE = /https?:\/\/(?:localhost|127\.0\.0\.1):\d{1,5}/;
+
+function extractFirstLocalhostUrl(text: string): string | null {
+    const m = text.match(LOCALHOST_URL_RE);
+    return m ? m[0] : null;
+}
+
+function urlToMappingTarget(url: string): string {
+    const m = url.match(/https?:\/\/((?:localhost|127\.0\.0\.1):\d{1,5})/);
+    return m ? m[1] : "";
+}
+
+function findMappingForTarget(mappings: LocalMapping[], target: string): LocalMapping | undefined {
+    return mappings.find(m => m.enabled && m.target === target);
+}
+
+function openDetectedUrl(detectedUrl: string, mappings: LocalMapping[], serverPort: number): void {
+    const target = urlToMappingTarget(detectedUrl);
+    const mapping = target ? findMappingForTarget(mappings, target) : undefined;
+    if (mapping) {
+        const portSuffix = serverPort && serverPort !== 80 ? `:${serverPort}` : "";
+        window.api.openExternal(`http://${mapping.domain}${portSuffix}`);
+    } else {
+        window.api.openExternal(detectedUrl);
+    }
 }
 
 // â”€â”€ Icon map (resolved React nodes inside components) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1137,6 +1173,10 @@ function AppCard({
     onStop,
     onEdit,
     onDelete,
+    detectedUrl,
+    mappings,
+    serverPort,
+    onAddMapping,
 }: {
     app: ApplicationConfig;
     state: AppProcessState | null;
@@ -1147,6 +1187,10 @@ function AppCard({
     onStop: () => void;
     onEdit: () => void;
     onDelete: () => void;
+    detectedUrl?: string;
+    mappings: LocalMapping[];
+    serverPort: number;
+    onAddMapping?: (target: string) => void;
 }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [, tick] = useState(0);
@@ -1274,6 +1318,31 @@ function AppCard({
                         {state.error}
                     </div>
                 )}
+                {detectedUrl && (
+                    <div
+                        className="mt-1 flex items-center gap-1.5 bg-bg1/50 rounded px-2 py-1.5 border border-border/20"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <span className="text-[10px] text-text-dim/50 flex-shrink-0 uppercase tracking-wide">URL</span>
+                        <span className="text-xs font-mono text-text-bright/80 truncate flex-1">
+                            {detectedUrl.replace(/^https?:\/\//, "")}
+                        </span>
+                        <button
+                            title={findMappingForTarget(mappings, urlToMappingTarget(detectedUrl)) ? "Open mapped URL" : "Open in browser"}
+                            className="text-text-dim hover:text-accent transition-colors flex-shrink-0 p-0.5"
+                            onClick={e => { e.stopPropagation(); openDetectedUrl(detectedUrl, mappings, serverPort); }}
+                        >
+                            <ExternalLink size={11} />
+                        </button>
+                        <button
+                            title="Add mapping for this URL"
+                            className="text-text-dim hover:text-accent transition-colors flex-shrink-0 p-0.5"
+                            onClick={e => { e.stopPropagation(); onAddMapping?.(urlToMappingTarget(detectedUrl)); }}
+                        >
+                            <Link2 size={11} />
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* ── Action buttons ── */}
@@ -1377,14 +1446,16 @@ function LogPanel({
 
 interface Props {
     config: AppConfig;
+    onAddMapping?: (target: string) => void;
 }
 
-export default function ApplicationsPanel({ config }: Props) {
+export default function ApplicationsPanel({ config, onAddMapping }: Props) {
     const [apps, setApps] = useState<ApplicationConfig[]>([]);
     const [states, setStates] = useState<Map<string, AppProcessState>>(new Map());
     const [formMode, setFormMode] = useState<null | "add" | "edit">(null);
     const [editTarget, setEditTarget] = useState<ApplicationConfig | null>(null);
     const [selected, setSelected] = useState<string | null>(null);
+    const [detectedUrls, setDetectedUrls] = useState<Map<string, string>>(new Map());
 
     const wsId = config.activeWorkspaceId;
     const platform: string = (window.api as any).platform ?? "linux";
@@ -1406,6 +1477,15 @@ export default function ApplicationsPanel({ config }: Props) {
     useEffect(() => {
         const unsub = window.api.onAppStatusChange((data: unknown) => {
             const d = data as AppProcessState;
+            // Clear detected URL when app restarts
+            if (d.status === "starting") {
+                setDetectedUrls(prev => {
+                    if (!prev.has(d.appId)) return prev;
+                    const next = new Map(prev);
+                    next.delete(d.appId);
+                    return next;
+                });
+            }
             setStates((prev) => {
                 const next = new Map(prev);
                 next.set(d.appId, { ...prev.get(d.appId), ...d });
@@ -1414,6 +1494,43 @@ export default function ApplicationsPanel({ config }: Props) {
         });
         return () => { unsub(); };
     }, []);
+
+    // Subscribe to live logs and scan for localhost URLs
+    useEffect(() => {
+        const unsub = window.api.onAppLog((raw: unknown) => {
+            const chunk = raw as AppLogChunk;
+            setDetectedUrls(prev => {
+                if (prev.has(chunk.appId)) return prev;
+                const url = extractFirstLocalhostUrl(chunk.data);
+                if (!url) return prev;
+                const next = new Map(prev);
+                next.set(chunk.appId, url);
+                return next;
+            });
+        });
+        return () => unsub();
+    }, []);
+
+    // Scan historical logs for localhost URLs on mount / app list change
+    useEffect(() => {
+        for (const app of apps) {
+            const appId = app.id;
+            (window.api.getApplicationLogs(appId) as Promise<AppLogChunk[]>).then(chunks => {
+                for (const chunk of (chunks ?? [])) {
+                    const url = extractFirstLocalhostUrl(chunk.data);
+                    if (url) {
+                        setDetectedUrls(prev => {
+                            if (prev.has(appId)) return prev;
+                            const next = new Map(prev);
+                            next.set(appId, url);
+                            return next;
+                        });
+                        break;
+                    }
+                }
+            });
+        }
+    }, [apps]);
 
     const handleSave = useCallback(async (app: ApplicationConfig) => {
         app.workspaceId = wsId;
@@ -1515,6 +1632,10 @@ export default function ApplicationsPanel({ config }: Props) {
                                 onStop={() => handleStop(app.id)}
                                 onEdit={() => openEdit(app)}
                                 onDelete={() => handleDelete(wsId, app.id)}
+                                detectedUrl={detectedUrls.get(app.id)}
+                                mappings={config.mappings ?? []}
+                                serverPort={config.port}
+                                onAddMapping={onAddMapping}
                             />
                         ))}
                     </div>
