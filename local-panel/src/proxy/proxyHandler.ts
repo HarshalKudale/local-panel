@@ -287,7 +287,6 @@ export function matchProxyRule(
   mappings: LocalMapping[],
 ): RuleMatchResult {
   for (const rule of rules) {
-    if (!rule.enabled) continue;
     let matches = false;
     if (rule.useRegex) {
       try { matches = new RegExp(rule.pattern).test(targetUrl); } catch { /* invalid regex */ }
