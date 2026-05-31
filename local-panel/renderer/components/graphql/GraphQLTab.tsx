@@ -240,6 +240,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                                     onChange={(v) => dispatch({ type: "SET_FIELD", field: "query", value: v })}
                                     language="text"
                                     placeholder="query { ... }"
+                                    className="h-full"
                                 />
                             )}
                             {reqSubTab === "query" && tabType === "mock" && (
@@ -292,6 +293,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                                     onChange={(v) => dispatch({ type: "SET_FIELD", field: "variables", value: v })}
                                     language="json"
                                     placeholder='{ "key": "value" }'
+                                    className="h-full"
                                 />
                             )}
                             {reqSubTab === "headers" && tabType === "request" && (
@@ -306,6 +308,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                                     onChange={(v) => dispatch({ type: "SET_FIELD", field: "preScript", value: v })}
                                     language="javascript"
                                     placeholder="// Pre-request script"
+                                    className="h-full"
                                 />
                             )}
                             {reqSubTab === "post-script" && (
@@ -314,6 +317,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                                     onChange={(v) => dispatch({ type: "SET_FIELD", field: "postScript", value: v })}
                                     language="javascript"
                                     placeholder="// Post-response script"
+                                    className="h-full"
                                 />
                             )}
                             {reqSubTab === "schema" && (
@@ -353,6 +357,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                                         language="json"
                                         readOnly
                                         placeholder="Send a request to see the response…"
+                                        className="h-full"
                                     />
                                 </div>
                             </>
@@ -368,6 +373,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                                         onChange={(v) => dispatch({ type: "SET_FIELD", field: "responseBody", value: v })}
                                         language="json"
                                         placeholder='{"data": { ... }}'
+                                        className="h-full"
                                     />
                                 </div>
                             </>

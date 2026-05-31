@@ -46,10 +46,10 @@ export function useDraftPersist(
   getData: () => unknown,
   isEmpty?: () => boolean,
 ): { markSaved: () => void } {
-  const savedRef   = useRef(false);
-  const dataRef    = useRef(getData);
+  const savedRef = useRef(false);
+  const dataRef = useRef(getData);
   const isEmptyRef = useRef(isEmpty);
-  dataRef.current    = getData;
+  dataRef.current = getData;
   isEmptyRef.current = isEmpty;
 
   const markSaved = () => { savedRef.current = true; };
@@ -57,8 +57,7 @@ export function useDraftPersist(
   const shouldSkip = () => !!(isEmptyRef.current && isEmptyRef.current());
 
   // Debounced auto-save on every render (data changes trigger re-render)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null); useEffect(() => {
     if (!tabId) return;
     if (savedRef.current) return;
     if (discarded.has(tabId)) return;
@@ -70,20 +69,31 @@ export function useDraftPersist(
     }, 400);
   });
 
+  // Save immediately on mount to ensure new drafts are persisted
+  useEffect(() => {
+    if (!tabId) return;
+    if (discarded.has(tabId)) return;
+    // Save the draft immediately so it persists even if user switches panels without entering data
+    saveDraft(tabId, dataRef.current());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabId]);
+
   // On unmount: flush immediately if not yet saved; clear if saved
   useEffect(() => {
     return () => {
       if (!tabId) return;
       if (timerRef.current) clearTimeout(timerRef.current);
       if (savedRef.current) {
+        // User saved it — clear the draft
         clearDraft(tabId);
-      } else if (!discarded.has(tabId) && !shouldSkip()) {
+      } else if (!discarded.has(tabId)) {
+        // Always save on unmount, even if empty (preserves new tabs when switching panels)
         saveDraft(tabId, dataRef.current());
       }
       // Clean up the discard entry once the component is gone
       discarded.delete(tabId);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabId]);
 
   return { markSaved };

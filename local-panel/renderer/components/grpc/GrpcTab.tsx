@@ -287,16 +287,16 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                     <TabStrip tabs={reqSubTabs} active={reqTab} onChange={(t) => setReqTab(t as ReqSubTab)} />
                                     <div className="flex-1 overflow-hidden">
                                         {reqTab === "message" && (
-                                            <CodeEditor value={state.requestBody} onChange={(v) => set("requestBody")(v)} language="json" placeholder='{"key": "value"}' />
+                                            <CodeEditor value={state.requestBody} onChange={(v) => set("requestBody")(v)} language="json" placeholder='{"key": "value"}' className="h-full" />
                                         )}
                                         {reqTab === "metadata" && (
                                             <HeaderTable rows={metaRows} onChange={setMetaRows} emptyMessage="No metadata. Add key-value pairs for gRPC metadata." />
                                         )}
                                         {reqTab === "pre-script" && (
-                                            <CodeEditor value={state.preScript} onChange={(v) => set("preScript")(v)} language="javascript" placeholder="// Pre-request script" />
+                                            <CodeEditor value={state.preScript} onChange={(v) => set("preScript")(v)} language="javascript" placeholder="// Pre-request script" className="h-full" />
                                         )}
                                         {reqTab === "post-script" && (
-                                            <CodeEditor value={state.postScript} onChange={(v) => set("postScript")(v)} language="javascript" placeholder="// Post-response script" />
+                                            <CodeEditor value={state.postScript} onChange={(v) => set("postScript")(v)} language="javascript" placeholder="// Post-response script" className="h-full" />
                                         )}
                                         {reqTab === "proto" && (
                                             <ProtoExplorer
@@ -317,7 +317,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                     <TabStrip tabs={mockSubTabs} active={mockTab} onChange={(t) => setMockTab(t as MockSubTab)} />
                                     <div className="flex-1 overflow-hidden">
                                         {mockTab === "response" && (
-                                            <CodeEditor value={state.responseBody} onChange={(v) => set("responseBody")(v)} language="json" placeholder='{"result": "mocked"}' />
+                                            <CodeEditor value={state.responseBody} onChange={(v) => set("responseBody")(v)} language="json" placeholder='{"result": "mocked"}' className="h-full" />
                                         )}
                                         {mockTab === "metadata" && (
                                             <HeaderTable rows={resMetaRows} onChange={setResMetaRows} emptyMessage="No response metadata." />
@@ -411,7 +411,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                                     {state.sending ? "Sending…" : "No response yet. Send a request to see results."}
                                                 </div>
                                             ) : state.responses.length === 1 ? (
-                                                <CodeEditor value={state.responses[0]} language="json" readOnly />
+                                                <CodeEditor value={state.responses[0]} language="json" readOnly className="h-full" />
                                             ) : (
                                                 <div className="flex flex-col h-full overflow-y-auto p-2 gap-1">
                                                     {state.responses.map((r, i) => (

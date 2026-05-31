@@ -260,6 +260,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                                             value={state.body}
                                             onChange={(v) => dispatch({ type: "SET_FIELD", field: "body", value: v })}
                                             language="xml"
+                                            className="h-full"
                                         />
                                     )}
                                     {state.reqTab === "headers" && (
@@ -270,6 +271,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                                             value={state.preScript}
                                             onChange={(v) => dispatch({ type: "SET_FIELD", field: "preScript", value: v })}
                                             language="javascript"
+                                            className="h-full"
                                         />
                                     )}
                                     {state.reqTab === "post-script" && (
@@ -277,6 +279,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                                             value={state.postScript}
                                             onChange={(v) => dispatch({ type: "SET_FIELD", field: "postScript", value: v })}
                                             language="javascript"
+                                            className="h-full"
                                         />
                                     )}
                                     {state.reqTab === "wsdl" && (
@@ -319,6 +322,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                                             onChange={() => { }}
                                             language="xml"
                                             readOnly
+                                            className="h-full"
                                         />
                                     ) : (
                                         <div className="p-3 overflow-auto h-full">
@@ -351,6 +355,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                                     value={state.responseBody}
                                     onChange={(v) => dispatch({ type: "SET_FIELD", field: "responseBody", value: v })}
                                     language="xml"
+                                    className="h-full"
                                 />
                             )}
                             {state.reqTab === "headers" && (
