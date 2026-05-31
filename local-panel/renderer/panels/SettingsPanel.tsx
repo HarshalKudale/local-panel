@@ -4,6 +4,7 @@ import Toggle from "@/components/common/Toggle";
 import { strings } from "@/lib/strings";
 import iconUrl from "@/icon.png";
 import { Theme } from "@/lib/useTheme";
+import { allThemes, darkThemes, lightThemes, getThemeById } from "@/lib/themes";
 import { Button, SectionLabel, SectionCard, SettingsRow } from "@/components/ui";
 import PanelLayout from "@/components/ui/PanelLayout";
 
@@ -253,10 +254,22 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
             </SettingsRow>
 
             <SettingsRow title={strings.settings.darkMode} desc={strings.settings.darkModeDesc}>
-              <Toggle
-                checked={theme === "dark"}
-                onChange={(v) => onThemeChange(v ? "dark" : "light")}
-              />
+              <select
+                className="bg-bg2 border border-border focus:border-accent rounded text-sm text-text-bright px-3 py-1.5 outline-none w-48 transition-colors"
+                value={theme}
+                onChange={(e) => onThemeChange(e.target.value)}
+              >
+                <optgroup label="Dark">
+                  {darkThemes.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Light">
+                  {lightThemes.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </optgroup>
+              </select>
             </SettingsRow>
           </SectionCard>
         </section>

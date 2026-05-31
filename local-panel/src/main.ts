@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, Tray, Menu, nativeImage, dialog, ipcMain, screen } from "electron";
 import * as path from "path";
 import * as dotenv from "dotenv";
 // Load .env before anything else so SUPABASE_* are available
@@ -79,6 +79,46 @@ export function updateTrayMenu(): void {
   tray.setContextMenu(menu);
 }
 
+/** Base titlebar overlay height at zoom level 0 */
+const BASE_TITLEBAR_HEIGHT = 35;
+
+/** Compute the overlay height adjusted for the current zoom level */
+function titleBarHeightForZoom(zoomLevel: number): number {
+  return Math.round(BASE_TITLEBAR_HEIGHT * Math.pow(1.2, zoomLevel));
+}
+
+/** Update the titlebar overlay height to match the current zoom level */
+function syncTitleBarOverlay(win: BrowserWindow, zoomLevel: number): void {
+  if (win.isDestroyed()) return;
+  try {
+    win.setTitleBarOverlay({ height: titleBarHeightForZoom(zoomLevel) });
+  } catch { /* setTitleBarOverlay not supported on all platforms */ }
+}
+
+/**
+ * Compute a default zoom level based on the primary display's logical resolution.
+ * High-DPI scaling is already handled by the OS (scaleFactor), so this targets
+ * the logical work-area size to keep UI elements comfortably sized.
+ */
+function computeDefaultZoomForDisplay(): number {
+  const display = screen.getPrimaryDisplay();
+  const { width, height } = display.workAreaSize;
+  const scaleFactor = display.scaleFactor;
+
+  // The effective physical resolution
+  const physicalWidth = width * scaleFactor;
+
+  // On standard 1080p (1920x1080 @ 100%) → zoom 0
+  // On 1440p (2560x1440 @ 100%) → slight zoom up
+  // On 4K (3840x2160 @ 100%) → larger zoom up
+  // If OS DPI scaling is applied (e.g., 4K @ 150%), logical res is smaller → zoom stays low
+  if (physicalWidth >= 3840 && scaleFactor <= 1.0) return 2;
+  if (physicalWidth >= 3840 && scaleFactor <= 1.25) return 1;
+  if (physicalWidth >= 2560 && scaleFactor <= 1.0) return 1;
+  if (physicalWidth >= 2560 && scaleFactor <= 1.25) return 0.5;
+  return 0;
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -98,12 +138,52 @@ function createWindow(): void {
     titleBarOverlay: {
       color: "#121212",
       symbolColor: "#71736d",
-      height: 35,
+      height: BASE_TITLEBAR_HEIGHT,
     },
   });
 
   mainWindow.loadFile(path.join(__dirname, "renderer/index.html"));
-  mainWindow.once("ready-to-show", () => mainWindow!.show());
+  mainWindow.once("ready-to-show", () => {
+    const settings = loadSettings();
+    // Use persisted zoom if user has set one, otherwise compute from display
+    let zoom = settings.zoomLevel ?? 0;
+    if (zoom === 0 && !settings.zoomLevelSetByUser) {
+      zoom = computeDefaultZoomForDisplay();
+      // Persist the computed default so it's consistent across restarts
+      saveSettings({ ...settings, zoomLevel: zoom });
+    }
+    mainWindow!.webContents.setZoomLevel(zoom);
+    syncTitleBarOverlay(mainWindow!, zoom);
+    mainWindow!.show();
+  });
+
+  // ── Zoom shortcuts (Ctrl+=/Ctrl+-/Ctrl+0) ──────────────────────────────────
+  mainWindow.webContents.on("before-input-event", (_event, input) => {
+    if (input.type !== "keyDown") return;
+    const ctrl = input.control && !input.alt && !input.meta;
+    if (!ctrl) return;
+
+    let newLevel: number | null = null;
+    const current = mainWindow!.webContents.getZoomLevel();
+
+    if (input.key === "=" || input.key === "+") {
+      // Zoom in
+      newLevel = Math.min(current + 0.5, 9);
+    } else if (input.key === "-") {
+      // Zoom out
+      newLevel = Math.max(current - 0.5, -5);
+    } else if (input.key === "0") {
+      // Reset zoom
+      newLevel = 0;
+    }
+
+    if (newLevel !== null && newLevel !== current) {
+      mainWindow!.webContents.setZoomLevel(newLevel);
+      syncTitleBarOverlay(mainWindow!, newLevel);
+      const s = loadSettings();
+      saveSettings({ ...s, zoomLevel: newLevel, zoomLevelSetByUser: true });
+    }
+  });
 
   processSpawner.setMainWindow(mainWindow);
 

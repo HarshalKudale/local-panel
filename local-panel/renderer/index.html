@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Local Panel</title>
   <script>
-    (function(){var t=localStorage.getItem('lp-theme');document.documentElement.classList.add(t==='light'?'light':'dark');})();
+    (function () { var id = localStorage.getItem('lp-theme') || 'midnight-navy'; var dark = ['midnight-navy', 'dracula-purple', 'tokyo-night', 'nord-dark', 'monokai']; document.documentElement.classList.add(dark.indexOf(id) !== -1 ? 'dark' : 'light'); })();
   </script>
 </head>
+
 <body>
   <div id="root"></div>
   <script type="module" src="./main.tsx"></script>
 </body>
+
 </html>

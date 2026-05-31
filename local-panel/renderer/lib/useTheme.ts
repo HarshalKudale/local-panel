@@ -1,33 +1,36 @@
 import { useState, useEffect } from "react";
+import { ThemeDef, getThemeById, DEFAULT_THEME_ID } from "./themes";
 
-export type Theme = "dark" | "light";
+export type Theme = string; // theme id
 
 const STORAGE_KEY = "lp-theme";
 
-// Overlay colors must match the CSS token values for each theme
-const OVERLAY: Record<Theme, { color: string; symbolColor: string }> = {
-  dark: { color: "#010f1f", symbolColor: "#908fa0" },
-  light: { color: "#dde4ef", symbolColor: "#464554" },
-};
-
-function applyTheme(theme: Theme) {
+function applyTheme(themeDef: ThemeDef) {
   const html = document.documentElement;
+  // Set dark/light class for Tailwind darkMode: "class"
   html.classList.remove("dark", "light");
-  html.classList.add(theme);
+  html.classList.add(themeDef.mode);
+
+  // Apply all CSS custom properties
+  for (const [key, value] of Object.entries(themeDef.vars)) {
+    html.style.setProperty(`--${key}`, value);
+  }
+
   // Sync Electron titlebar overlay — best-effort (no-op in browser/test env)
-  window.api?.setTitleBarOverlay?.(OVERLAY[theme].color, OVERLAY[theme].symbolColor);
+  window.api?.setTitleBarOverlay?.(themeDef.overlay.color, themeDef.overlay.symbolColor);
 }
 
 export function useTheme(): [Theme, (t: Theme) => void] {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === "light" ? "light" : "dark";
+  const [themeId, setThemeId] = useState<Theme>(() => {
+    return localStorage.getItem(STORAGE_KEY) ?? DEFAULT_THEME_ID;
   });
 
   useEffect(() => {
-    applyTheme(theme);
-    localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
+    const def = getThemeById(themeId);
+    applyTheme(def);
+    localStorage.setItem(STORAGE_KEY, themeId);
+  }, [themeId]);
 
-  return [theme, setThemeState];
+  return [themeId, setThemeId];
 }
+

@@ -136,14 +136,13 @@
   --c-syn-invalid: #ffb4ab;
 }
 
-/* Periwinkle accent — dark text needed on light lavender */
+/* Accent badge text — uses contrast token set by theme */
 :root .bg-accent {
-  color: #1000a9 !important;
+  color: var(--c-accent-contrast, #1000a9) !important;
 }
 
-/* Dark-blue-purple accent in light mode — light text needed */
 html.light .bg-accent {
-  color: #e1e0ff !important;
+  color: var(--c-accent-contrast, #e1e0ff) !important;
 }
 
 /* ── Light mode — RGB channel tokens ──────────────────────────────────────── */

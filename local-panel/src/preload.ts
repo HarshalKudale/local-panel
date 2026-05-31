@@ -197,4 +197,8 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("app:statusChange", handler);
     return () => ipcRenderer.off("app:statusChange", handler);
   },
+
+  // ── Zoom ────────────────────────────────────────────────────────────────────
+  getZoomLevel: () => ipcRenderer.invoke("zoom:get"),
+  setZoomLevel: (level: number) => ipcRenderer.invoke("zoom:set", level),
 });

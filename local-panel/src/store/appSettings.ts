@@ -34,6 +34,10 @@ export interface AppSettings {
   activeWorkspaceId: string;
   /** False on first ever launch — renderer shows the welcome/login screen */
   hasSeenWelcome: boolean;
+  /** Zoom level for the application window (0 = default, positive = zoomed in, negative = zoomed out) */
+  zoomLevel: number;
+  /** Whether the user has manually set the zoom level (disables auto-detection from display) */
+  zoomLevelSetByUser: boolean;
 }
 
 function generateId(): string {
@@ -53,6 +57,8 @@ function makeDefaultSettings(): AppSettings {
     workspaces: [{ id, name: "Workspace 1", activeEnvironmentId: null }],
     activeWorkspaceId: id,
     hasSeenWelcome: false,
+    zoomLevel: 0,
+    zoomLevelSetByUser: false,
   };
 }
 

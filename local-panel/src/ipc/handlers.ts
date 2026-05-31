@@ -124,6 +124,26 @@ export function registerIpcHandlers(): void {
     return { ok: true };
   });
 
+  // ── Zoom ────────────────────────────────────────────────────────────────────
+  ipcMain.handle("zoom:get", () => {
+    const s = loadSettings();
+    return s.zoomLevel ?? 0;
+  });
+
+  ipcMain.handle("zoom:set", (_e, level: number) => {
+    const clamped = Math.max(-5, Math.min(9, level));
+    const s = loadSettings();
+    saveSettings({ ...s, zoomLevel: clamped, zoomLevelSetByUser: true });
+    const overlayHeight = Math.round(35 * Math.pow(1.2, clamped));
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (!w.isDestroyed()) {
+        w.webContents.setZoomLevel(clamped);
+        try { w.setTitleBarOverlay({ height: overlayHeight }); } catch { }
+      }
+    });
+    return { ok: true, zoomLevel: clamped };
+  });
+
   ipcMain.handle("tls:generate", async () => {
     try {
       const { certPath, keyPath } = await generateCA(appDataDir());
@@ -1671,7 +1691,9 @@ export function registerIpcHandlers(): void {
   ipcMain.handle("shell:setTitleBarOverlay", (_e, color: string, symbolColor: string) => {
     const win = getMainWindow();
     if (win && !win.isDestroyed()) {
-      win.setTitleBarOverlay({ color, symbolColor, height: 35 });
+      const zoomLevel = win.webContents.getZoomLevel();
+      const height = Math.round(35 * Math.pow(1.2, zoomLevel));
+      win.setTitleBarOverlay({ color, symbolColor, height });
     }
     return { ok: true };
   });
