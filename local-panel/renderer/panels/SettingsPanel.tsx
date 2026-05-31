@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { AppConfig } from "@/types";
 import Toggle from "@/components/common/Toggle";
 import { strings } from "@/lib/strings";
@@ -7,6 +7,8 @@ import { Theme } from "@/lib/useTheme";
 import { allThemes, darkThemes, lightThemes, getThemeById } from "@/lib/themes";
 import { Button, SectionLabel, SectionCard, SettingsRow } from "@/components/ui";
 import PanelLayout from "@/components/ui/PanelLayout";
+import { Panel, enabledPanels, ALWAYS_VISIBLE_PANELS, PanelEntry } from "@/lib/panelRegistry";
+import { ChevronDown, ChevronRight } from "@/lib/icons";
 
 interface Props {
   config: AppConfig;
@@ -16,9 +18,11 @@ interface Props {
   onServerRestart: () => Promise<void>;
   theme: Theme;
   onThemeChange: (t: Theme) => void;
+  sidebarVisibility: Record<string, boolean>;
+  onSidebarVisibilityChange: (id: string, visible: boolean) => void;
 }
 
-export default function SettingsPanel({ config, serverRunning, serverError, onConfigChange, onServerRestart, theme, onThemeChange }: Props) {
+export default function SettingsPanel({ config, serverRunning, serverError, onConfigChange, onServerRestart, theme, onThemeChange, sidebarVisibility, onSidebarVisibilityChange }: Props) {
   const [portInput, setPortInput] = useState(String(config.port));
   const [webhookPortInput, setWebhookPortInput] = useState(String(config.webhookPort ?? 9101));
   const [companionPortInput, setCompanionPortInput] = useState(String(config.companionPort ?? 9271));
@@ -389,6 +393,12 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
           </SectionCard>
         </section>
 
+        {/* ── Appearance section ─────────────────────────────────────── */}
+        <AppearanceSection
+          sidebarVisibility={sidebarVisibility}
+          onSidebarVisibilityChange={onSidebarVisibilityChange}
+        />
+
         {/* ── About section ──────────────────────────────────────────── */}
         <section>
           <SectionLabel>{strings.settings.sectionAbout}</SectionLabel>
@@ -450,5 +460,85 @@ function AboutRow({ label, children }: { label: string; children: React.ReactNod
       <span className="text-text-base font-medium w-16 flex-shrink-0">{label}</span>
       {children}
     </div>
+  );
+}
+
+// ── Appearance section (collapsible, grouped) ─────────────────────────────
+
+interface AppearanceSectionProps {
+  sidebarVisibility: Record<string, boolean>;
+  onSidebarVisibilityChange: (id: string, visible: boolean) => void;
+}
+
+function AppearanceSection({ sidebarVisibility, onSidebarVisibilityChange }: AppearanceSectionProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  // Group panels by section, preserving order
+  const groups = useMemo(() => {
+    const map = new Map<string, PanelEntry[]>();
+    for (const entry of enabledPanels) {
+      const list = map.get(entry.section) ?? [];
+      list.push(entry);
+      map.set(entry.section, list);
+    }
+    return Array.from(map.entries()).map(([section, items]) => ({ section, items }));
+  }, []);
+
+  const visibleCount = enabledPanels.filter(
+    (e) => ALWAYS_VISIBLE_PANELS.includes(e.id) || sidebarVisibility[e.id] !== false
+  ).length;
+
+  return (
+    <section>
+      <SectionLabel>Appearance</SectionLabel>
+
+      <SectionCard>
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="flex items-center gap-4 px-5 py-4 w-full text-left cursor-pointer hover:bg-bg2 transition-colors"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-text-base">Sidebar Panels</div>
+            <div className="text-xs text-text-dim mt-0.5">
+              Choose which panels are visible in the sidebar ({visibleCount} of {enabledPanels.length} shown)
+            </div>
+          </div>
+          <span className="flex-shrink-0 text-text-dim">
+            {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </span>
+        </button>
+
+        {expanded && (
+          <div className="border-t border-border">
+            {groups.map(({ section, items }) => (
+              <div key={section}>
+                <div className="text-[10px] font-semibold uppercase tracking-widest text-text-dim px-5 pt-3 pb-1">
+                  {section}
+                </div>
+                {items.map((entry) => {
+                  const isAlwaysVisible = ALWAYS_VISIBLE_PANELS.includes(entry.id);
+                  const isVisible = isAlwaysVisible || sidebarVisibility[entry.id] !== false;
+                  return (
+                    <div key={entry.id} className="flex items-center gap-4 px-5 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-text-base">{entry.label}</div>
+                        {isAlwaysVisible && (
+                          <div className="text-[10px] text-text-dim">Always visible</div>
+                        )}
+                      </div>
+                      <Toggle
+                        checked={isVisible}
+                        onChange={(v) => onSidebarVisibilityChange(entry.id, v)}
+                        disabled={isAlwaysVisible}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
+    </section>
   );
 }

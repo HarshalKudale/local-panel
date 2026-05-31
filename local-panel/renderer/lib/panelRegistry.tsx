@@ -54,6 +54,8 @@ export interface PanelEntry {
     /** When false, the panel is functional but hidden from the sidebar nav.
      *  Use the three-dot workspace menu to access workspace/audit panels. */
     showInSidebar?: boolean;
+    /** When true, the panel cannot be hidden by the user in Appearance settings. */
+    alwaysVisible?: boolean;
     helpText: string;
 }
 
@@ -91,13 +93,13 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         helpText: strings.capture.helpText,
     },
 
-    // ─── Mock (collapsible) ───────────────────────────────────────────────────
+    // ─── Mock (flat) ────────────────────────────────────────────────────────────
     {
         id: "mock-rest",
         label: "REST",
         icon: <ArrowUpRight size={14} />,
         section: "Mock",
-        sectionType: "collapsible",
+        sectionType: "flat",
         enabled: true,
         helpText: strings.mocks.helpText,
     },
@@ -106,7 +108,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         label: "GraphQL",
         icon: <Braces size={14} />,
         section: "Mock",
-        sectionType: "collapsible",
+        sectionType: "flat",
         enabled: true,
         helpText: "Create GraphQL mock operations. Match incoming queries and mutations by operation name and return configured responses.",
     },
@@ -115,7 +117,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         label: "SOAP",
         icon: <FileCode size={14} />,
         section: "Mock",
-        sectionType: "collapsible",
+        sectionType: "flat",
         enabled: true,
         helpText: "Create SOAP mock services. Match incoming requests by SOAPAction header and return configured XML responses.",
     },
@@ -124,18 +126,18 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         label: "gRPC",
         icon: <Network size={14} />,
         section: "Mock",
-        sectionType: "collapsible",
+        sectionType: "flat",
         enabled: true,
         helpText: "Create gRPC mock services. Run a local gRPC server that returns configured responses for matched methods.",
     },
 
-    // ─── Request (collapsible) ────────────────────────────────────────────────
+    // ─── Request (flat) ───────────────────────────────────────────────────────
     {
         id: "req-rest",
         label: "REST",
         icon: <ArrowUpRight size={14} />,
         section: "Request",
-        sectionType: "collapsible",
+        sectionType: "flat",
         enabled: true,
         helpText: strings.requests.helpText,
     },
@@ -144,7 +146,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         label: "GraphQL",
         icon: <Braces size={14} />,
         section: "Request",
-        sectionType: "collapsible",
+        sectionType: "flat",
         enabled: true,
         helpText: "Send GraphQL queries and mutations. Import schemas via introspection or SDL files for query generation.",
     },
@@ -153,7 +155,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         label: "SOAP",
         icon: <FileCode size={14} />,
         section: "Request",
-        sectionType: "collapsible",
+        sectionType: "flat",
         enabled: true,
         helpText: "Send SOAP requests. Import WSDL files to discover operations and auto-generate request envelopes.",
     },
@@ -162,7 +164,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         label: "gRPC",
         icon: <Network size={14} />,
         section: "Request",
-        sectionType: "collapsible",
+        sectionType: "flat",
         enabled: true,
         helpText: "Make gRPC calls. Import .proto files or use server reflection to discover services and methods.",
     },
@@ -171,7 +173,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         label: "WebSocket",
         icon: <Radio size={14} />,
         section: "Request",
-        sectionType: "collapsible",
+        sectionType: "flat",
         enabled: true,
         helpText: strings.sockets.helpText,
     },
@@ -180,7 +182,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         label: "Webhooks",
         icon: <Webhook size={14} />,
         section: "Request",
-        sectionType: "collapsible",
+        sectionType: "flat",
         enabled: true,
         helpText: "Create and manage webhooks. Open a webhook in a tab to activate it and receive POST requests on the webhook server.",
     },
@@ -193,10 +195,20 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         section: strings.nav.tools,
         sectionType: "flat",
         enabled: true,
+        alwaysVisible: true,
         helpText: strings.environments.helpText,
     },
 
     // ─── Applications (flat) ──────────────────────────────────────────────────
+    {
+        id: "services",
+        label: strings.nav.services,
+        icon: <Zap size={14} />,
+        section: "Applications",
+        sectionType: "flat",
+        enabled: true,
+        helpText: strings.services.helpText,
+    },
     {
         id: "applications",
         label: "Run Configs",
@@ -206,24 +218,11 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         enabled: true,
         helpText: strings.applications.helpText,
     },
-
-    // ─── Discovery (flat) ─────────────────────────────────────────────────────
-    {
-        id: "services",
-        label: strings.nav.services,
-        icon: <Zap size={14} />,
-        section: strings.nav.discovery,
-        sectionType: "flat",
-        enabled: true,
-        helpText: strings.services.helpText,
-    },
-
-    // ─── Monitoring (flat) ────────────────────────────────────────────────────
     {
         id: "healthbar",
         label: "Health Bar",
         icon: <Activity size={14} />,
-        section: "Monitoring",
+        section: "Applications",
         sectionType: "flat",
         enabled: true,
         helpText: "Monitor health check endpoints for your services. Responses are fetched live from the main process.",
@@ -257,6 +256,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         section: strings.nav.config,
         sectionType: "flat",
         enabled: true,
+        alwaysVisible: true,
         helpText: strings.settings.helpText,
     },
 ];
@@ -267,6 +267,11 @@ export const PANEL_REGISTRY: PanelEntry[] = [
  *  Panels with showInSidebar: false (workspace, audit) are still functional
  *  but accessed via the sticky workspace footer menu instead. */
 export const enabledPanels = PANEL_REGISTRY.filter((e) => e.enabled && e.showInSidebar !== false);
+
+/** Panels that cannot be hidden by the user (always shown in sidebar). */
+export const ALWAYS_VISIBLE_PANELS: Panel[] = PANEL_REGISTRY
+    .filter((e) => e.alwaysVisible)
+    .map((e) => e.id);
 
 /** Quick lookup: is a given panel enabled? */
 export function isPanelEnabled(id: Panel): boolean {

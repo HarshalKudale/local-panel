@@ -88,6 +88,9 @@ export interface PanelRenderContext {
     onWorkspaceDelete: (id: string) => Promise<void>;
     // Server restart (settings panel)
     onServerRestart: () => Promise<void>;
+    // Sidebar visibility (appearance settings)
+    sidebarVisibility: Record<string, boolean>;
+    setSidebarPanelVisible: (id: string, visible: boolean) => void;
 }
 
 // ── Disabled panel placeholder ──────────────────────────────────────────────
@@ -266,6 +269,8 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
             theme={ctx.theme}
             onThemeChange={ctx.setTheme}
             onServerRestart={ctx.onServerRestart}
+            sidebarVisibility={ctx.sidebarVisibility}
+            onSidebarVisibilityChange={ctx.setSidebarPanelVisible}
         />
     ),
     audit: (ctx) => (

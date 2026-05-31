@@ -11,6 +11,7 @@ import GlobalFooter from "@/components/layout/GlobalFooter";
 import { useTheme } from "@/lib/useTheme";
 import { Panel, enabledPanels, PANEL_HELP } from "@/lib/panelRegistry";
 import { renderPanel, PanelRenderContext } from "@/lib/panelFactory";
+import { useSidebarVisibility } from "@/lib/useSidebarVisibility";
 
 const EMPTY_CONFIG: AppConfig = {
   port: 80,
@@ -58,6 +59,7 @@ export default function App() {
   const [panel, setPanel] = useState<Panel>("services");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [config, setConfig] = useState<AppConfig>(EMPTY_CONFIG);
+  const { visibility, setPanelVisible, isPanelVisible } = useSidebarVisibility();
   const [wsLoading, setWsLoading] = useState<string | null>("Loading workspace…");
   const [services, setServices] = useState<ServiceInfo[]>([]);
   const [serverRunning, setServerRunning] = useState(false);
@@ -385,6 +387,12 @@ export default function App() {
     environments: cnt((wsConfig.environments ?? []).length),
   };
 
+  // Filter sidebar entries based on user visibility preferences
+  const visiblePanels = useMemo(
+    () => enabledPanels.filter((e) => isPanelVisible(e.id)),
+    [visibility]
+  );
+
   // Active workspace object (used for syncConfig / branch in GlobalFooter)
   const currentWorkspace = (config.workspaces ?? []).find((w) => w.id === wsId) ?? null;
 
@@ -472,6 +480,8 @@ export default function App() {
       setServerRunning(status.running);
       setServerError(status.error);
     },
+    sidebarVisibility: visibility,
+    setSidebarPanelVisible: setPanelVisible,
   }), [
     wsConfig, config, wsId, services, serverRunning, serverError, theme, setTheme,
     activeEnv, openHistory, handleEntityPathChange, historyOpen, bumpHistoryReload,
@@ -479,6 +489,7 @@ export default function App() {
     refreshServices, mappingPrefill, pendingOpenRequest, pendingMockInitial,
     handleOpenMockEditor, handleOpenInRequests, makePublishItem, makePublishFolder,
     makeFlatPublish, makeFlatRevert, makeRestoreItem, handlePublishHealthBar,
+    visibility, setPanelVisible,
   ]);
 
   if (wsLoading) {
@@ -524,7 +535,7 @@ export default function App() {
           style={{ width: sidebarOpen ? "192px" : "0px", opacity: sidebarOpen ? 1 : 0 }}
         >
           <AppSidebar
-            entries={enabledPanels}
+            entries={visiblePanels}
             activePanel={panel}
             onPanelSelect={setPanel}
             badges={navBadges}
