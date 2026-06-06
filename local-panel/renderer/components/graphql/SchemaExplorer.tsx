@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { SavedGraphQLSchema } from "@/types";
 import CodeEditor from "@/components/common/CodeEditor";
 import { cn } from "@/components/ui/cn";
+import { strings } from "@/lib/strings";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -137,10 +138,10 @@ export default function SchemaExplorer({ schemaId, onInsertQuery, onInsertVariab
                 setOperations(parseIntrospectionToOperations(res.sdl));
                 setMode("list");
             } else {
-                setError(res.error ?? "Introspection failed");
+                setError(res.error ?? strings.graphql.introspectionFailed);
             }
         } catch (err: any) {
-            setError(err.message ?? "Network error");
+            setError(err.message ?? strings.graphql.networkError);
         } finally {
             setLoading(false);
         }
@@ -166,12 +167,12 @@ export default function SchemaExplorer({ schemaId, onInsertQuery, onInsertVariab
         <div className="flex flex-col h-full overflow-hidden bg-bg0">
             {/* Header */}
             <div className="flex items-center gap-2 px-3 py-2 border-b border-border flex-shrink-0">
-                <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider flex-1">Schema</span>
+                <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider flex-1">{strings.graphql.schema}</span>
                 <button
                     onClick={() => setMode(mode === "introspect" ? "list" : "introspect")}
                     className="text-[10px] text-accent hover:text-accent-dim cursor-pointer"
                 >
-                    {mode === "introspect" ? "Back" : "+ Introspect"}
+                    {mode === "introspect" ? strings.graphql.back : strings.graphql.introspect}
                 </button>
             </div>
 
@@ -190,7 +191,7 @@ export default function SchemaExplorer({ schemaId, onInsertQuery, onInsertVariab
                         disabled={loading || !introspectUrl.trim()}
                         className="px-3 py-1.5 rounded bg-accent text-bg0 text-xs font-semibold disabled:opacity-40 cursor-pointer"
                     >
-                        {loading ? "Introspecting…" : "Fetch Schema"}
+                        {loading ? strings.graphql.introspecting : strings.graphql.fetchSchema}
                     </button>
                     {error && <span className="text-xs text-red">{error}</span>}
                 </div>
@@ -210,7 +211,7 @@ export default function SchemaExplorer({ schemaId, onInsertQuery, onInsertVariab
                         }}
                         className="w-full bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs text-text-bright outline-none focus:border-accent"
                     >
-                        <option value="">Select schema…</option>
+                        <option value="">{strings.graphql.selectSchema}</option>
                         {schemas.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
@@ -223,7 +224,7 @@ export default function SchemaExplorer({ schemaId, onInsertQuery, onInsertVariab
                 <div className="px-3 py-2 border-b border-border">
                     <input
                         className="w-full bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
-                        placeholder="Filter operations…"
+                        placeholder={strings.graphql.filterOperations}
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
                     />
@@ -234,12 +235,12 @@ export default function SchemaExplorer({ schemaId, onInsertQuery, onInsertVariab
             <div className="flex-1 overflow-y-auto">
                 {!selectedSchema && schemas.length === 0 && (
                     <div className="p-4 text-xs text-text-dim text-center">
-                        No schemas loaded. Click "Introspect" to fetch a schema from a GraphQL endpoint.
+                        {strings.graphql.noSchemasLoaded}
                     </div>
                 )}
                 {selectedSchema && operations.length === 0 && (
                     <div className="p-4 text-xs text-text-dim text-center">
-                        No operations found in schema.
+                        {strings.graphql.noOperationsInSchema}
                     </div>
                 )}
                 {(["query", "mutation", "subscription"] as const).map((type) => {
@@ -255,7 +256,7 @@ export default function SchemaExplorer({ schemaId, onInsertQuery, onInsertVariab
                                     key={`${type}-${op.name}`}
                                     onClick={() => handleSelectOperation(op)}
                                     className="w-full text-left px-3 py-1.5 hover:bg-bg2 transition-colors cursor-pointer border-b border-border/50"
-                                    title={`Insert ${op.name} query template`}
+                                    title={strings.graphql.insertQueryTemplate.replace("{name}", op.name)}
                                 >
                                     <div className="text-xs text-text-bright font-mono truncate">{op.name}</div>
                                     {op.args.length > 0 && (

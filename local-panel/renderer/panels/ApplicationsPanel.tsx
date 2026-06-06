@@ -9,6 +9,7 @@ import {
 } from "@/lib/icons";
 import { Button, IconButton, EmptyState, PanelLayout } from "@/components/ui";
 import { strings } from "@/lib/strings";
+import { appConstants } from "@/lib/appConstants";
 import XtermLogViewer from "@/components/applications/XtermLogViewer";
 import {
     RUN_CONFIG_TYPE_INFOS,
@@ -232,8 +233,8 @@ function PathInput({
 }) {
     const browse = async () => {
         const picked = type === "folder"
-            ? await window.api.pickFolderPath(title || "Select Folder")
-            : await window.api.pickFilePath(title || "Select File", filters);
+            ? await window.api.pickFolderPath(title || strings.applications.dialogSelectFolder)
+            : await window.api.pickFilePath(title || strings.applications.dialogSelectFile, filters);
         if (picked) onChange(picked);
     };
     return (
@@ -248,10 +249,10 @@ function PathInput({
                 type="button"
                 onClick={browse}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-text-dim bg-bg1 border border-border/40 rounded hover:border-accent hover:text-accent transition-colors whitespace-nowrap"
-                title={type === "folder" ? "Browse for folder" : "Browse for file"}
+                title={type === "folder" ? strings.applications.browseFolder : strings.applications.browseFile}
             >
                 <FolderSearch2 size={12} />
-                Browse
+                {strings.applications.browse}
             </button>
         </div>
     );
@@ -350,29 +351,29 @@ function ShellFields({ type, cfg, onChange }: {
 }) {
     const c = cfg ?? { scriptPath: "", interpreter: "" };
     const filterMap: Record<string, { name: string; extensions: string[] }[]> = {
-        shell: [{ name: "Shell Scripts", extensions: ["sh", "bash", "zsh"] }, { name: "All Files", extensions: ["*"] }],
-        bat: [{ name: "Batch Files", extensions: ["bat", "cmd"] }, { name: "All Files", extensions: ["*"] }],
-        powershell: [{ name: "PowerShell", extensions: ["ps1"] }, { name: "All Files", extensions: ["*"] }],
-        vbs: [{ name: "VBScript", extensions: ["vbs"] }, { name: "All Files", extensions: ["*"] }],
+        shell: [{ name: strings.applications.filterShellScripts, extensions: ["sh", "bash", "zsh"] }, { name: strings.applications.filterAllFiles, extensions: ["*"] }],
+        bat: [{ name: strings.applications.filterBatchFiles, extensions: ["bat", "cmd"] }, { name: strings.applications.filterAllFiles, extensions: ["*"] }],
+        powershell: [{ name: strings.applications.filterPowerShell, extensions: ["ps1"] }, { name: strings.applications.filterAllFiles, extensions: ["*"] }],
+        vbs: [{ name: strings.applications.filterVbscript, extensions: ["vbs"] }, { name: strings.applications.filterAllFiles, extensions: ["*"] }],
     };
     return (
         <div className="space-y-3">
-            <FormRow label="Script File" hint="required">
+            <FormRow label={strings.applications.labelScriptFile} hint={strings.applications.hintRequired}>
                 <PathInput
                     value={c.scriptPath}
                     onChange={(v) => onChange({ ...c, scriptPath: v })}
-                    placeholder={type === "bat" ? "run.bat" : type === "powershell" ? "deploy.ps1" : type === "vbs" ? "script.vbs" : "start.sh"}
+                    placeholder={type === "bat" ? appConstants.shell.scriptBat : type === "powershell" ? appConstants.shell.scriptPowershell : type === "vbs" ? appConstants.shell.scriptVbs : appConstants.shell.scriptShell}
                     filters={filterMap[type]}
-                    title="Select Script File"
+                    title={strings.applications.dialogSelectScriptFile}
                 />
             </FormRow>
             {(type === "shell") && (
-                <FormRow label="Interpreter" hint="optional â€” default: system shell">
+                <FormRow label={strings.applications.labelInterpreter} hint={strings.applications.hintInterpreter}>
                     <input
                         className={monoInputCls}
                         value={c.interpreter ?? ""}
                         onChange={(e) => onChange({ ...c, interpreter: e.target.value })}
-                        placeholder="bash"
+                        placeholder={appConstants.shell.interpreter}
                     />
                 </FormRow>
             )}
@@ -384,33 +385,33 @@ function NodeFields({ cfg, onChange }: {
     cfg: ApplicationConfig["nodeConfig"];
     onChange: (v: ApplicationConfig["nodeConfig"]) => void;
 }) {
-    const c = cfg ?? { scriptPath: "", nodeFlags: "", inspectPort: 9229 };
+    const c = cfg ?? { scriptPath: "", nodeFlags: "", inspectPort: appConstants.node.inspectPort };
     return (
         <div className="space-y-3">
-            <FormRow label="Script File" hint="required">
+            <FormRow label={strings.applications.labelScriptFile} hint={strings.applications.hintRequired}>
                 <PathInput
                     value={c.scriptPath}
                     onChange={(v) => onChange({ ...c, scriptPath: v })}
-                    placeholder="src/index.js"
-                    filters={[{ name: "JavaScript", extensions: ["js", "mjs", "cjs", "ts"] }]}
-                    title="Select Entry Point"
+                    placeholder={appConstants.node.scriptPath}
+                    filters={[{ name: strings.applications.filterJavaScript, extensions: ["js", "mjs", "cjs", "ts"] }]}
+                    title={strings.applications.dialogSelectEntryPoint}
                 />
             </FormRow>
-            <FormRow label="Node Flags" hint="optional">
+            <FormRow label={strings.applications.labelNodeFlags} hint={strings.applications.hintOptional}>
                 <input
                     className={monoInputCls}
                     value={c.nodeFlags}
                     onChange={(e) => onChange({ ...c, nodeFlags: e.target.value })}
-                    placeholder="--experimental-vm-modules --max-old-space-size=4096"
+                    placeholder={appConstants.node.nodeFlags}
                 />
             </FormRow>
-            <FormRow label="Inspector Port" hint="for debug mode">
+            <FormRow label={strings.applications.labelInspectorPort} hint={strings.applications.hintForDebugMode}>
                 <input
                     type="number"
                     className={monoInputCls + " w-40"}
-                    value={c.inspectPort ?? 9229}
-                    onChange={(e) => onChange({ ...c, inspectPort: parseInt(e.target.value) || 9229 })}
-                    placeholder="9229"
+                    value={c.inspectPort ?? appConstants.node.inspectPort}
+                    onChange={(e) => onChange({ ...c, inspectPort: parseInt(e.target.value) || appConstants.node.inspectPort })}
+                    placeholder={appConstants.node.inspectPortPlaceholder}
                 />
             </FormRow>
         </div>
@@ -421,18 +422,18 @@ function NpmFields({ cfg, onChange }: {
     cfg: ApplicationConfig["npmConfig"];
     onChange: (v: ApplicationConfig["npmConfig"]) => void;
 }) {
-    const c = cfg ?? { scriptName: "start", packageManager: "npm" };
+    const c = cfg ?? { scriptName: appConstants.npm.scriptName, packageManager: "npm" };
     return (
         <div className="grid grid-cols-2 gap-3">
-            <FormRow label="Script Name" hint="from package.json scripts">
+            <FormRow label={strings.applications.labelScriptName} hint={strings.applications.hintScriptName}>
                 <input
                     className={monoInputCls}
                     value={c.scriptName}
                     onChange={(e) => onChange({ ...c, scriptName: e.target.value })}
-                    placeholder="start"
+                    placeholder={appConstants.npm.scriptName}
                 />
             </FormRow>
-            <FormRow label="Package Manager">
+            <FormRow label={strings.applications.labelPackageManager}>
                 <select
                     className={inputCls}
                     value={c.packageManager}
@@ -454,7 +455,7 @@ function PythonFields({ cfg, onChange }: {
     const c = cfg ?? { mode: "script", scriptPath: "", moduleName: "" };
     return (
         <div className="space-y-3">
-            <FormRow label="Launch Mode">
+            <FormRow label={strings.applications.labelLaunchMode}>
                 <div className="flex gap-2">
                     {(["script", "module"] as const).map(m => (
                         <button
@@ -463,28 +464,28 @@ function PythonFields({ cfg, onChange }: {
                             onClick={() => onChange({ ...c, mode: m })}
                             className={`px-3 py-1 text-xs rounded border transition-all ${c.mode === m ? "border-accent bg-accent/10 text-text-bright" : "border-border/30 text-text-dim hover:border-border/60"}`}
                         >
-                            {m === "script" ? "Script File" : "Module (-m)"}
+                            {m === "script" ? strings.applications.labelScriptFile : strings.applications.labelModule}
                         </button>
                     ))}
                 </div>
             </FormRow>
             {c.mode === "script" ? (
-                <FormRow label="Script File" hint="required">
+                <FormRow label={strings.applications.labelScriptFile} hint={strings.applications.hintRequired}>
                     <PathInput
                         value={c.scriptPath}
                         onChange={(v) => onChange({ ...c, scriptPath: v })}
-                        placeholder="main.py"
-                        filters={[{ name: "Python Files", extensions: ["py"] }]}
-                        title="Select Python Script"
+                        placeholder={appConstants.python.scriptPath}
+                        filters={[{ name: strings.applications.filterPythonFiles, extensions: ["py"] }]}
+                        title={strings.applications.dialogSelectPythonScript}
                     />
                 </FormRow>
             ) : (
-                <FormRow label="Module Name" hint="e.g. uvicorn.main">
+                <FormRow label={strings.applications.labelModuleName} hint={strings.applications.hintModuleName}>
                     <input
                         className={monoInputCls}
                         value={c.moduleName}
                         onChange={(e) => onChange({ ...c, moduleName: e.target.value })}
-                        placeholder="mypackage.server"
+                        placeholder={appConstants.python.moduleName}
                     />
                 </FormRow>
             )}
@@ -500,7 +501,7 @@ function JavaFields({ cfg, onChange }: {
     const c = cfg ?? { launchMode: "mainClass", mainClass: "", jarPath: "", classpath: "", vmOptions: "", systemProperties: "" };
     return (
         <div className="space-y-3">
-            <FormRow label="Launch Mode">
+            <FormRow label={strings.applications.labelLaunchMode}>
                 <div className="flex gap-2">
                     {(["mainClass", "jar"] as const).map(m => (
                         <button
@@ -509,58 +510,58 @@ function JavaFields({ cfg, onChange }: {
                             onClick={() => onChange({ ...c, launchMode: m })}
                             className={`px-3 py-1 text-xs rounded border transition-all ${c.launchMode === m ? "border-accent bg-accent/10 text-text-bright" : "border-border/30 text-text-dim hover:border-border/60"}`}
                         >
-                            {m === "mainClass" ? "Main Class" : "JAR File"}
+                            {m === "mainClass" ? strings.applications.labelMainClass : strings.applications.labelJarFile}
                         </button>
                     ))}
                 </div>
             </FormRow>
             {c.launchMode === "mainClass" ? (
-                <FormRow label="Main Class" hint="required â€” e.g. com.example.Application">
+                <FormRow label={strings.applications.labelMainClass} hint={strings.applications.hintMainClass}>
                     <input
                         className={monoInputCls}
                         value={c.mainClass}
                         onChange={(e) => onChange({ ...c, mainClass: e.target.value })}
-                        placeholder="com.example.MainApplication"
+                        placeholder={appConstants.java.mainClass}
                     />
                 </FormRow>
             ) : (
-                <FormRow label="JAR File" hint="required">
+                <FormRow label={strings.applications.labelJarFile} hint={strings.applications.hintRequired}>
                     <PathInput
                         value={c.jarPath}
                         onChange={(v) => onChange({ ...c, jarPath: v })}
-                        placeholder="target/app.jar"
-                        filters={[{ name: "JAR Files", extensions: ["jar"] }]}
-                        title="Select JAR File"
+                        placeholder={appConstants.java.jarPath}
+                        filters={[{ name: strings.applications.filterJarFiles, extensions: ["jar"] }]}
+                        title={strings.applications.dialogSelectJarFile}
                     />
                 </FormRow>
             )}
-            <FormRow label="Classpath" hint="colon/semicolon separated or . for CWD">
+            <FormRow label={strings.applications.labelClasspath} hint={strings.applications.hintClasspath}>
                 <input
                     className={monoInputCls}
                     value={c.classpath}
                     onChange={(e) => onChange({ ...c, classpath: e.target.value })}
-                    placeholder="target/classes:lib/*"
+                    placeholder={appConstants.java.classpath}
                 />
             </FormRow>
-            <FormRow label="VM Options" hint="-Xmx, -Xms, GC flags, etc.">
+            <FormRow label={strings.applications.labelVmOptions} hint={strings.applications.hintVmOptions}>
                 <input
                     className={monoInputCls}
                     value={c.vmOptions}
                     onChange={(e) => onChange({ ...c, vmOptions: e.target.value })}
-                    placeholder="-Xmx2g -Xms512m -XX:+UseG1GC"
+                    placeholder={appConstants.java.vmOptions}
                 />
             </FormRow>
-            <FormRow label="System Properties" hint="-Dkey=value, one per line">
+            <FormRow label={strings.applications.labelSystemProperties} hint={strings.applications.hintSystemProperties}>
                 <textarea
                     className={textareaCls}
                     rows={3}
                     value={c.systemProperties}
                     onChange={(e) => onChange({ ...c, systemProperties: e.target.value })}
-                    placeholder={"-Dserver.port=8080\n-Dspring.profiles.active=dev\n-Dlogging.level.root=INFO"}
+                    placeholder={appConstants.java.systemProperties}
                 />
             </FormRow>
             <Checkbox
-                label="Enable assertions (-ea)"
+                label={strings.applications.checkboxEnableAssertions}
                 checked={!!c.enableAssertions}
                 onChange={(v) => onChange({ ...c, enableAssertions: v })}
             />
@@ -575,7 +576,7 @@ function SpringBootFields({ cfg, onChange }: {
     const c = cfg ?? { buildTool: "maven", activeProfiles: "", vmArgs: "", programArgs: "", mainClass: "", beforeLaunchGoal: "" };
     return (
         <div className="space-y-3">
-            <FormRow label="Build Tool">
+            <FormRow label={strings.applications.labelBuildTool}>
                 <div className="flex gap-2">
                     {(["maven", "gradle"] as const).map(bt => (
                         <button
@@ -585,51 +586,51 @@ function SpringBootFields({ cfg, onChange }: {
                             className={`px-3 py-1 text-xs rounded border transition-all flex items-center gap-1.5 ${c.buildTool === bt ? "border-accent bg-accent/10 text-text-bright" : "border-border/30 text-text-dim hover:border-border/60"}`}
                         >
                             {bt === "maven" ? <Package2 size={11} /> : <Hammer size={11} />}
-                            {bt === "maven" ? "Maven" : "Gradle"}
+                            {bt === "maven" ? strings.applications.buildToolMaven : strings.applications.buildToolGradle}
                         </button>
                     ))}
                 </div>
             </FormRow>
             <div className="grid grid-cols-2 gap-3">
-                <FormRow label="Active Profiles" hint="comma-separated">
+                <FormRow label={strings.applications.labelActiveProfiles} hint={strings.applications.hintCommaSeparated}>
                     <input
                         className={monoInputCls}
                         value={c.activeProfiles}
                         onChange={(e) => onChange({ ...c, activeProfiles: e.target.value })}
-                        placeholder="dev,local"
+                        placeholder={appConstants.springBoot.activeProfiles}
                     />
                 </FormRow>
-                <FormRow label="Main Class" hint="optional â€” auto-detected">
+                <FormRow label={strings.applications.labelMainClass} hint={strings.applications.hintMainClassAutoDetected}>
                     <input
                         className={monoInputCls}
                         value={c.mainClass ?? ""}
                         onChange={(e) => onChange({ ...c, mainClass: e.target.value })}
-                        placeholder="com.example.Application"
+                        placeholder={appConstants.springBoot.mainClass}
                     />
                 </FormRow>
             </div>
-            <FormRow label="VM Arguments">
+            <FormRow label={strings.applications.labelVmArguments}>
                 <input
                     className={monoInputCls}
                     value={c.vmArgs}
                     onChange={(e) => onChange({ ...c, vmArgs: e.target.value })}
-                    placeholder="-Xmx512m -Xms256m -Dspring.devtools.restart.enabled=true"
+                    placeholder={appConstants.springBoot.vmArgs}
                 />
             </FormRow>
-            <FormRow label="Program Arguments">
+            <FormRow label={strings.applications.labelProgramArguments}>
                 <input
                     className={monoInputCls}
                     value={c.programArgs}
                     onChange={(e) => onChange({ ...c, programArgs: e.target.value })}
-                    placeholder="--server.port=8080 --debug"
+                    placeholder={appConstants.springBoot.programArgs}
                 />
             </FormRow>
-            <FormRow label="Before Launch Goal" hint="optional â€” compile step">
+            <FormRow label={strings.applications.labelBeforeLaunchGoal} hint={strings.applications.hintBeforeLaunchGoal}>
                 <input
                     className={monoInputCls}
                     value={c.beforeLaunchGoal}
                     onChange={(e) => onChange({ ...c, beforeLaunchGoal: e.target.value })}
-                    placeholder={c.buildTool === "maven" ? "mvn compile" : "./gradlew classes"}
+                    placeholder={c.buildTool === "maven" ? appConstants.springBoot.beforeLaunchGoalMaven : appConstants.springBoot.beforeLaunchGoalGradle}
                 />
             </FormRow>
         </div>
@@ -640,38 +641,38 @@ function MavenFields({ cfg, onChange }: {
     cfg: ApplicationConfig["mavenConfig"];
     onChange: (v: ApplicationConfig["mavenConfig"]) => void;
 }) {
-    const c = cfg ?? { executable: "./mvnw", goals: "clean spring-boot:run", profiles: "", properties: "", jvmArgs: "", pomFile: "", settingsFile: "", skipTests: false };
+    const c = cfg ?? { executable: appConstants.maven.executable, goals: appConstants.maven.goals, profiles: "", properties: "", jvmArgs: "", pomFile: "", settingsFile: "", skipTests: false };
     return (
         <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
-                <FormRow label="Maven Executable">
-                    <input className={monoInputCls} value={c.executable} onChange={(e) => onChange({ ...c, executable: e.target.value })} placeholder="./mvnw" />
+                <FormRow label={strings.applications.labelMavenExecutable}>
+                    <input className={monoInputCls} value={c.executable} onChange={(e) => onChange({ ...c, executable: e.target.value })} placeholder={appConstants.maven.executable} />
                 </FormRow>
                 <div className="col-span-2">
-                    <FormRow label="POM File" hint="optional â€” uses pom.xml in working dir">
-                        <PathInput value={c.pomFile ?? ""} onChange={(v) => onChange({ ...c, pomFile: v })} placeholder="pom.xml" filters={[{ name: "POM Files", extensions: ["xml"] }]} title="Select pom.xml" />
+                    <FormRow label={strings.applications.labelPomFile} hint={strings.applications.hintPomFile}>
+                        <PathInput value={c.pomFile ?? ""} onChange={(v) => onChange({ ...c, pomFile: v })} placeholder={appConstants.maven.pomFile} filters={[{ name: strings.applications.filterPomFiles, extensions: ["xml"] }]} title={strings.applications.dialogSelectPom} />
                     </FormRow>
                 </div>
             </div>
-            <FormRow label="Goals" hint="space or comma separated">
-                <input className={monoInputCls} value={c.goals} onChange={(e) => onChange({ ...c, goals: e.target.value })} placeholder="clean spring-boot:run" />
+            <FormRow label={strings.applications.labelGoals} hint={strings.applications.hintGoals}>
+                <input className={monoInputCls} value={c.goals} onChange={(e) => onChange({ ...c, goals: e.target.value })} placeholder={appConstants.maven.goals} />
             </FormRow>
             <div className="grid grid-cols-2 gap-3">
-                <FormRow label="Profiles (-P)" hint="comma-separated">
-                    <input className={monoInputCls} value={c.profiles} onChange={(e) => onChange({ ...c, profiles: e.target.value })} placeholder="dev,local" />
+                <FormRow label={strings.applications.labelProfiles} hint={strings.applications.hintCommaSeparated}>
+                    <input className={monoInputCls} value={c.profiles} onChange={(e) => onChange({ ...c, profiles: e.target.value })} placeholder={appConstants.maven.profiles} />
                 </FormRow>
-                <FormRow label="JVM Arguments">
-                    <input className={monoInputCls} value={c.jvmArgs} onChange={(e) => onChange({ ...c, jvmArgs: e.target.value })} placeholder="-Xmx1g" />
+                <FormRow label={strings.applications.labelJvmArguments}>
+                    <input className={monoInputCls} value={c.jvmArgs} onChange={(e) => onChange({ ...c, jvmArgs: e.target.value })} placeholder={appConstants.maven.jvmArgs} />
                 </FormRow>
             </div>
-            <FormRow label="Properties (-D)" hint="one -Dkey=value per line">
-                <textarea className={textareaCls} rows={3} value={c.properties} onChange={(e) => onChange({ ...c, properties: e.target.value })} placeholder={"-Dserver.port=8080\n-Dspring.profiles.active=dev"} />
+            <FormRow label={strings.applications.labelPropertiesD} hint={strings.applications.hintPropertiesD}>
+                <textarea className={textareaCls} rows={3} value={c.properties} onChange={(e) => onChange({ ...c, properties: e.target.value })} placeholder={appConstants.maven.properties} />
             </FormRow>
             <div className="flex items-center gap-4">
-                <Checkbox label="Skip tests (-DskipTests)" checked={!!c.skipTests} onChange={(v) => onChange({ ...c, skipTests: v })} />
+                <Checkbox label={strings.applications.checkboxSkipTestsMaven} checked={!!c.skipTests} onChange={(v) => onChange({ ...c, skipTests: v })} />
             </div>
-            <FormRow label="Settings File (-s)" hint="optional">
-                <PathInput value={c.settingsFile ?? ""} onChange={(v) => onChange({ ...c, settingsFile: v })} placeholder="settings.xml" filters={[{ name: "XML Files", extensions: ["xml"] }]} title="Select settings.xml" />
+            <FormRow label={strings.applications.labelSettingsFile} hint={strings.applications.hintOptional}>
+                <PathInput value={c.settingsFile ?? ""} onChange={(v) => onChange({ ...c, settingsFile: v })} placeholder={appConstants.maven.settingsFile} filters={[{ name: strings.applications.filterXmlFiles, extensions: ["xml"] }]} title={strings.applications.dialogSelectSettings} />
             </FormRow>
         </div>
     );
@@ -681,34 +682,34 @@ function GradleFields({ cfg, onChange }: {
     cfg: ApplicationConfig["gradleConfig"];
     onChange: (v: ApplicationConfig["gradleConfig"]) => void;
 }) {
-    const c = cfg ?? { executable: "./gradlew", tasks: "bootRun", projectDir: "", jvmArgs: "", properties: "", skipTests: false, extraArgs: "" };
+    const c = cfg ?? { executable: appConstants.gradle.executable, tasks: appConstants.gradle.tasks, projectDir: "", jvmArgs: "", properties: "", skipTests: false, extraArgs: "" };
     return (
         <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
-                <FormRow label="Gradle Executable">
-                    <input className={monoInputCls} value={c.executable} onChange={(e) => onChange({ ...c, executable: e.target.value })} placeholder="./gradlew" />
+                <FormRow label={strings.applications.labelGradleExecutable}>
+                    <input className={monoInputCls} value={c.executable} onChange={(e) => onChange({ ...c, executable: e.target.value })} placeholder={appConstants.gradle.executable} />
                 </FormRow>
                 <div className="col-span-2">
-                    <FormRow label="Project Directory" hint="optional">
-                        <PathInput value={c.projectDir ?? ""} onChange={(v) => onChange({ ...c, projectDir: v })} placeholder="." type="folder" title="Select Gradle Project" />
+                    <FormRow label={strings.applications.labelProjectDirectory} hint={strings.applications.hintOptional}>
+                        <PathInput value={c.projectDir ?? ""} onChange={(v) => onChange({ ...c, projectDir: v })} placeholder={appConstants.gradle.projectDir} type="folder" title={strings.applications.dialogSelectGradleProject} />
                     </FormRow>
                 </div>
             </div>
-            <FormRow label="Tasks">
-                <input className={monoInputCls} value={c.tasks} onChange={(e) => onChange({ ...c, tasks: e.target.value })} placeholder="bootRun" />
+            <FormRow label={strings.applications.labelTasks}>
+                <input className={monoInputCls} value={c.tasks} onChange={(e) => onChange({ ...c, tasks: e.target.value })} placeholder={appConstants.gradle.tasks} />
             </FormRow>
             <div className="grid grid-cols-2 gap-3">
-                <FormRow label="JVM Arguments">
-                    <input className={monoInputCls} value={c.jvmArgs} onChange={(e) => onChange({ ...c, jvmArgs: e.target.value })} placeholder="-Xmx1g" />
+                <FormRow label={strings.applications.labelJvmArguments}>
+                    <input className={monoInputCls} value={c.jvmArgs} onChange={(e) => onChange({ ...c, jvmArgs: e.target.value })} placeholder={appConstants.gradle.jvmArgs} />
                 </FormRow>
-                <FormRow label="Extra Arguments">
-                    <input className={monoInputCls} value={c.extraArgs} onChange={(e) => onChange({ ...c, extraArgs: e.target.value })} placeholder="--info" />
+                <FormRow label={strings.applications.labelExtraArguments}>
+                    <input className={monoInputCls} value={c.extraArgs} onChange={(e) => onChange({ ...c, extraArgs: e.target.value })} placeholder={appConstants.gradle.extraArgs} />
                 </FormRow>
             </div>
-            <FormRow label="Properties (-P)" hint="one -Pkey=value per line">
-                <textarea className={textareaCls} rows={2} value={c.properties} onChange={(e) => onChange({ ...c, properties: e.target.value })} placeholder={"-Pprofile=dev"} />
+            <FormRow label={strings.applications.labelPropertiesP} hint={strings.applications.hintPropertiesP}>
+                <textarea className={textareaCls} rows={2} value={c.properties} onChange={(e) => onChange({ ...c, properties: e.target.value })} placeholder={appConstants.gradle.properties} />
             </FormRow>
-            <Checkbox label="Skip tests (-x test)" checked={!!c.skipTests} onChange={(v) => onChange({ ...c, skipTests: v })} />
+            <Checkbox label={strings.applications.checkboxSkipTestsGradle} checked={!!c.skipTests} onChange={(v) => onChange({ ...c, skipTests: v })} />
         </div>
     );
 }
@@ -720,24 +721,24 @@ function DotnetFields({ cfg, onChange }: {
     const c = cfg ?? { projectFile: "", configuration: "Debug", framework: "", launchProfile: "", noBuild: false };
     return (
         <div className="space-y-3">
-            <FormRow label="Project File (.csproj / .fsproj)" hint="required">
-                <PathInput value={c.projectFile} onChange={(v) => onChange({ ...c, projectFile: v })} placeholder="MyApp.csproj" filters={[{ name: "Project Files", extensions: ["csproj", "fsproj", "vbproj"] }]} title="Select Project File" />
+            <FormRow label={strings.applications.labelProjectFile} hint={strings.applications.hintRequired}>
+                <PathInput value={c.projectFile} onChange={(v) => onChange({ ...c, projectFile: v })} placeholder={appConstants.dotnet.projectFile} filters={[{ name: strings.applications.filterProjectFiles, extensions: ["csproj", "fsproj", "vbproj"] }]} title={strings.applications.dialogSelectProjectFile} />
             </FormRow>
             <div className="grid grid-cols-2 gap-3">
-                <FormRow label="Configuration">
+                <FormRow label={strings.applications.labelConfiguration}>
                     <select className={inputCls} value={c.configuration} onChange={(e) => onChange({ ...c, configuration: e.target.value as "Debug" | "Release" })}>
                         <option value="Debug">Debug</option>
                         <option value="Release">Release</option>
                     </select>
                 </FormRow>
-                <FormRow label="Target Framework" hint="optional">
-                    <input className={monoInputCls} value={c.framework ?? ""} onChange={(e) => onChange({ ...c, framework: e.target.value })} placeholder="net8.0" />
+                <FormRow label={strings.applications.labelTargetFramework} hint={strings.applications.hintOptional}>
+                    <input className={monoInputCls} value={c.framework ?? ""} onChange={(e) => onChange({ ...c, framework: e.target.value })} placeholder={appConstants.dotnet.framework} />
                 </FormRow>
             </div>
-            <FormRow label="Launch Profile" hint="from launchSettings.json â€” optional">
-                <input className={monoInputCls} value={c.launchProfile ?? ""} onChange={(e) => onChange({ ...c, launchProfile: e.target.value })} placeholder="https" />
+            <FormRow label={strings.applications.labelLaunchProfile} hint={strings.applications.hintLaunchProfile}>
+                <input className={monoInputCls} value={c.launchProfile ?? ""} onChange={(e) => onChange({ ...c, launchProfile: e.target.value })} placeholder={appConstants.dotnet.launchProfile} />
             </FormRow>
-            <Checkbox label="No Build (--no-build)" checked={!!c.noBuild} onChange={(v) => onChange({ ...c, noBuild: v })} />
+            <Checkbox label={strings.applications.checkboxNoBuild} checked={!!c.noBuild} onChange={(v) => onChange({ ...c, noBuild: v })} />
         </div>
     );
 }
@@ -746,16 +747,16 @@ function GoFields({ cfg, onChange }: {
     cfg: ApplicationConfig["goConfig"];
     onChange: (v: ApplicationConfig["goConfig"]) => void;
 }) {
-    const c = cfg ?? { packagePath: "./...", buildFlags: "", raceDetector: false };
+    const c = cfg ?? { packagePath: appConstants.go.packagePathDefault, buildFlags: "", raceDetector: false };
     return (
         <div className="space-y-3">
-            <FormRow label="Package Path" hint="e.g. ./cmd/server or ./...">
-                <input className={monoInputCls} value={c.packagePath} onChange={(e) => onChange({ ...c, packagePath: e.target.value })} placeholder="./cmd/server" />
+            <FormRow label={strings.applications.labelPackagePath} hint={strings.applications.hintPackagePath}>
+                <input className={monoInputCls} value={c.packagePath} onChange={(e) => onChange({ ...c, packagePath: e.target.value })} placeholder={appConstants.go.packagePath} />
             </FormRow>
-            <FormRow label="Build Flags" hint="optional">
-                <input className={monoInputCls} value={c.buildFlags} onChange={(e) => onChange({ ...c, buildFlags: e.target.value })} placeholder='-ldflags "-s -w"' />
+            <FormRow label={strings.applications.labelBuildFlags} hint={strings.applications.hintOptional}>
+                <input className={monoInputCls} value={c.buildFlags} onChange={(e) => onChange({ ...c, buildFlags: e.target.value })} placeholder={appConstants.go.buildFlags} />
             </FormRow>
-            <Checkbox label="Race Detector (-race)" checked={!!c.raceDetector} onChange={(v) => onChange({ ...c, raceDetector: v })} />
+            <Checkbox label={strings.applications.checkboxRaceDetector} checked={!!c.raceDetector} onChange={(v) => onChange({ ...c, raceDetector: v })} />
         </div>
     );
 }
@@ -767,51 +768,51 @@ function DockerFields({ cfg, onChange }: {
     const c = cfg ?? { runMode: "image", image: "", dockerfile: "", buildContext: "", ports: "", volumes: "", envVars: "", network: "", entrypoint: "", extraArgs: "" };
     return (
         <div className="space-y-3">
-            <FormRow label="Run Mode">
+            <FormRow label={strings.applications.labelRunMode}>
                 <div className="flex gap-2">
                     {(["image", "build"] as const).map(m => (
                         <button key={m} type="button" onClick={() => onChange({ ...c, runMode: m })}
                             className={`px-3 py-1 text-xs rounded border transition-all ${c.runMode === m ? "border-accent bg-accent/10 text-text-bright" : "border-border/30 text-text-dim hover:border-border/60"}`}>
-                            {m === "image" ? "Pull Image" : "Build & Run"}
+                            {m === "image" ? strings.applications.runModePullImage : strings.applications.runModeBuildRun}
                         </button>
                     ))}
                 </div>
             </FormRow>
             {c.runMode === "image" ? (
-                <FormRow label="Image" hint="required">
-                    <input className={monoInputCls} value={c.image} onChange={(e) => onChange({ ...c, image: e.target.value })} placeholder="nginx:latest" />
+                <FormRow label={strings.applications.labelImage} hint={strings.applications.hintRequired}>
+                    <input className={monoInputCls} value={c.image} onChange={(e) => onChange({ ...c, image: e.target.value })} placeholder={appConstants.docker.image} />
                 </FormRow>
             ) : (
                 <div className="grid grid-cols-2 gap-3">
-                    <FormRow label="Dockerfile">
-                        <PathInput value={c.dockerfile ?? ""} onChange={(v) => onChange({ ...c, dockerfile: v })} placeholder="Dockerfile" filters={[{ name: "Dockerfile", extensions: ["*"] }]} title="Select Dockerfile" />
+                    <FormRow label={strings.applications.labelDockerfile}>
+                        <PathInput value={c.dockerfile ?? ""} onChange={(v) => onChange({ ...c, dockerfile: v })} placeholder={appConstants.docker.dockerfile} filters={[{ name: strings.applications.filterDockerfile, extensions: ["*"] }]} title={strings.applications.dialogSelectDockerfile} />
                     </FormRow>
-                    <FormRow label="Build Context">
-                        <PathInput value={c.buildContext ?? ""} onChange={(v) => onChange({ ...c, buildContext: v })} placeholder="." type="folder" title="Select Build Context" />
+                    <FormRow label={strings.applications.labelBuildContext}>
+                        <PathInput value={c.buildContext ?? ""} onChange={(v) => onChange({ ...c, buildContext: v })} placeholder={appConstants.docker.buildContext} type="folder" title={strings.applications.dialogSelectBuildContext} />
                     </FormRow>
                 </div>
             )}
             <div className="grid grid-cols-2 gap-3">
-                <FormRow label="Port Mappings" hint="host:container, one per line">
-                    <textarea className={textareaCls} rows={3} value={c.ports} onChange={(e) => onChange({ ...c, ports: e.target.value })} placeholder={"8080:80\n3000:3000"} />
+                <FormRow label={strings.applications.labelPortMappings} hint={strings.applications.hintHostContainer}>
+                    <textarea className={textareaCls} rows={3} value={c.ports} onChange={(e) => onChange({ ...c, ports: e.target.value })} placeholder={appConstants.docker.ports} />
                 </FormRow>
-                <FormRow label="Volume Mounts" hint="host:container, one per line">
-                    <textarea className={textareaCls} rows={3} value={c.volumes} onChange={(e) => onChange({ ...c, volumes: e.target.value })} placeholder={"./data:/data\n./config:/app/config"} />
+                <FormRow label={strings.applications.labelVolumeMounts} hint={strings.applications.hintHostContainer}>
+                    <textarea className={textareaCls} rows={3} value={c.volumes} onChange={(e) => onChange({ ...c, volumes: e.target.value })} placeholder={appConstants.docker.volumes} />
                 </FormRow>
             </div>
-            <FormRow label="Environment Variables" hint="KEY=VALUE, one per line">
-                <textarea className={textareaCls} rows={3} value={c.envVars} onChange={(e) => onChange({ ...c, envVars: e.target.value })} placeholder={"NODE_ENV=production\nPORT=3000"} />
+            <FormRow label={strings.applications.labelEnvironmentVariables} hint={strings.applications.hintEnvVars}>
+                <textarea className={textareaCls} rows={3} value={c.envVars} onChange={(e) => onChange({ ...c, envVars: e.target.value })} placeholder={appConstants.docker.envVars} />
             </FormRow>
             <div className="grid grid-cols-2 gap-3">
-                <FormRow label="Network" hint="optional">
-                    <input className={monoInputCls} value={c.network ?? ""} onChange={(e) => onChange({ ...c, network: e.target.value })} placeholder="my-network" />
+                <FormRow label={strings.applications.labelNetwork} hint={strings.applications.hintOptional}>
+                    <input className={monoInputCls} value={c.network ?? ""} onChange={(e) => onChange({ ...c, network: e.target.value })} placeholder={appConstants.docker.network} />
                 </FormRow>
-                <FormRow label="Entrypoint Override" hint="optional">
-                    <input className={monoInputCls} value={c.entrypoint ?? ""} onChange={(e) => onChange({ ...c, entrypoint: e.target.value })} placeholder="/bin/sh" />
+                <FormRow label={strings.applications.labelEntrypointOverride} hint={strings.applications.hintOptional}>
+                    <input className={monoInputCls} value={c.entrypoint ?? ""} onChange={(e) => onChange({ ...c, entrypoint: e.target.value })} placeholder={appConstants.docker.entrypoint} />
                 </FormRow>
             </div>
-            <FormRow label="Extra docker run Arguments">
-                <input className={monoInputCls} value={c.extraArgs} onChange={(e) => onChange({ ...c, extraArgs: e.target.value })} placeholder="--rm --name mycontainer" />
+            <FormRow label={strings.applications.labelExtraDockerRunArguments}>
+                <input className={monoInputCls} value={c.extraArgs} onChange={(e) => onChange({ ...c, extraArgs: e.target.value })} placeholder={appConstants.docker.extraArgs} />
             </FormRow>
         </div>
     );
@@ -821,25 +822,25 @@ function DockerComposeFields({ cfg, onChange }: {
     cfg: ApplicationConfig["dockerComposeConfig"];
     onChange: (v: ApplicationConfig["dockerComposeConfig"]) => void;
 }) {
-    const c = cfg ?? { composeFile: "docker-compose.yml", services: "", profile: "", build: false, extraArgs: "" };
+    const c = cfg ?? { composeFile: appConstants.dockerCompose.composeFile, services: "", profile: "", build: false, extraArgs: "" };
     return (
         <div className="space-y-3">
-            <FormRow label="Compose File" hint="required">
-                <PathInput value={c.composeFile} onChange={(v) => onChange({ ...c, composeFile: v })} placeholder="docker-compose.yml"
-                    filters={[{ name: "Compose Files", extensions: ["yml", "yaml"] }]} title="Select Compose File" />
+            <FormRow label={strings.applications.labelComposeFile} hint={strings.applications.hintRequired}>
+                <PathInput value={c.composeFile} onChange={(v) => onChange({ ...c, composeFile: v })} placeholder={appConstants.dockerCompose.composeFile}
+                    filters={[{ name: strings.applications.filterComposeFiles, extensions: ["yml", "yaml"] }]} title={strings.applications.dialogSelectComposeFile} />
             </FormRow>
             <div className="grid grid-cols-2 gap-3">
-                <FormRow label="Services" hint="optional â€” space-separated">
-                    <input className={monoInputCls} value={c.services ?? ""} onChange={(e) => onChange({ ...c, services: e.target.value })} placeholder="web db redis" />
+                <FormRow label={strings.applications.labelServices} hint={strings.applications.hintServices}>
+                    <input className={monoInputCls} value={c.services ?? ""} onChange={(e) => onChange({ ...c, services: e.target.value })} placeholder={appConstants.dockerCompose.services} />
                 </FormRow>
-                <FormRow label="Profile" hint="optional">
-                    <input className={monoInputCls} value={c.profile ?? ""} onChange={(e) => onChange({ ...c, profile: e.target.value })} placeholder="development" />
+                <FormRow label={strings.applications.labelProfile} hint={strings.applications.hintOptional}>
+                    <input className={monoInputCls} value={c.profile ?? ""} onChange={(e) => onChange({ ...c, profile: e.target.value })} placeholder={appConstants.dockerCompose.profile} />
                 </FormRow>
             </div>
-            <FormRow label="Extra Arguments">
-                <input className={monoInputCls} value={c.extraArgs} onChange={(e) => onChange({ ...c, extraArgs: e.target.value })} placeholder="--remove-orphans" />
+            <FormRow label={strings.applications.labelExtraArguments}>
+                <input className={monoInputCls} value={c.extraArgs} onChange={(e) => onChange({ ...c, extraArgs: e.target.value })} placeholder={appConstants.dockerCompose.extraArgs} />
             </FormRow>
-            <Checkbox label="Build images before starting (--build)" checked={!!c.build} onChange={(v) => onChange({ ...c, build: v })} />
+            <Checkbox label={strings.applications.checkboxBuildImages} checked={!!c.build} onChange={(v) => onChange({ ...c, build: v })} />
         </div>
     );
 }
@@ -950,7 +951,7 @@ function AppConfigForm({
                 <div className="flex-1">
                     <input
                         className="w-full bg-transparent text-lg font-semibold text-text-bright outline-none placeholder:text-text-dim/40 border-b border-transparent focus:border-accent/50 transition-colors pb-0.5"
-                        placeholder="Configuration nameâ€¦"
+                        placeholder={s.configNamePlaceholder}
                         value={form.name}
                         onChange={(e) => patch("name", e.target.value)}
                         required
@@ -972,7 +973,7 @@ function AppConfigForm({
 
                 {/* Type Selector */}
                 <div>
-                    <SectionHeader title="Run Configuration Type" expanded={true} onToggle={() => { }} />
+                    <SectionHeader title={s.sectionRunConfigType} expanded={true} onToggle={() => { }} />
                     <div className="mt-2">
                         <TypeSelector
                             value={form.type}
@@ -985,23 +986,23 @@ function AppConfigForm({
                 {/* Working Directory */}
                 <div className="space-y-2">
                     <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-text-dim uppercase tracking-wide">Working Directory</span>
+                        <span className="text-xs font-semibold text-text-dim uppercase tracking-wide">{s.labelWorkingDirectory}</span>
                         <div className="flex-1 h-px bg-border/20 ml-1" />
-                        <span className="text-xs text-text-dim/50 italic">required</span>
+                        <span className="text-xs text-text-dim/50 italic">{s.hintRequired}</span>
                     </div>
                     <PathInput
                         value={form.workingDirectory}
                         onChange={(v) => patch("workingDirectory", v)}
-                        placeholder="/path/to/project"
+                        placeholder={appConstants.common.workingDirectory}
                         type="folder"
-                        title="Select Project Directory"
+                        title={s.dialogSelectProjectDirectory}
                     />
                 </div>
 
                 {/* Type-specific fields */}
                 <div className="space-y-2">
                     <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-text-dim uppercase tracking-wide">{typeInfo?.label ?? "Configuration"}</span>
+                        <span className="text-xs font-semibold text-text-dim uppercase tracking-wide">{typeInfo?.label ?? s.sectionConfiguration}</span>
                         <div className="flex-1 h-px bg-border/20 ml-1" />
                     </div>
                     <div className="mt-2">
@@ -1025,38 +1026,38 @@ function AppConfigForm({
                 {/* Common: program arguments */}
                 <div className="space-y-2">
                     <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-text-dim uppercase tracking-wide">Program Arguments</span>
+                        <span className="text-xs font-semibold text-text-dim uppercase tracking-wide">{s.labelProgramArguments}</span>
                         <div className="flex-1 h-px bg-border/20 ml-1" />
-                        <span className="text-xs text-text-dim/50 italic">optional</span>
+                        <span className="text-xs text-text-dim/50 italic">{s.hintOptional}</span>
                     </div>
                     <input
                         className={monoInputCls}
                         value={form.args}
                         onChange={(e) => patch("args", e.target.value)}
-                        placeholder="--port 3000 --env production"
+                        placeholder={appConstants.common.programArgs}
                     />
                 </div>
 
                 {/* Collapsible: Before launch */}
                 <div>
-                    <SectionHeader title="Before Launch" expanded={beforeLaunchExpanded} onToggle={() => setBeforeLaunchExpanded(p => !p)} />
+                    <SectionHeader title={s.sectionBeforeLaunch} expanded={beforeLaunchExpanded} onToggle={() => setBeforeLaunchExpanded(p => !p)} />
                     {beforeLaunchExpanded && (
                         <div className="mt-2 grid grid-cols-2 gap-3">
-                            <FormRow label="Pre-run Command" hint="runs in working directory before start">
+                            <FormRow label={s.labelPreRunCommand} hint={s.hintPreRunCommand}>
                                 <input
                                     className={monoInputCls}
                                     value={form.preRunCommand}
                                     onChange={(e) => patch("preRunCommand", e.target.value)}
-                                    placeholder="npm install"
+                                    placeholder={appConstants.common.preRunCommand}
                                 />
                             </FormRow>
-                            <FormRow label="Debug Port Override" hint="default: auto">
+                            <FormRow label={s.labelDebugPortOverride} hint={s.hintDebugPortOverride}>
                                 <input
                                     type="number"
                                     className={monoInputCls}
                                     value={form.debugPort}
                                     onChange={(e) => patch("debugPort", e.target.value)}
-                                    placeholder="9229"
+                                    placeholder={appConstants.common.debugPort}
                                 />
                             </FormRow>
                         </div>
@@ -1071,24 +1072,25 @@ function AppConfigForm({
 // ── Runtime / port helpers ──────────────────────────────────────────────────
 
 function deriveRuntime(app: ApplicationConfig): string {
+    const r = strings.applications;
     switch (app.type) {
-        case "node": return "Node.js";
-        case "npm": return "Node.js";
-        case "python": return "Python";
-        case "java": return "Java";
-        case "spring-boot": return "Spring Boot";
-        case "maven": return "Maven";
-        case "gradle": return "Gradle";
-        case "dotnet": return ".NET";
-        case "go": return "Go";
+        case "node": return r.runtimeNode;
+        case "npm": return r.runtimeNode;
+        case "python": return r.runtimePython;
+        case "java": return r.runtimeJava;
+        case "spring-boot": return r.runtimeSpringBoot;
+        case "maven": return r.runtimeMaven;
+        case "gradle": return r.runtimeGradle;
+        case "dotnet": return r.runtimeDotnet;
+        case "go": return r.runtimeGo;
         case "docker": return app.dockerConfig?.image
-            ? `Docker (${app.dockerConfig.image.split(":")[0]})`
-            : "Docker";
-        case "docker-compose": return "Docker Compose";
-        case "shell": return "Shell Script";
-        case "bat": return "Batch File";
-        case "powershell": return "PowerShell";
-        case "vbs": return "VBScript";
+            ? `${r.runtimeDocker} (${app.dockerConfig.image.split(":")[0]})`
+            : r.runtimeDocker;
+        case "docker-compose": return r.runtimeDockerCompose;
+        case "shell": return r.runtimeShellScript;
+        case "bat": return r.runtimeBatchFile;
+        case "powershell": return r.runtimePowershell;
+        case "vbs": return r.runtimeVbscript;
         default: return app.type;
     }
 }
@@ -1129,16 +1131,16 @@ function StatsBar({ apps, states }: { apps: ApplicationConfig[]; states: Map<str
     const stopped = apps.length - running - errors;
 
     const stats = [
-        { value: running, label: "RUNNING", color: "text-green-400" },
-        { value: stopped, label: "STOPPED", color: "text-text-dim" },
-        { value: debugging, label: "DEBUG ACTIVE", color: "text-blue-400" },
-        { value: errors, label: "ERRORS", color: "text-red-400" },
+        { value: running, label: strings.applications.statRunning, color: "text-green-400" },
+        { value: stopped, label: strings.applications.statStopped, color: "text-text-dim" },
+        { value: debugging, label: strings.applications.statDebugActive, color: "text-blue-400" },
+        { value: errors, label: strings.applications.statErrors, color: "text-red-400" },
     ];
 
     return (
         <div className="mx-6 mt-4 mb-1 rounded-xl border border-border/20 bg-bg2/20 px-5 py-4 flex-shrink-0">
             <div className="text-xs text-text-dim/50 uppercase tracking-widest font-semibold mb-3">
-                Application Status
+                {strings.applications.applicationStatus}
             </div>
             <div className="flex items-end gap-8">
                 {stats.map(s => (
@@ -1271,13 +1273,13 @@ function AppCard({
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-base hover:bg-bg2 transition-colors"
                                 onClick={() => { onEdit(); setMenuOpen(false); }}
                             >
-                                <Pencil size={12} /> Edit Config
+                                <Pencil size={12} /> {strings.applications.menuEditConfig}
                             </button>
                             <button
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
                                 onClick={() => { onDelete(); setMenuOpen(false); }}
                             >
-                                <Trash2 size={12} /> Delete
+                                <Trash2 size={12} /> {strings.common.delete}
                             </button>
                         </div>
                     )}
@@ -1287,30 +1289,30 @@ function AppCard({
             {/* ── Info rows ── */}
             <div className="px-4 pb-3 space-y-2 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-text-dim/60 flex-shrink-0">Runtime</span>
+                    <span className="text-xs text-text-dim/60 flex-shrink-0">{strings.applications.infoRuntime}</span>
                     <span className="text-xs text-text-base font-mono truncate text-right">{runtimeLabel}</span>
                 </div>
                 {portLabel && (
                     <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs text-text-dim/60 flex-shrink-0">Port</span>
+                        <span className="text-xs text-text-dim/60 flex-shrink-0">{strings.applications.infoPort}</span>
                         <span className="text-xs text-text-bright font-mono font-semibold">{portLabel}</span>
                     </div>
                 )}
                 {isActive && state?.pid && (
                     <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs text-text-dim/60 flex-shrink-0">PID</span>
+                        <span className="text-xs text-text-dim/60 flex-shrink-0">{strings.applications.infoPid}</span>
                         <span className="text-xs text-text-dim font-mono">{state.pid}</span>
                     </div>
                 )}
                 {uptime && (
                     <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs text-text-dim/60 flex-shrink-0">Uptime</span>
+                        <span className="text-xs text-text-dim/60 flex-shrink-0">{strings.applications.infoUptime}</span>
                         <span className="text-xs text-text-base font-mono">{uptime}</span>
                     </div>
                 )}
                 {status === "debugging" && state?.debugPort && (
                     <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs text-blue-400/70 flex-shrink-0">Debug Port</span>
+                        <span className="text-xs text-blue-400/70 flex-shrink-0">{strings.applications.infoDebugPort}</span>
                         <span className="text-xs text-blue-400 font-mono font-semibold">{state.debugPort}</span>
                     </div>
                 )}
@@ -1324,19 +1326,19 @@ function AppCard({
                         className="mt-1 flex items-center gap-1.5 bg-bg1/50 rounded px-2 py-1.5 border border-border/20"
                         onClick={e => e.stopPropagation()}
                     >
-                        <span className="text-[10px] text-text-dim/50 flex-shrink-0 uppercase tracking-wide">URL</span>
+                        <span className="text-[10px] text-text-dim/50 flex-shrink-0 uppercase tracking-wide">{strings.applications.infoUrl}</span>
                         <span className="text-xs font-mono text-text-bright/80 truncate flex-1">
                             {detectedUrl.replace(/^https?:\/\//, "")}
                         </span>
                         <button
-                            title={findMappingForTarget(mappings, urlToMappingTarget(detectedUrl)) ? "Open mapped URL" : "Open in browser"}
+                            title={findMappingForTarget(mappings, urlToMappingTarget(detectedUrl)) ? strings.applications.openMappedUrl : strings.applications.openInBrowser}
                             className="text-text-dim hover:text-accent transition-colors flex-shrink-0 p-0.5"
                             onClick={e => { e.stopPropagation(); openDetectedUrl(detectedUrl, mappings, serverPort); }}
                         >
                             <ExternalLink size={11} />
                         </button>
                         <button
-                            title="Add mapping for this URL"
+                            title={strings.applications.addMappingForUrl}
                             className="text-text-dim hover:text-accent transition-colors flex-shrink-0 p-0.5"
                             onClick={e => { e.stopPropagation(); onAddMapping?.(urlToMappingTarget(detectedUrl)); }}
                         >
@@ -1356,7 +1358,7 @@ function AppCard({
                         className="flex-1 justify-center"
                         onClick={e => { e.stopPropagation(); onStop(); }}
                     >
-                        Stop
+                        {strings.applications.actionStop}
                     </Button>
                 ) : (
                     <Button
@@ -1366,7 +1368,7 @@ function AppCard({
                         className="flex-1 justify-center"
                         onClick={e => { e.stopPropagation(); onStart(); }}
                     >
-                        Run
+                        {strings.applications.actionRun}
                     </Button>
                 )}
                 <IconButton
@@ -1405,7 +1407,7 @@ function LogPanel({
             status === "exited" ? "text-text-dim/50 italic" :
                 "text-orange-400"
             }`}>
-            {status === "error" ? "errored" : status === "exited" ? "exited" : status}
+            {status === "error" ? strings.applications.badgeErrored : status === "exited" ? strings.applications.badgeExited : statusLabel(status)}
         </span>
     ) : null;
 
@@ -1415,7 +1417,7 @@ function LogPanel({
             <div className="flex items-center gap-2 px-4 h-8 border-b border-white/[0.06] bg-white/[0.02] flex-shrink-0">
                 <Terminal size={12} className="text-text-dim/50" />
                 <span className="text-xs font-semibold text-text-dim/70 uppercase tracking-wider truncate">
-                    Log Output — {appName}
+                    {strings.applications.logOutput.replace("{name}", appName)}
                 </span>
                 {statusBadge}
                 <div className="flex-1" />
@@ -1423,7 +1425,7 @@ function LogPanel({
                     icon={<X size={13} />}
                     className="w-5 h-5 border-0 bg-transparent"
                     onClick={onClose}
-                    title="Close log panel"
+                    title={strings.applications.closeLogPanel}
                 />
             </div>
             {/* content */}
@@ -1434,7 +1436,7 @@ function LogPanel({
                     <div className="flex flex-col items-center justify-center h-full gap-2">
                         <Terminal size={20} className="text-text-dim/20" />
                         <span className="text-xs text-text-dim/30 font-mono">
-                            Start the application to see log output
+                            {strings.applications.startToSeeOutput}
                         </span>
                     </div>
                 )}
@@ -1543,7 +1545,7 @@ export default function ApplicationsPanel({ config, onAddMapping }: Props) {
     }, [wsId, loadApps]);
 
     const handleDelete = useCallback(async (workspaceId: string, id: string) => {
-        const ok = await confirm("Delete this application? This cannot be undone.");
+        const ok = await confirm(strings.applications.confirmDelete);
         if (!ok) return;
         await window.api.deleteApplication(workspaceId, id);
         if (selected === id) setSelected(null);

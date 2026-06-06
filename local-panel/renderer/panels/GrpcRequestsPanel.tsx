@@ -10,6 +10,7 @@ import { Network } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { strings } from "@/lib/strings";
 
 import { GrpcRequestDraft } from "@/components/grpc/grpcTabReducer";
 
@@ -70,7 +71,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
     }, [loadedEntities, requests, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
-        const ok = await confirm("Delete this request? This cannot be undone.");
+        const ok = await confirm(strings.grpc.deleteRequestConfirm);
         if (!ok) return;
         await window.api.deleteGrpcRequest(id);
         await reloadConfig();
@@ -85,7 +86,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
         }
         if (!r) return;
         const { id: _id, createdAt: _ca, workspaceId: _ws, ...rest } = r;
-        await window.api.addGrpcRequest({ ...rest, name: r.name ? `${r.name} (copy)` : "" });
+        await window.api.addGrpcRequest({ ...rest, name: r.name ? strings.grpc.copySuffix.replace("{name}", r.name) : "" });
         await reloadConfig();
     }, [loadedEntities, config.activeWorkspaceId, reloadConfig]);
 
@@ -110,13 +111,13 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
             const draft = loadDraft<GrpcRequestDraft>(tabId);
             if (draft?.serviceName && draft?.methodName) return `${draft.serviceName}/${draft.methodName}`;
             if (draft?.serviceName) return draft.serviceName;
-            return "New gRPC Request";
+            return strings.grpc.newRequestTab;
         }
         const r = requests.find((x) => x.id === tabId);
         if (!r) return "…";
         if (r.name) return r.name;
         if (r.serviceName && r.methodName) return `${r.serviceName}/${r.methodName}`;
-        return r.serviceName || "gRPC Request";
+        return r.serviceName || strings.grpc.requestLabel;
     };
 
     const folderViewItems: FolderTreeItem[] = useMemo(() => {
@@ -126,7 +127,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
             : requests;
         return filtered.map((r): FolderTreeItem => ({
             id: r.id,
-            name: r.name || `${r.serviceName}/${r.methodName}` || "Unnamed",
+            name: r.name || `${r.serviceName}/${r.methodName}` || strings.grpc.unnamed,
             folderId: r.folderId ?? null,
             isActive: activeTab === r.id,
             isEnabled: true,
@@ -139,13 +140,13 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
 
     const sidebarContent = (
         <>
-            <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle="Collapse sidebar">
-                <SearchInput value={search} onChange={setSearch} placeholder="Search gRPC requests…" />
+            <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle={strings.grpc.collapseSidebar}>
+                <SearchInput value={search} onChange={setSearch} placeholder={strings.grpc.searchRequests} />
             </SidebarHeader>
             <div className="flex-1 overflow-y-auto overflow-x-auto min-w-0" style={{ display: "flex", flexDirection: "column" }}>
                 {draftTabIds.length > 0 && (
                     <DraftsFolder
-                        label="Drafts"
+                        label={strings.grpc.drafts}
                         draftTabIds={draftTabIds}
                         activeTab={activeTab}
                         onOpenTab={(id) => setActiveTab(id)}
@@ -179,8 +180,8 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                 onTabClick={setActiveTab}
                 onTabClose={closeTab}
                 onNewTab={openNewTab}
-                newTabTitle="New gRPC request"
-                closeTabTitle="Close tab"
+                newTabTitle={strings.grpc.newRequestTabTitle}
+                closeTabTitle={strings.grpc.closeTab}
                 onCloseOthers={closeOtherTabs}
                 onCloseAll={closeAllTabs}
                 onTabDuplicate={handleDuplicate}
@@ -190,9 +191,9 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                 {openTabs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center gap-2">
                         <div className="opacity-10 mb-1"><Network size={48} /></div>
-                        <div className="text-sm font-medium text-text-base">No gRPC requests open</div>
+                        <div className="text-sm font-medium text-text-base">{strings.grpc.noRequestsOpen}</div>
                         <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-                            Make gRPC calls. Import a .proto file or use server reflection to discover available methods.
+                            {strings.grpc.noRequestsOpenHint}
                         </p>
                     </div>
                 ) : (
@@ -229,11 +230,11 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                 sidebarOpen={sidebarOpen}
                 onToggle={() => setSidebarOpen(true)}
                 sidebar={sidebarContent}
-                collapseTitle="Collapse sidebar"
-                expandTitle="Expand sidebar"
+                collapseTitle={strings.grpc.collapseSidebar}
+                expandTitle={strings.grpc.expandSidebar}
                 storageKey="grpc-requests-panel-sidebar"
                 collapsedBadge={requests.length > 0 ? (
-                    <span className="text-[9px] text-text-dim font-mono" title={`${requests.length} requests`}
+                    <span className="text-[9px] text-text-dim font-mono" title={strings.grpc.requestCount.replace("{count}", String(requests.length))}
                         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{requests.length}</span>
                 ) : undefined}
             >

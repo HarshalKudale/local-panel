@@ -8,7 +8,7 @@ import { allThemes, darkThemes, lightThemes, getThemeById } from "@/lib/themes";
 import { Button, SectionLabel, SectionCard, SettingsRow } from "@/components/ui";
 import PanelLayout from "@/components/ui/PanelLayout";
 import { Panel, enabledPanels, ALWAYS_VISIBLE_PANELS, PanelEntry } from "@/lib/panelRegistry";
-import { ChevronDown, ChevronRight } from "@/lib/icons";
+import { ChevronDown, ChevronRight, Star, Heart } from "@/lib/icons";
 
 interface Props {
   config: AppConfig;
@@ -183,8 +183,8 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
               <span className="text-accent font-semibold">{strings.settings.proxyHint}</span>
               {" "}Optionally set <code className="font-mono bg-bg3 px-1 py-0.5 rounded text-text-bright">127.0.0.1:{config.port}</code> as your HTTP proxy. Proxy rules then apply to all HTTP traffic.{" "}
               {config.tlsEnabled
-                ? "HTTPS traffic is intercepted and decrypted — mocks and proxy rules apply."
-                : "HTTPS is a transparent TCP tunnel — not inspected."}
+                ? strings.settings.httpsIntercepted
+                : strings.settings.httpsTunnel}
             </p>
           </div>
 
@@ -206,8 +206,8 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
             </SettingsRow>
 
             <SettingsRow
-              title="Webhook Server Port"
-              desc={`Port for the dedicated webhook HTTP server (default 9101). Start/stop from the Webhooks panel. Currently: localhost:${config.webhookPort ?? 9101}/localpanel/webhooks/`}
+              title={strings.settings.webhookServerPort}
+              desc={`${strings.settings.webhookServerPortDesc} ${strings.settings.currentlyLabel} localhost:${config.webhookPort ?? 9101}/localpanel/webhooks/`}
             >
               <input
                 type="number"
@@ -222,8 +222,8 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
             </SettingsRow>
 
             <SettingsRow
-              title="Companion Extension Port"
-              desc={`WebSocket port for the companion browser extension (default 9271). The extension connects here to send captured requests.`}
+              title={strings.settings.companionPort}
+              desc={strings.settings.companionPortDesc}
             >
               <input
                 type="number"
@@ -263,12 +263,12 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
                 value={theme}
                 onChange={(e) => onThemeChange(e.target.value)}
               >
-                <optgroup label="Dark">
+                <optgroup label={strings.settings.themeGroupDark}>
                   {darkThemes.map((t) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </optgroup>
-                <optgroup label="Light">
+                <optgroup label={strings.settings.themeGroupLight}>
                   {lightThemes.map((t) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
@@ -437,13 +437,13 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface-40 border border-border text-xs font-medium text-text-base hover:border-accent/50 hover:text-accent transition-colors cursor-pointer"
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .2a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 8 .2z" /></svg>
-                ⭐ Star on GitHub
+                <Star size={14} /> {strings.settings.starOnGitHub}
               </button>
               <button
                 onClick={() => window.api.openExternal("https://github.com/HarshalKudale/local-panel/blob/main/SUPPORT.md")}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface-40 border border-border text-xs font-medium text-text-base hover:border-accent/50 hover:text-accent transition-colors cursor-pointer"
               >
-                💖 Support Project
+                <Heart size={14} /> {strings.settings.supportProject}
               </button>
             </div>
           </SectionCard>
@@ -490,7 +490,7 @@ function AppearanceSection({ sidebarVisibility, onSidebarVisibilityChange }: App
 
   return (
     <section>
-      <SectionLabel>Appearance</SectionLabel>
+      <SectionLabel>{strings.settings.sectionAppearance}</SectionLabel>
 
       <SectionCard>
         <button
@@ -498,9 +498,9 @@ function AppearanceSection({ sidebarVisibility, onSidebarVisibilityChange }: App
           className="flex items-center gap-4 px-5 py-4 w-full text-left cursor-pointer hover:bg-bg2 transition-colors"
         >
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-text-base">Sidebar Panels</div>
+            <div className="text-sm font-medium text-text-base">{strings.settings.sidebarPanels}</div>
             <div className="text-xs text-text-dim mt-0.5">
-              Choose which panels are visible in the sidebar ({visibleCount} of {enabledPanels.length} shown)
+              {strings.settings.sidebarPanelsDesc} ({strings.settings.sidebarPanelsShown.replace("{visibleCount}", String(visibleCount)).replace("{n}", String(enabledPanels.length))})
             </div>
           </div>
           <span className="flex-shrink-0 text-text-dim">
@@ -523,7 +523,7 @@ function AppearanceSection({ sidebarVisibility, onSidebarVisibilityChange }: App
                       <div className="flex-1 min-w-0">
                         <div className="text-sm text-text-base">{entry.label}</div>
                         {isAlwaysVisible && (
-                          <div className="text-[10px] text-text-dim">Always visible</div>
+                          <div className="text-[10px] text-text-dim">{strings.settings.alwaysVisible}</div>
                         )}
                       </div>
                       <Toggle

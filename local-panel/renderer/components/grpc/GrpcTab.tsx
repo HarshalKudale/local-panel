@@ -9,6 +9,7 @@ import { useDraftPersist, loadDraft } from "@/lib/useDraftPersist";
 import { KVRow, mkRowId } from "@/lib/utils";
 import { resolveVars } from "@/lib/resolveVars";
 import { cn } from "@/components/ui/cn";
+import { strings } from "@/lib/strings";
 import {
     GrpcTabState, GrpcTabType, GrpcAction,
     grpcTabReducer, initGrpcRequestState, initGrpcMockState,
@@ -47,10 +48,10 @@ function rowsToMetadata(rows: KVRow[]): Record<string, string> {
 }
 
 const STREAMING_BADGES: Record<string, string> = {
-    unary: "Unary",
-    server: "Server Stream",
-    client: "Client Stream",
-    bidi: "Bidirectional",
+    unary: strings.grpc.streamUnary,
+    server: strings.grpc.streamServer,
+    client: strings.grpc.streamClient,
+    bidi: strings.grpc.streamBidirectional,
 };
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -139,10 +140,10 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                     durationMs: result.durationMs ?? 0,
                 });
             } else {
-                dispatch({ type: "SEND_ERROR", error: result.error ?? "Unknown error" });
+                dispatch({ type: "SEND_ERROR", error: result.error ?? strings.grpc.unknownError });
             }
         } catch (err: any) {
-            dispatch({ type: "SEND_ERROR", error: err?.message ?? "Send failed" });
+            dispatch({ type: "SEND_ERROR", error: err?.message ?? strings.grpc.sendFailed });
         }
     }, [state.serverAddress, state.serviceName, state.methodName, state.requestBody, state.metadata, state.protoFileId, state.useReflection, activeEnv]);
 
@@ -166,27 +167,27 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
     // ── Render ─────────────────────────────────────────────────────────────
 
     const reqSubTabs: { id: ReqSubTab; label: string }[] = tabType === "request"
-        ? [{ id: "message", label: "Message" }, { id: "metadata", label: "Metadata" }, { id: "pre-script", label: "Pre-Script" }, { id: "post-script", label: "Post-Script" }, { id: "proto", label: "Proto" }]
-        : [{ id: "message", label: "Message" }, { id: "metadata", label: "Metadata" }, { id: "proto", label: "Proto" }];
+        ? [{ id: "message", label: strings.grpc.tabMessage }, { id: "metadata", label: strings.grpc.tabMetadata }, { id: "pre-script", label: strings.grpc.tabPreScript }, { id: "post-script", label: strings.grpc.tabPostScript }, { id: "proto", label: strings.grpc.tabProto }]
+        : [{ id: "message", label: strings.grpc.tabMessage }, { id: "metadata", label: strings.grpc.tabMetadata }, { id: "proto", label: strings.grpc.tabProto }];
 
     const resSubTabs: { id: ResSubTab; label: string }[] = [
-        { id: "response", label: "Response" },
-        { id: "res-metadata", label: "Trailing Metadata" },
+        { id: "response", label: strings.grpc.tabResponse },
+        { id: "res-metadata", label: strings.grpc.tabTrailingMetadata },
     ];
 
     const mockSubTabs: { id: MockSubTab; label: string }[] = [
-        { id: "response", label: "Response Body" },
-        { id: "metadata", label: "Response Metadata" },
-        { id: "settings", label: "Settings" },
-        { id: "proto", label: "Proto" },
+        { id: "response", label: strings.grpc.tabResponseBody },
+        { id: "metadata", label: strings.grpc.tabResponseMetadata },
+        { id: "settings", label: strings.grpc.tabSettings },
+        { id: "proto", label: strings.grpc.tabProto },
     ];
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
             {/* Title bar */}
             <EditorTitleBar
-                label={tabType === "request" ? "gRPC Request" : "gRPC Mock"}
-                namePlaceholder={tabType === "request" ? "Request name…" : "Mock name…"}
+                label={tabType === "request" ? strings.grpc.requestTitle : strings.grpc.mockTitle}
+                namePlaceholder={tabType === "request" ? strings.grpc.requestNamePlaceholder : strings.grpc.mockNamePlaceholder}
                 name={state.name}
                 onNameChange={(v) => set("name")(v)}
                 onClose={onClose}
@@ -222,7 +223,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                     onChange={(e) => set("methodName")(e.target.value)}
                 />
                 <span className="text-[10px] font-semibold px-2 py-1 rounded bg-bg3 text-text-dim whitespace-nowrap">
-                    {STREAMING_BADGES[state.streamingType] ?? "Unary"}
+                    {STREAMING_BADGES[state.streamingType] ?? strings.grpc.streamUnary}
                 </span>
                 {tabType === "request" && (
                     <button
@@ -232,7 +233,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                     >
                         {state.sending ? (
                             <span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : "Send"}
+                        ) : strings.server.send}
                     </button>
                 )}
             </div>
@@ -240,16 +241,16 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
             {/* Streaming type + reflection toggle */}
             <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border flex-shrink-0">
                 <label className="flex items-center gap-2 text-xs text-text-dim">
-                    <span>Type:</span>
+                    <span>{strings.grpc.type}</span>
                     <select
                         className="bg-bg2 border border-border rounded px-2 py-1 text-xs text-text-bright outline-none"
                         value={state.streamingType}
                         onChange={(e) => set("streamingType")(e.target.value)}
                     >
-                        <option value="unary">Unary</option>
-                        <option value="server">Server Streaming</option>
-                        <option value="client">Client Streaming</option>
-                        <option value="bidi">Bidirectional</option>
+                        <option value="unary">{strings.grpc.streamUnary}</option>
+                        <option value="server">{strings.grpc.streamServerStreaming}</option>
+                        <option value="client">{strings.grpc.streamClientStreaming}</option>
+                        <option value="bidi">{strings.grpc.streamBidirectional}</option>
                     </select>
                 </label>
                 {tabType === "request" && (
@@ -260,7 +261,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                             onChange={(e) => set("useReflection")(e.target.checked)}
                             className="accent-accent"
                         />
-                        Use Reflection
+                        {strings.grpc.useReflection}
                     </label>
                 )}
                 {tabType === "mock" && (
@@ -271,7 +272,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                             onChange={(e) => set("enabled")(e.target.checked)}
                             className="accent-accent"
                         />
-                        Enabled
+                        {strings.grpc.enabled}
                     </label>
                 )}
             </div>
@@ -290,7 +291,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                             <CodeEditor value={state.requestBody} onChange={(v) => set("requestBody")(v)} language="json" placeholder='{"key": "value"}' className="h-full" />
                                         )}
                                         {reqTab === "metadata" && (
-                                            <HeaderTable rows={metaRows} onChange={setMetaRows} emptyMessage="No metadata. Add key-value pairs for gRPC metadata." />
+                                            <HeaderTable rows={metaRows} onChange={setMetaRows} emptyMessage={strings.grpc.noMetadata} />
                                         )}
                                         {reqTab === "pre-script" && (
                                             <CodeEditor value={state.preScript} onChange={(v) => set("preScript")(v)} language="javascript" placeholder="// Pre-request script" className="h-full" />
@@ -320,12 +321,12 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                             <CodeEditor value={state.responseBody} onChange={(v) => set("responseBody")(v)} language="json" placeholder='{"result": "mocked"}' className="h-full" />
                                         )}
                                         {mockTab === "metadata" && (
-                                            <HeaderTable rows={resMetaRows} onChange={setResMetaRows} emptyMessage="No response metadata." />
+                                            <HeaderTable rows={resMetaRows} onChange={setResMetaRows} emptyMessage={strings.grpc.noResponseMetadata} />
                                         )}
                                         {mockTab === "settings" && (
                                             <div className="p-4 space-y-4 overflow-y-auto">
                                                 <div className="space-y-1">
-                                                    <label className="text-xs font-medium text-text-dim">Response Delay (ms)</label>
+                                                    <label className="text-xs font-medium text-text-dim">{strings.grpc.responseDelay}</label>
                                                     <input
                                                         type="number"
                                                         min={0}
@@ -335,7 +336,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-xs font-medium text-text-dim">Error Code (0 = no error)</label>
+                                                    <label className="text-xs font-medium text-text-dim">{strings.grpc.errorCode}</label>
                                                     <input
                                                         type="number"
                                                         min={0}
@@ -346,10 +347,10 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-xs font-medium text-text-dim">Error Message</label>
+                                                    <label className="text-xs font-medium text-text-dim">{strings.grpc.errorMessage}</label>
                                                     <input
                                                         className="w-full bg-bg2 border border-border focus:border-accent rounded px-3 py-1.5 text-sm text-text-bright outline-none placeholder:text-text-dim"
-                                                        placeholder="Optional error message"
+                                                        placeholder={strings.grpc.errorMessagePlaceholder}
                                                         value={state.errorMessage}
                                                         onChange={(e) => set("errorMessage")(e.target.value)}
                                                     />
@@ -387,7 +388,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                                 "text-xs font-semibold",
                                                 state.resStatus === 0 ? "text-green" : "text-red"
                                             )}>
-                                                Status: {state.resStatus}
+                                                {strings.grpc.status} {state.resStatus}
                                             </span>
                                             {state.resStatusMessage && (
                                                 <span className="text-xs text-text-dim">{state.resStatusMessage}</span>
@@ -408,7 +409,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                         {resTab === "response" && (
                                             state.responses.length === 0 ? (
                                                 <div className="flex items-center justify-center h-full text-xs text-text-dim">
-                                                    {state.sending ? "Sending…" : "No response yet. Send a request to see results."}
+                                                    {state.sending ? strings.grpc.sending : strings.grpc.noResponseYet}
                                                 </div>
                                             ) : state.responses.length === 1 ? (
                                                 <CodeEditor value={state.responses[0]} language="json" readOnly className="h-full" />
@@ -416,7 +417,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                                 <div className="flex flex-col h-full overflow-y-auto p-2 gap-1">
                                                     {state.responses.map((r, i) => (
                                                         <div key={i} className="border border-border rounded p-2">
-                                                            <div className="text-[10px] text-text-dim font-semibold mb-1">Response #{i + 1}</div>
+                                                            <div className="text-[10px] text-text-dim font-semibold mb-1">{strings.grpc.responseNumber.replace("{n}", String(i + 1))}</div>
                                                             <pre className="text-xs text-text-bright font-mono whitespace-pre-wrap break-all">{r}</pre>
                                                         </div>
                                                     ))}
@@ -426,7 +427,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                                         {resTab === "res-metadata" && (
                                             <div className="p-4 overflow-y-auto">
                                                 {Object.keys(state.resMetadata).length === 0 ? (
-                                                    <p className="text-xs text-text-dim italic">No trailing metadata received.</p>
+                                                    <p className="text-xs text-text-dim italic">{strings.grpc.noTrailingMetadata}</p>
                                                 ) : (
                                                     <table className="w-full text-xs">
                                                         <tbody>
@@ -456,10 +457,10 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
                 onFolderChange={(id) => set("folderId")(id)}
                 onCancel={onClose}
                 onSave={handleSave}
-                saveLabel={isNew ? "Save" : "Update"}
+                saveLabel={isNew ? strings.common.save : strings.grpc.update}
                 saveDisabled={tabType === "request" ? (!state.serviceName || !state.methodName) : (!state.serviceName || !state.methodName)}
                 saving={state.saving}
-                savingLabel="Saving…"
+                savingLabel={strings.server.saving}
             />
         </div>
     );

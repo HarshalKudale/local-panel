@@ -17,7 +17,8 @@ import { usePersistedState } from "@/lib/usePersistedState";
 import { useDraftPersist, loadDraft, clearDraft, getDraftIds } from "@/lib/useDraftPersist";
 import { useWebSocket, MAX_WS_CONNECTIONS, WsMessage } from "@/lib/useWebSocket";
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
-import { Plus, X, Folder, Zap, Play, Send } from "@/lib/icons";
+import { Plus, X, Folder, Zap, Play, Send, Radio } from "@/lib/icons";
+import { strings } from "@/lib/strings";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
@@ -147,8 +148,8 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
     <div className="flex flex-col h-full overflow-hidden bg-bg1">
       {/* Title bar */}
       <EditorTitleBar
-        label={isNew ? "New Socket" : "Edit Socket"}
-        namePlaceholder="Socket name (optional)"
+        label={isNew ? strings.sockets.newSocket : strings.sockets.editSocket}
+        namePlaceholder={strings.sockets.namePlaceholder}
         name={name}
         onNameChange={setName}
         onClose={onClose}
@@ -183,17 +184,17 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
           <button
             onClick={handleConnect}
             disabled={!url.trim() || (isAtConnectionLimit && !isConnected)}
-            title={isAtConnectionLimit && !isConnected ? `Max ${MAX_WS_CONNECTIONS} active connections` : "Connect"}
+            title={isAtConnectionLimit && !isConnected ? strings.sockets.maxConnectionsTitle.replace("{n}", String(MAX_WS_CONNECTIONS)) : strings.sockets.connect}
             className="px-4 py-2.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
           >
-            <Play size={10} className="inline mr-1" fill="currentColor" /> Connect
+            <Play size={10} className="inline mr-1" fill="currentColor" /> {strings.sockets.connect}
           </button>
         ) : (
           <button
             onClick={handleDisconnect}
             className="px-4 py-2.5 rounded bg-red/80 hover:bg-red text-white text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
           >
-            Disconnect
+            {strings.sockets.disconnect}
           </button>
         )}
       </div>
@@ -202,7 +203,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
       {isAtConnectionLimit && isDisconnected && (
         <div className="px-4 py-1.5 border-b border-border bg-yellow/5 flex-shrink-0">
           <span className="text-[11px] text-yellow">
-            {MAX_WS_CONNECTIONS} connections active — disconnect another tab before connecting here.
+            {strings.sockets.connectionsActive.replace("{n}", String(MAX_WS_CONNECTIONS))}
           </span>
         </div>
       )}
@@ -228,7 +229,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
               onChange={(t) => setReqTab(t as "headers")}
               prefix={
                 <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-r border-border whitespace-nowrap">
-                  OutputStream
+                  {strings.sockets.outputStream}
                 </span>
               }
             />
@@ -260,7 +261,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
                 rows={headers}
                 onChange={setHeaders}
                 readOnly={isConnected || isConnecting}
-                emptyMessage={isConnected || isConnecting ? "No headers" : undefined}
+                emptyMessage={isConnected || isConnecting ? strings.common.noHeaders : undefined}
               />
             </div>
 
@@ -269,7 +270,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
               {/* Sent messages list */}
               <div className="max-h-40 overflow-y-auto px-4 py-2 space-y-1">
                 {outgoingMessages.length === 0 ? (
-                  <p className="text-[10px] text-text-dim italic py-1">No messages sent yet</p>
+                  <p className="text-[10px] text-text-dim italic py-1">{strings.sockets.noMessagesSent}</p>
                 ) : (
                   outgoingMessages.map((m) => (
                     <MessageRow key={m.id} msg={m} />
@@ -296,7 +297,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
               <div className="flex items-center gap-2 px-4 py-2.5 border-t border-border">
                 <input
                   className="flex-1 bg-bg2 border border-border focus:border-accent rounded px-3 py-2 text-xs font-mono text-text-bright outline-none placeholder:text-text-dim/60 transition-colors"
-                  placeholder={isConnected ? "Type a message…" : "Connect to send messages"}
+                  placeholder={isConnected ? strings.sockets.typeMessage : strings.sockets.connectToSend}
                   value={outgoingInput}
                   onChange={(e) => setOutgoingInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
@@ -333,9 +334,9 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
                   {isConnected
                     ? <span className="flex items-center gap-1.5">
                       <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--c-green)", boxShadow: "0 0 5px var(--c-green)" }} />
-                      Live
+                      {strings.sockets.live}
                     </span>
-                    : "Waiting"}
+                    : strings.sockets.waiting}
                 </span>
               }
               suffix={
@@ -344,16 +345,16 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
                     onClick={clearMessages}
                     className="px-3 text-[10px] text-text-dim hover:text-text-base cursor-pointer transition-colors"
                     title="Clear all messages"
-                  >Clear</button>
+                  >{strings.sockets.clear}</button>
                   : undefined
               }
             />
             <div className="flex-1 overflow-y-auto min-h-0 px-4 py-2 space-y-1">
               {incomingMessages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8">
-                  <div className="text-3xl opacity-15">◎</div>
+                  <div className="opacity-15"><Radio size={28} /></div>
                   <p className="text-xs text-text-dim">
-                    {isConnected ? "Waiting for messages…" : "Connect to receive messages"}
+                    {isConnected ? strings.sockets.waitingForMessages : strings.sockets.connectToReceive}
                   </p>
                 </div>
               ) : (
@@ -374,10 +375,10 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
         onFolderChange={setFolderId}
         onCancel={onClose}
         onSave={handleSave}
-        saveLabel={isNew ? "Save Socket" : "Update Socket"}
+        saveLabel={isNew ? strings.sockets.saveSocket : strings.sockets.updateSocket}
         saveDisabled={!url.trim()}
         saving={saving}
-        savingLabel="Saving…"
+        savingLabel={strings.server.saving}
       />
     </div>
   );
@@ -576,7 +577,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
         try { const u = new URL(d.url); return d.name || u.host || d.url.slice(0, 20); }
         catch { return d.name || d.url.slice(0, 20); }
       }
-      return "New Socket";
+      return strings.sockets.newSocket;
     }
     const c = connections.find((x) => x.id === tabId);
     if (!c) return "…";
@@ -603,8 +604,8 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
 
   const sidebarContent = (
     <>
-      <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle="Collapse sidebar">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search sockets…" />
+      <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle={strings.titleBar.collapseSidebar}>
+        <SearchInput value={search} onChange={setSearch} placeholder={strings.sockets.searchPlaceholder} />
       </SidebarHeader>
 
       <div className="flex-1 overflow-y-auto overflow-x-auto min-w-0" style={{ display: "flex", flexDirection: "column" }}>
@@ -656,8 +657,8 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
         onTabClick={setActiveTab}
         onTabClose={closeTab}
         onNewTab={openNewTab}
-        newTabTitle="New socket"
-        closeTabTitle="Close"
+        newTabTitle={strings.sockets.newTab}
+        closeTabTitle={strings.common.close}
         onCloseOthers={(id) => {
           openTabs.filter((t) => t !== id).forEach(closeTab);
         }}
@@ -670,9 +671,9 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
         {openTabs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center gap-2">
             <div className="opacity-10 mb-1"><Zap size={48} /></div>
-            <div className="text-sm font-medium text-text-base">No sockets open</div>
+            <div className="text-sm font-medium text-text-base">{strings.sockets.noSocketsOpen}</div>
             <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-              Click a socket in the tree, or press <span className="text-accent font-semibold">+</span> to create one.
+              {strings.sockets.noSocketsHintPrefix} <span className="text-accent font-semibold">+</span> {strings.sockets.noSocketsHintSuffix}
             </p>
           </div>
         ) : (
@@ -705,8 +706,8 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
         sidebarOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(true)}
         sidebar={sidebarContent}
-        collapseTitle="Collapse sidebar"
-        expandTitle="Expand sidebar"
+        collapseTitle={strings.titleBar.collapseSidebar}
+        expandTitle={strings.titleBar.expandSidebar}
         storageKey="websockets-panel-sidebar"
         collapsedBadge={connections.length > 0 ? (
           <span className="text-[9px] text-text-dim font-mono" title={`${connections.length} sockets`}
@@ -742,7 +743,7 @@ function WsTabHeader({ tabId, label, isDraft: draft, onClose }: {
       {draft && <span className="text-[8px] text-yellow opacity-70 flex-shrink-0">●</span>}
       <span className="max-w-[160px] truncate">{label}</span>
       <button onClick={onClose}
-        className="w-4 h-4 flex items-center justify-center rounded hover:bg-bg3 text-text-dim hover:text-text-base ml-0.5 flex-shrink-0 cursor-pointer" title="Close"><X size={10} /></button>
+        className="w-4 h-4 flex items-center justify-center rounded hover:bg-bg3 text-text-dim hover:text-text-base ml-0.5 flex-shrink-0 cursor-pointer" title={strings.common.close}><X size={10} /></button>
     </>
   );
 }

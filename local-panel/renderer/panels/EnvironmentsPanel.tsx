@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { AppConfig, Environment, EnvVariable } from "@/types";
 import { Globe, Plus, X, History } from "@/lib/icons";
 import { Button, IconButton, EmptyState } from "@/components/ui";
+import { strings } from "@/lib/strings";
 import SidebarLayout, { SidebarHeader } from "@/components/ui/SidebarLayout";
 import ActiveDot from "@/components/ui/ActiveDot";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
@@ -125,13 +126,13 @@ function VariableEditor({
             className="flex-1 bg-transparent text-sm font-semibold text-text-bright outline-none placeholder:text-text-dim min-w-0"
             value={name}
             onChange={(e) => { setName(e.target.value); markDirty(); }}
-            placeholder="Environment name"
+            placeholder={strings.environments.environmentName}
           />
         )}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {isGlobal && (
             <span className="px-2.5 py-1 rounded border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
-              Always Active
+              {strings.environments.alwaysActive}
             </span>
           )}
           {!isGlobal && !isActive && (
@@ -139,12 +140,12 @@ function VariableEditor({
               onClick={onActivate}
               className="px-2.5 py-1 rounded border border-border bg-bg2 hover:border-accent/50 hover:bg-accent/10 hover:text-accent text-text-dim text-xs font-medium transition-all cursor-pointer"
             >
-              Set Active
+              {strings.environments.setActive}
             </button>
           )}
           {!isGlobal && isActive && (
             <span className="px-2.5 py-1 rounded border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
-              Active
+              {strings.environments.active}
             </span>
           )}
           {dirty && (
@@ -153,13 +154,13 @@ function VariableEditor({
               disabled={saving}
               className="px-2.5 py-1 rounded border border-green/40 bg-green/10 hover:bg-green/20 text-green text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
             >
-              {saving ? "Saving…" : "Save"}
+              {saving ? strings.server.saving : strings.common.save}
             </button>
           )}
           {onHistory && (
             <IconButton
               icon={<History size={12} />}
-              title="View history"
+              title={strings.environments.viewHistory}
               onClick={onHistory}
               className="hover:text-accent"
             />
@@ -169,7 +170,7 @@ function VariableEditor({
               onClick={onDelete}
               className="px-2.5 py-1 rounded border border-border bg-bg2 hover:border-red/40 hover:bg-red/10 hover:text-red text-text-dim text-xs font-medium transition-all cursor-pointer"
             >
-              Delete
+              {strings.common.delete}
             </button>
           )}
         </div>
@@ -188,7 +189,7 @@ function VariableEditor({
         </div>
 
         {vars.length === 0 && (
-          <p className="px-4 py-4 text-xs text-text-dim italic">No variables — click Add Variable below</p>
+          <p className="px-4 py-4 text-xs text-text-dim italic">{strings.environments.noVariables}</p>
         )}
 
         {vars.map((v) => (
@@ -199,7 +200,7 @@ function VariableEditor({
           onClick={addVar}
           className="flex items-center gap-2 px-4 py-2.5 text-xs text-text-dim hover:text-text-base hover:bg-bg2/30 transition-colors cursor-pointer w-full text-left border-t border-border/20"
         >
-          <span className="text-accent font-semibold text-sm leading-none">+</span>Add Variable
+          <span className="text-accent font-semibold text-sm leading-none">+</span>{strings.environments.addVariable}
         </button>
       </div>
     </div>
@@ -236,7 +237,7 @@ function EnvItem({
       <span className="flex-1 text-xs truncate">{env.name}</span>
       {isGlobal && (
         <span className="text-[9px] font-semibold uppercase tracking-wide text-accent opacity-70 flex-shrink-0">
-          Always Active
+          {strings.environments.alwaysActive}
         </span>
       )}
     </button>
@@ -291,7 +292,7 @@ export default function EnvironmentsPanel({ config, onConfigChange, onHistoryOpe
   const sidebar = (
     <div className="flex flex-col flex-1 overflow-hidden">
       <SidebarHeader onCollapse={() => setSidebarOpen(false)}>
-        <span className="text-xs font-semibold text-text-dim uppercase tracking-wider px-1">Environments</span>
+        <span className="text-xs font-semibold text-text-dim uppercase tracking-wider px-1">{strings.environments.title}</span>
       </SidebarHeader>
 
       <div className="flex flex-col flex-1 overflow-y-auto">
@@ -325,7 +326,7 @@ export default function EnvironmentsPanel({ config, onConfigChange, onHistoryOpe
       {/* New env button at bottom */}
       <div className="flex-shrink-0 border-t border-border/40 p-2">
         <Button variant="secondary" icon={<Plus size={12} />} onClick={handleAdd} className="w-full justify-center">
-          New Environment
+          {strings.environments.newEnvironment}
         </Button>
       </div>
     </div>
@@ -347,11 +348,11 @@ export default function EnvironmentsPanel({ config, onConfigChange, onHistoryOpe
       <EmptyState
         fill
         icon={<Globe size={36} />}
-        title="No environments yet"
+        title={strings.environments.noEnvironments}
         description={
           <>
-            Create environments to manage variable sets for different stages.{" "}
-            Use <code className="font-mono bg-bg3 px-1 rounded">{"{{VAR}}"}</code> syntax anywhere in your requests and mocks.
+            {strings.environments.noEnvironmentsDesc}{" "}
+            {strings.environments.useVarPrefix} <code className="font-mono bg-bg3 px-1 rounded">{"{{VAR}}"}</code> {strings.environments.useVarSuffix}
           </>
         }
       />

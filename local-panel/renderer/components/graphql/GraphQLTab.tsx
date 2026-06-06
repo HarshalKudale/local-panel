@@ -133,17 +133,17 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
     // ── Render: Request mode ───────────────────────────────────────────────
 
     const reqTabs: { id: ReqSubTab; label: string }[] = [
-        { id: "query", label: "Query" },
-        { id: "variables", label: "Variables" },
-        { id: "headers", label: "Headers" },
-        { id: "pre-script", label: "Pre-Script" },
-        { id: "post-script", label: "Post-Script" },
-        { id: "schema", label: "Schema" },
+        { id: "query", label: strings.graphql.tabQuery },
+        { id: "variables", label: strings.graphql.tabVariables },
+        { id: "headers", label: strings.graphql.tabHeaders },
+        { id: "pre-script", label: strings.graphql.tabPreScript },
+        { id: "post-script", label: strings.graphql.tabPostScript },
+        { id: "schema", label: strings.graphql.tabSchema },
     ];
 
     const mockReqTabs: { id: ReqSubTab; label: string }[] = [
-        { id: "query", label: "Match" },
-        { id: "headers", label: "Response Headers" },
+        { id: "query", label: strings.graphql.tabMatch },
+        { id: "headers", label: strings.graphql.tabResponseHeaders },
     ];
 
     // ── Format response body ───────────────────────────────────────────────
@@ -157,8 +157,8 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
     return (
         <div className="flex flex-col h-full overflow-hidden">
             <EditorTitleBar
-                label={label ?? (tabType === "request" ? "GRAPHQL REQUEST" : "GRAPHQL MOCK")}
-                namePlaceholder={tabType === "request" ? "Request name…" : "Mock name…"}
+                label={label ?? (tabType === "request" ? strings.graphql.requestTitle : strings.graphql.mockTitle)}
+                namePlaceholder={tabType === "request" ? strings.graphql.requestNamePlaceholder : strings.graphql.mockNamePlaceholder}
                 name={state.name}
                 onNameChange={(v) => dispatch({ type: "SET_FIELD", field: "name", value: v })}
                 onClose={onClose}
@@ -172,7 +172,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                         style={{ background: "var(--c-bg2)" }}
                     >
                         <span className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 flex-shrink-0 text-accent">
-                            POST
+                            {strings.graphql.methodPost}
                         </span>
                         <input
                             className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
@@ -188,8 +188,8 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                         className="px-4 py-2.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
                     >
                         {state.sending
-                            ? <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />Sending</>
-                            : "Send"}
+                            ? <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />{strings.graphql.sending}</>
+                            : strings.server.send}
                     </button>
                 </div>
             )}
@@ -202,7 +202,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                         style={{ background: "var(--c-bg2)" }}
                     >
                         <span className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 flex-shrink-0 text-text-dim">
-                            ENDPOINT
+                            {strings.graphql.endpoint}
                         </span>
                         <input
                             className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
@@ -218,7 +218,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                             onChange={(e) => dispatch({ type: "SET_FIELD", field: "useRegex", value: e.target.checked })}
                             className="accent-accent"
                         />
-                        Regex
+                        {strings.graphql.regex}
                     </label>
                 </div>
             )}
@@ -246,29 +246,29 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                             {reqSubTab === "query" && tabType === "mock" && (
                                 <div className="flex flex-col gap-3 p-4 overflow-y-auto h-full">
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Operation Type</label>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">{strings.graphql.operationType}</label>
                                         <select
                                             value={state.operationType}
                                             onChange={(e) => dispatch({ type: "SET_FIELD", field: "operationType", value: e.target.value })}
                                             className="bg-bg2 border border-border rounded px-3 py-2 text-sm text-text-bright outline-none focus:border-accent"
                                         >
-                                            <option value="any">Any</option>
-                                            <option value="query">Query</option>
-                                            <option value="mutation">Mutation</option>
-                                            <option value="subscription">Subscription</option>
+                                            <option value="any">{strings.graphql.opAny}</option>
+                                            <option value="query">{strings.graphql.opQuery}</option>
+                                            <option value="mutation">{strings.graphql.opMutation}</option>
+                                            <option value="subscription">{strings.graphql.opSubscription}</option>
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Operation Name</label>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">{strings.graphql.operationName}</label>
                                         <input
                                             className="bg-bg2 border border-border rounded px-3 py-2 text-sm text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
-                                            placeholder="Match operation name (leave empty to match all)"
+                                            placeholder={strings.graphql.operationNamePlaceholder}
                                             value={state.operationNameMatch}
                                             onChange={(e) => dispatch({ type: "SET_FIELD", field: "operationNameMatch", value: e.target.value })}
                                         />
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Response Status</label>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">{strings.graphql.responseStatus}</label>
                                         <input
                                             type="number"
                                             className="bg-bg2 border border-border rounded px-3 py-2 text-sm text-text-bright outline-none focus:border-accent w-24"
@@ -277,7 +277,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                                         />
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Response Delay (ms)</label>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">{strings.graphql.responseDelay}</label>
                                         <input
                                             type="number"
                                             className="bg-bg2 border border-border rounded px-3 py-2 text-sm text-text-bright outline-none focus:border-accent w-24"
@@ -340,7 +340,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                             <>
                                 {/* Response header bar */}
                                 <div className="flex items-center gap-3 px-4 py-2 border-b border-border flex-shrink-0 bg-bg0/40">
-                                    <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Response</span>
+                                    <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">{strings.graphql.response}</span>
                                     {state.resStatus !== null && (
                                         <>
                                             <span className={`text-xs font-mono font-bold ${state.resStatus < 300 ? "text-green" : state.resStatus < 400 ? "text-yellow" : "text-red"}`}>
@@ -356,7 +356,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                                         value={formattedResBody}
                                         language="json"
                                         readOnly
-                                        placeholder="Send a request to see the response…"
+                                        placeholder={strings.graphql.responsePlaceholder}
                                         className="h-full"
                                     />
                                 </div>
@@ -365,7 +365,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                         {tabType === "mock" && (
                             <>
                                 <div className="flex items-center gap-3 px-4 py-2 border-b border-border flex-shrink-0 bg-bg0/40">
-                                    <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Response Body</span>
+                                    <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">{strings.graphql.responseBody}</span>
                                 </div>
                                 <div className="flex-1 overflow-hidden">
                                     <CodeEditor
@@ -389,10 +389,10 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                 onFolderChange={(id) => dispatch({ type: "SET_FIELD", field: "folderId", value: id })}
                 onCancel={onClose}
                 onSave={handleSave}
-                saveLabel={draftTabId ? "Save" : "Update"}
+                saveLabel={draftTabId ? strings.common.save : strings.graphql.update}
                 saveDisabled={tabType === "request" ? !state.name && !state.endpointUrl : !state.name}
                 saving={state.saving}
-                savingLabel="Saving…"
+                savingLabel={strings.server.saving}
             />
         </div>
     );

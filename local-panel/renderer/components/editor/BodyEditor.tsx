@@ -13,15 +13,15 @@ export interface BodyEditorHandle {
 }
 
 const MODE_LABELS: Record<BodyMode, string> = {
-  json: "JSON",
-  text: "Text",
-  html: "HTML",
-  xml:  "XML",
-  form: "Form",
-  multipart: "Multipart",
-  binary: "Binary",
-  image: "Image",
-  none: "None",
+  json: strings.editor.modeJson,
+  text: strings.editor.modeText,
+  html: strings.editor.modeHtml,
+  xml:  strings.editor.modeXml,
+  form: strings.editor.modeForm,
+  multipart: strings.editor.modeMultipart,
+  binary: strings.editor.modeBinary,
+  image: strings.editor.modeImage,
+  none: strings.editor.modeNone,
 };
 
 const EDITABLE_MODES: BodyMode[] = ["json", "text", "html", "xml", "form", "multipart", "binary", "image", "none"];
@@ -193,7 +193,7 @@ export default forwardRef<BodyEditorHandle, Props>(function BodyEditor({
       {/* Body area */}
       {mode === "none" ? (
         <div className="flex items-center justify-center flex-1 text-xs text-text-dim italic opacity-60">
-          No body
+          {strings.editor.noBody}
         </div>
       ) : mode === "multipart" ? (
         <MultipartEditor
@@ -213,16 +213,16 @@ export default forwardRef<BodyEditorHandle, Props>(function BodyEditor({
           {/* Form column headers */}
           <div className="flex items-center border-b border-border/40 bg-bg0/10 flex-shrink-0">
             <div className="flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim border-r border-border/40">
-              Key
+              {strings.common.key}
             </div>
             <div className="flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim">
-              Value
+              {strings.common.value}
             </div>
             {!readOnly && <div className="w-9 flex-shrink-0" />}
           </div>
 
           {formPairs.length === 0 && readOnly && (
-            <p className="px-4 py-5 text-xs text-text-dim italic">No form fields</p>
+            <p className="px-4 py-5 text-xs text-text-dim italic">{strings.editor.noFormFields}</p>
           )}
 
           {formPairs.map((pair) => (
@@ -231,7 +231,7 @@ export default forwardRef<BodyEditorHandle, Props>(function BodyEditor({
                 <input
                   className="w-full h-full bg-transparent font-mono text-xs px-3 py-2 outline-none focus:bg-bg2/60 min-w-0"
                   style={{ color: "var(--c-accent)" }}
-                  placeholder={readOnly ? "—" : "key"}
+                  placeholder={readOnly ? "—" : strings.editor.placeholderKey}
                   value={pair.key}
                   onChange={(e) => handleFormPairChange(pair.id, "key", e.target.value)}
                   readOnly={readOnly}
@@ -240,7 +240,7 @@ export default forwardRef<BodyEditorHandle, Props>(function BodyEditor({
               <div className="flex-1 min-w-0">
                 <input
                   className="w-full h-full bg-transparent font-mono text-xs text-text-bright px-3 py-2 outline-none focus:bg-bg2/60 min-w-0"
-                  placeholder={readOnly ? "—" : "value"}
+                  placeholder={readOnly ? "—" : strings.editor.placeholderValue}
                   value={pair.value}
                   onChange={(e) => handleFormPairChange(pair.id, "value", e.target.value)}
                   readOnly={readOnly}
@@ -261,7 +261,7 @@ export default forwardRef<BodyEditorHandle, Props>(function BodyEditor({
               className="flex items-center gap-2 px-4 py-2.5 text-xs text-text-dim hover:text-text-base hover:bg-bg2/30 transition-colors cursor-pointer text-left border-t border-border/20"
             >
               <span className="text-accent font-semibold text-sm leading-none">+</span>
-              Add field
+              {strings.editor.addField}
             </button>
           )}
         </div>

@@ -7,6 +7,7 @@ import { Button, IconButton, Input, FormField, EmptyState, Badge, StatusDot, Mod
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 import { Plus, RefreshCw, Activity, Trash2, Cloud, CheckCircle2, AlertCircle, X } from "@/lib/icons";
+import { strings } from "@/lib/strings";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -72,11 +73,11 @@ function cardBgClass(s: CheckStatus, code: number | null): string {
 }
 
 function statusLabel(s: CheckStatus, code: number | null, error: string | null): string {
-  if (s === "idle") return "Not checked";
-  if (s === "checking") return "Checking…";
-  if (s === "error") return error ?? "Error";
+  if (s === "idle") return strings.healthBar.notChecked;
+  if (s === "checking") return strings.healthBar.checking;
+  if (s === "error") return error ?? strings.healthBar.error;
   if (code !== null) return `${code}`;
-  return "Unknown";
+  return strings.healthBar.unknown;
 }
 
 function badgeVariant(s: CheckStatus, code: number | null): "green" | "red" | "yellow" | "neutral" {
@@ -185,7 +186,7 @@ function ResponseModal({
                   </div>
                 ))
               ) : (
-                <p className="px-4 py-4 text-xs text-text-dim italic">No headers</p>
+                <p className="px-4 py-4 text-xs text-text-dim italic">{strings.common.noHeaders}</p>
               )}
             </div>
           </div>
@@ -212,7 +213,7 @@ function ResponseModal({
 
         {/* ── Footer ── */}
         <div className="flex justify-end px-6 py-3 border-t border-border flex-shrink-0">
-          <Button variant="secondary" onClick={onClose}>Close</Button>
+          <Button variant="secondary" onClick={onClose}>{strings.common.close}</Button>
         </div>
 
       </div>
@@ -253,7 +254,7 @@ function ServiceCard({
       <button
         className="w-full text-left p-4 cursor-pointer hover:bg-bg2/30 transition-colors"
         onClick={onClick}
-        title="View last response"
+        title={strings.healthBar.viewLastResponse}
       >
         <div className="flex items-start gap-3">
           <StatusDot
@@ -281,7 +282,7 @@ function ServiceCard({
             )}
             {state.checkedAt !== null && (
               <span className="text-xs text-text-dim">
-                Last checked {formatTs(state.checkedAt)}
+                {strings.healthBar.lastChecked} {formatTs(state.checkedAt)}
               </span>
             )}
           </div>
@@ -290,18 +291,18 @@ function ServiceCard({
 
       {/* Footer controls */}
       <div className="flex items-center gap-2 px-4 py-2 border-t border-border/40 bg-bg0/20">
-        <span className="text-xs text-text-dim flex-shrink-0">Auto refresh</span>
+        <span className="text-xs text-text-dim flex-shrink-0">{strings.healthBar.autoRefresh}</span>
         <Toggle checked={service.autoRefreshEnabled} onChange={onToggleAutoRefresh} />
         <div className="flex-1" />
         <IconButton
           icon={<RefreshCw size={13} className={state.status === "checking" ? "animate-spin" : ""} />}
-          title="Refresh this service"
+          title={strings.healthBar.refreshService}
           onClick={(e) => { e.stopPropagation(); onRefresh(); }}
           disabled={state.status === "checking"}
         />
         <IconButton
           icon={<Trash2 size={13} />}
-          title="Remove service"
+          title={strings.healthBar.removeService}
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           className="hover:border-red/40 hover:text-red"
         />
@@ -335,14 +336,14 @@ function AddServiceModal({
 
   const validate = (): boolean => {
     const errs: Partial<FormState> = {};
-    if (!form.name.trim()) errs.name = "Name is required";
+    if (!form.name.trim()) errs.name = strings.healthBar.nameRequired;
     if (!form.url.trim()) {
-      errs.url = "Health check URL is required";
+      errs.url = strings.healthBar.urlRequired;
     } else {
       // Allow env var tokens {{VAR}} — validate after stripping them
       const stripped = form.url.replace(/\{\{[^}]+\}\}/g, "placeholder");
       try { new URL(stripped); } catch {
-        errs.url = "Enter a valid URL (e.g. http://localhost:3000/health)";
+        errs.url = strings.healthBar.urlInvalid;
       }
     }
     setErrors(errs);
@@ -355,8 +356,8 @@ function AddServiceModal({
   };
 
   return (
-    <Modal open={open} title={editingService ? "Edit Service" : "Add Service"} onClose={onClose}>
-      <FormField label="Service Name" error={errors.name}>
+    <Modal open={open} title={editingService ? strings.healthBar.editService : strings.healthBar.addService} onClose={onClose}>
+      <FormField label={strings.healthBar.serviceName} error={errors.name}>
         <Input
           className="w-full"
           placeholder="e.g. Auth Service"
@@ -367,7 +368,7 @@ function AddServiceModal({
           onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
         />
       </FormField>
-      <FormField label="Health Check URL" error={errors.url}>
+      <FormField label={strings.healthBar.healthCheckUrl} error={errors.url}>
         <Input
           className="w-full font-mono"
           placeholder="http://localhost:3000/health or http://{{HOST}}/health"
@@ -377,13 +378,13 @@ function AddServiceModal({
           onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
         />
         <p className="text-xs text-text-dim mt-1">
-          Supports environment variables: <code className="text-accent">{"{{VAR_NAME}}"}</code>
+          {strings.healthBar.supportsEnvVars} <code className="text-accent">{"{{VAR_NAME}}"}</code>
         </p>
       </FormField>
       <ModalFooter
         onCancel={onClose}
         onConfirm={handleSave}
-        confirmLabel={editingService ? "Update" : "Add Service"}
+        confirmLabel={editingService ? strings.healthBar.update : strings.healthBar.addService}
       />
     </Modal>
   );
@@ -419,7 +420,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
   const SERVICES_REL_PATH = "healthbar/services.json";
   const syncStatus = entitySyncStatus[SERVICES_REL_PATH];
   const publishDisabled = syncStatus === "clean" || publishing;
-  const publishTooltip = syncStatus === "clean" ? "Health Bar is synced" : undefined;
+  const publishTooltip = syncStatus === "clean" ? strings.healthBar.synced : undefined;
 
   // ── Load services on mount / workspace change ────────────────────────────
 
@@ -591,7 +592,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
           disabled={publishDisabled}
           onClick={handlePublish}
         >
-          {publishing ? "Publishing…" : "Publish"}
+          {publishing ? strings.healthBar.publishing : strings.healthBar.publish}
         </Button>
       </span>
 
@@ -602,12 +603,12 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
         disabled={anyChecking || services.length === 0}
         onClick={() => checkAll(services)}
       >
-        Refresh All
+        {strings.healthBar.refreshAll}
       </Button>
 
       {/* Add service */}
       <Button variant="primary" icon={<Plus size={13} />} onClick={handleOpenAdd}>
-        Add Service
+        {strings.healthBar.addService}
       </Button>
     </>
   );
@@ -627,10 +628,10 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
       {ConfirmDialogElement}
       <div className="flex flex-col flex-1 overflow-hidden">
         <PanelHeader
-          title="Health Bar"
+          title={strings.healthBar.title}
           subtitle={
             services.length > 0
-              ? `${services.length} service${services.length !== 1 ? "s" : ""}`
+              ? `${services.length} ${services.length !== 1 ? strings.healthBar.services : strings.healthBar.service}`
               : undefined
           }
           actions={headerActions}
@@ -639,7 +640,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
         <div className="flex-1 overflow-y-auto p-6">
           {loading && (
             <div className="flex items-center justify-center h-32 text-text-dim text-sm">
-              Loading services…
+              {strings.healthBar.loadingServices}
             </div>
           )}
 
@@ -647,11 +648,11 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
             <EmptyState
               fill
               icon={<Activity size={40} />}
-              title="No services added"
-              description="Add a service to start monitoring its health check endpoint."
+              title={strings.healthBar.noServices}
+              description={strings.healthBar.noServicesDesc}
               action={
                 <Button variant="primary" icon={<Plus size={13} />} onClick={handleOpenAdd}>
-                  Add Service
+                  {strings.healthBar.addService}
                 </Button>
               }
             />

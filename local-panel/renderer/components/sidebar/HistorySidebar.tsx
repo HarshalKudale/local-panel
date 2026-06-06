@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { AuditEntry } from "@/types";
 import { X, ChevronRight, ChevronDown, GitCommit } from "@/lib/icons";
 import { formatFieldLabel } from "@/lib/utils";
+import { strings } from "@/lib/strings";
 
 interface Props {
   filePath: string;
@@ -96,16 +97,16 @@ export default function HistorySidebar({ filePath, workspaceId, onClose, reloadK
   const fileName = filePath.split("/").pop() ?? filePath;
 
   const KIND_LABELS: Record<string, string> = {
-    requests:     "Request",
-    mocks:        "Mock",
-    sockets:      "Socket",
-    environments: "Environment",
-    mappings:     "Mapping",
-    rules:        "Rule",
+    requests:     strings.history.kindRequest,
+    mocks:        strings.history.kindMock,
+    sockets:      strings.history.kindSocket,
+    environments: strings.history.kindEnvironment,
+    mappings:     strings.history.kindMapping,
+    rules:        strings.history.kindRule,
   };
   const firstSegment = filePath.split("/")[0] ?? "";
-  const kindLabel = KIND_LABELS[firstSegment] ?? "Entity";
-  const historyTitle = `${kindLabel} History`;
+  const kindLabel = KIND_LABELS[firstSegment] ?? strings.history.kindEntity;
+  const historyTitle = strings.history.title.replace("{kind}", kindLabel);
 
   return (
     <div
@@ -122,7 +123,7 @@ export default function HistorySidebar({ filePath, workspaceId, onClose, reloadK
         </div>
         <button
           onClick={onClose}
-          title="Close history"
+          title={strings.history.closeHistory}
           className="w-6 h-6 flex items-center justify-center rounded hover:bg-bg2 text-text-dim hover:text-text-base transition-colors flex-shrink-0 cursor-pointer"
         >
           <X size={12} />
@@ -132,19 +133,19 @@ export default function HistorySidebar({ filePath, workspaceId, onClose, reloadK
       {/* Entry count */}
       {!loading && total > 0 && (
         <div className="px-3 py-1.5 border-b border-border flex-shrink-0 bg-bg0/30">
-          <span className="text-[10px] text-text-dim">{total} commit{total !== 1 ? "s" : ""}</span>
+          <span className="text-[10px] text-text-dim">{total} {strings.history.commit.replace("{s}", total !== 1 ? "s" : "")}</span>
         </div>
       )}
 
       {/* List */}
       <div className="flex-1 overflow-y-auto">
         {loading && (
-          <div className="flex items-center justify-center h-20 text-xs text-text-dim">Loading…</div>
+          <div className="flex items-center justify-center h-20 text-xs text-text-dim">{strings.history.loading}</div>
         )}
 
         {!loading && entries.length === 0 && (
           <div className="flex flex-col items-center justify-center h-24 px-4 text-center">
-            <p className="text-xs text-text-dim">No history found for this file.</p>
+            <p className="text-xs text-text-dim">{strings.history.noHistory}</p>
           </div>
         )}
 
@@ -174,7 +175,7 @@ export default function HistorySidebar({ filePath, workspaceId, onClose, reloadK
                 className="text-[9px] font-mono bg-bg2 border border-border px-1 py-px rounded text-text-dim truncate flex-shrink-0 max-w-[72px]"
                 title={entry.actor}
               >
-                {entry.actor || "local"}
+                {entry.actor || strings.history.localActor}
               </span>
 
               {/* Changed fields or spacer */}
@@ -224,7 +225,7 @@ export default function HistorySidebar({ filePath, workspaceId, onClose, reloadK
                 <div className="px-3 pb-3 pt-1 bg-bg0/40">
                   <div className="text-[9px] font-mono text-text-dim/60 mb-1.5 select-all">{entry.commitHash}</div>
                   {isDiffLoading ? (
-                    <div className="text-[10px] text-text-dim py-1">Loading diff…</div>
+                    <div className="text-[10px] text-text-dim py-1">{strings.history.loadingDiff}</div>
                   ) : entryDiff ? (
                     <CompactDiff before={entryDiff.before} after={entryDiff.after} />
                   ) : null}
@@ -253,15 +254,15 @@ function CompactDiff({ before, after }: CompactDiffProps) {
   const afterObj  = (after  && typeof after  === "object") ? (after  as Record<string, unknown>) : {};
 
   if (!before && !after) {
-    return <p className="text-[10px] text-text-dim">No snapshot available.</p>;
+    return <p className="text-[10px] text-text-dim">{strings.history.noSnapshot}</p>;
   }
 
   if (before && !after) {
-    return <p className="text-[10px] text-text-dim italic">Deleted — prior state in git history.</p>;
+    return <p className="text-[10px] text-text-dim italic">{strings.history.deletedPrior}</p>;
   }
 
   if (!before && after) {
-    return <p className="text-[10px] text-text-dim italic">Created — no prior state.</p>;
+    return <p className="text-[10px] text-text-dim italic">{strings.history.createdNoPrior}</p>;
   }
 
   const allKeys = Array.from(new Set([...Object.keys(beforeObj), ...Object.keys(afterObj)]))
@@ -271,7 +272,7 @@ function CompactDiff({ before, after }: CompactDiffProps) {
   const unchanged = allKeys.filter((k) => !changed.includes(k));
 
   if (changed.length === 0) {
-    return <p className="text-[10px] text-text-dim">No field changes detected.</p>;
+    return <p className="text-[10px] text-text-dim">{strings.history.noFieldChanges}</p>;
   }
 
   const displayKeys = showAll ? allKeys : changed;
@@ -303,7 +304,7 @@ function CompactDiff({ before, after }: CompactDiffProps) {
           className="text-[9px] text-text-dim underline text-left mt-0.5 cursor-pointer"
           onClick={() => setShowAll((v) => !v)}
         >
-          {showAll ? `Hide ${unchanged.length} unchanged` : `Show ${unchanged.length} unchanged`}
+          {showAll ? strings.history.hideUnchanged.replace("{n}", String(unchanged.length)) : strings.history.showUnchanged.replace("{n}", String(unchanged.length))}
         </button>
       )}
     </div>

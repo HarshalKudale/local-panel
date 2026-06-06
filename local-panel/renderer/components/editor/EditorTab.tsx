@@ -25,23 +25,23 @@ import { Environment } from "@/types";
 // ── Status dropdown options (mock only) ────────────────────────────────────
 
 const STATUS_OPTIONS = [
-  { v: 200, label: "200  OK" },
-  { v: 201, label: "201  Created" },
-  { v: 204, label: "204  No Content" },
-  { v: 301, label: "301  Moved Permanently" },
-  { v: 302, label: "302  Found" },
-  { v: 304, label: "304  Not Modified" },
-  { v: 400, label: "400  Bad Request" },
-  { v: 401, label: "401  Unauthorized" },
-  { v: 403, label: "403  Forbidden" },
-  { v: 404, label: "404  Not Found" },
-  { v: 405, label: "405  Method Not Allowed" },
-  { v: 409, label: "409  Conflict" },
-  { v: 422, label: "422  Unprocessable Entity" },
-  { v: 429, label: "429  Too Many Requests" },
-  { v: 500, label: "500  Internal Server Error" },
-  { v: 502, label: "502  Bad Gateway" },
-  { v: 503, label: "503  Service Unavailable" },
+  { v: 200, label: strings.editor.status200 },
+  { v: 201, label: strings.editor.status201 },
+  { v: 204, label: strings.editor.status204 },
+  { v: 301, label: strings.editor.status301 },
+  { v: 302, label: strings.editor.status302 },
+  { v: 304, label: strings.editor.status304 },
+  { v: 400, label: strings.editor.status400 },
+  { v: 401, label: strings.editor.status401 },
+  { v: 403, label: strings.editor.status403 },
+  { v: 404, label: strings.editor.status404 },
+  { v: 405, label: strings.editor.status405 },
+  { v: 409, label: strings.editor.status409 },
+  { v: 422, label: strings.editor.status422 },
+  { v: 429, label: strings.editor.status429 },
+  { v: 500, label: strings.editor.status500 },
+  { v: 502, label: strings.editor.status502 },
+  { v: 503, label: strings.editor.status503 },
 ];
 
 // ── Props ──────────────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ export default function EditorTab({
     <div className="flex flex-col h-full overflow-hidden">
       <TabStrip
         tabs={[
-          ...(!reqReadOnly ? [{ id: "params" as const, label: `Params${reqParamCount > 0 ? ` (${reqParamCount})` : ""}` }] : []),
+          ...(!reqReadOnly ? [{ id: "params" as const, label: `${strings.editor.params}${reqParamCount > 0 ? ` (${reqParamCount})` : ""}` }] : []),
           { id: "headers" as const, label: `${strings.editor.headers}${reqHeaderCount > 0 ? ` (${reqHeaderCount})` : ""}` },
           { id: "body" as const, label: strings.editor.body },
           ...(!reqReadOnly ? [{ id: "pre-script" as const, label: `${strings.editor.preScript}${preScriptDot}` }] : []),
@@ -185,7 +185,7 @@ export default function EditorTab({
           <HeaderTable
             rows={reqParams}
             onChange={onReqParamsChange ?? (() => { })}
-            emptyMessage="No query params — add a row or type ?key=value in the URL"
+            emptyMessage={strings.editor.noQueryParams}
           />
         )}
         {reqTab === "headers" && (
@@ -221,7 +221,7 @@ export default function EditorTab({
               value={reqBody}
               onChange={onReqBodyChange}
               readOnly={reqReadOnly}
-              placeholder={reqReadOnly ? "No request body captured" : "Request body (optional)"}
+              placeholder={reqReadOnly ? strings.editor.noRequestBodyCaptured : strings.editor.requestBodyOptional}
               mode={reqMode}
               onModeChange={reqReadOnly ? undefined : onReqModeChange}
             />
@@ -260,7 +260,7 @@ export default function EditorTab({
           }
           suffix={
             <div className="flex items-center gap-2 pr-3">
-              <span className="text-[10px] text-text-dim flex-shrink-0">Delay</span>
+              <span className="text-[10px] text-text-dim flex-shrink-0">{strings.editor.delay}</span>
               <input
                 type="number"
                 min={0}
@@ -269,19 +269,19 @@ export default function EditorTab({
                 onChange={(e) => onResDelayChange?.(Math.max(0, parseInt(e.target.value, 10) || 0))}
                 className="bg-bg2 border border-border rounded px-2 py-1 text-xs font-mono text-text-bright outline-none focus:border-accent w-16 text-center"
                 placeholder="0"
-                title="Response delay in milliseconds"
+                title={strings.editor.responseDelayTitle}
               />
-              <span className="text-[10px] text-text-dim flex-shrink-0">ms</span>
+              <span className="text-[10px] text-text-dim flex-shrink-0">{strings.editor.ms}</span>
               {/* Streaming mode selector */}
               <select
                 value={streamingMode ?? "none"}
                 onChange={(e) => onStreamingModeChange?.(e.target.value as "none" | "sse" | "chunked")}
                 className="bg-bg2 border border-border rounded px-1.5 py-1 text-[10px] font-mono text-text-bright outline-none focus:border-accent cursor-pointer"
-                title="Streaming mode"
+                title={strings.editor.streamingModeTitle}
               >
-                <option value="none">No Stream</option>
-                <option value="sse">SSE</option>
-                <option value="chunked">Chunked</option>
+                <option value="none">{strings.editor.streamNone}</option>
+                <option value="sse">{strings.editor.streamSse}</option>
+                <option value="chunked">{strings.editor.streamChunked}</option>
               </select>
               {streamingMode && streamingMode !== "none" && (
                 <>
@@ -292,9 +292,9 @@ export default function EditorTab({
                     value={streamingChunkDelay ?? 100}
                     onChange={(e) => onStreamingChunkDelayChange?.(Math.max(10, parseInt(e.target.value, 10) || 100))}
                     className="bg-bg2 border border-border rounded px-2 py-1 text-xs font-mono text-text-bright outline-none focus:border-accent w-14 text-center"
-                    title="Chunk delay in ms"
+                    title={strings.editor.chunkDelayTitle}
                   />
-                  <span className="text-[10px] text-text-dim flex-shrink-0">ms/chunk</span>
+                  <span className="text-[10px] text-text-dim flex-shrink-0">{strings.editor.msPerChunk}</span>
                 </>
               )}
               <input
@@ -305,7 +305,7 @@ export default function EditorTab({
                 onChange={(e) => onResStatusChange?.(parseInt(e.target.value, 10) || 200)}
                 className="bg-bg2 border border-border rounded px-2 py-1 text-sm font-bold font-mono outline-none focus:border-accent w-16 text-center"
                 style={{ color: statusColor(resStatus ?? 200) }}
-                title="Response status code"
+                title={strings.editor.responseStatusTitle}
               />
             </div>
           }
@@ -363,7 +363,7 @@ export default function EditorTab({
             { id: "body" as const, label: strings.editor.body },
             { id: "headers" as const, label: strings.editor.headers },
             { id: "post-script" as const, label: `${strings.editor.postScript}${postScriptDot}` },
-            { id: "tests" as const, label: `Tests${testScriptDot}${testBadge}` },
+            { id: "tests" as const, label: `${strings.editor.tests}${testScriptDot}${testBadge}` },
           ]}
           active={resTab}
           onChange={onResTabChange}
@@ -520,7 +520,7 @@ function ScriptEditor({ value, onChange, placeholder, error }: {
 function TokenToolbar({ env, onInsert }: { env: Environment | null; onInsert(token: string): void }) {
   return (
     <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/40 bg-bg0/10 flex-shrink-0 justify-end">
-      <span className="text-[9px] text-text-dim/60 uppercase tracking-wider mr-1">Insert</span>
+      <span className="text-[9px] text-text-dim/60 uppercase tracking-wider mr-1">{strings.editor.insert}</span>
       <EnvVarHint env={env} onInsert={onInsert} />
       <RandomizerHint onInsert={onInsert} />
     </div>
@@ -600,13 +600,13 @@ function TestsPanel({ testScript, onTestScriptChange, testResults, testLogs, tes
           onClick={() => setView("script")}
           className={`px-3 py-1.5 text-[11px] font-medium cursor-pointer ${view === "script" ? "text-text-bright border-b-2 border-accent" : "text-text-dim hover:text-text-bright"}`}
         >
-          Script
+          {strings.editor.script}
         </button>
         <button
           onClick={() => setView("results")}
           className={`px-3 py-1.5 text-[11px] font-medium cursor-pointer ${view === "results" ? "text-text-bright border-b-2 border-accent" : "text-text-dim hover:text-text-bright"}`}
         >
-          Results
+          {strings.editor.results}
           {testResults && testResults.length > 0 && (
             <span className="ml-1.5 text-[10px]">
               <span className="text-green">{passCount}</span>
@@ -632,13 +632,13 @@ function TestsPanel({ testScript, onTestScriptChange, testResults, testLogs, tes
         <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
           {(!testResults || testResults.length === 0) && !testRunning && (
             <div className="flex items-center justify-center h-full text-center">
-              <p className="text-xs text-text-dim">No test results yet. Write tests and send the request.</p>
+              <p className="text-xs text-text-dim">{strings.editor.noTestResults}</p>
             </div>
           )}
           {testResults && testResults.map((t, i) => (
             <div key={i} className={`flex items-start gap-2 px-2.5 py-1.5 rounded text-xs font-mono ${t.passed ? "bg-green/5 border border-green/20" : "bg-red/5 border border-red/20"}`}>
               <span className={`flex-shrink-0 mt-0.5 text-[10px] font-bold ${t.passed ? "text-green" : "text-red"}`}>
-                {t.passed ? "PASS" : "FAIL"}
+                {t.passed ? strings.editor.pass : strings.editor.fail}
               </span>
               <div className="flex-1 min-w-0">
                 <span className="text-text-bright">{t.name}</span>
@@ -649,7 +649,7 @@ function TestsPanel({ testScript, onTestScriptChange, testResults, testLogs, tes
           ))}
           {testLogs && testLogs.length > 0 && (
             <div className="mt-3 pt-2 border-t border-border/40">
-              <div className="text-[10px] text-text-dim uppercase tracking-wider mb-1">Console</div>
+              <div className="text-[10px] text-text-dim uppercase tracking-wider mb-1">{strings.editor.console}</div>
               {testLogs.map((log, i) => (
                 <div key={i} className="text-[11px] font-mono text-text-dim px-2 py-0.5">{log}</div>
               ))}

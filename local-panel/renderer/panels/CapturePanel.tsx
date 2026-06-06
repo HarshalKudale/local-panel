@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Group as PanelGroup, Panel, Separator as ResizeHandle } from "react-resizable-panels";
-import { RequestLogEntry, MockRule, SavedRequest } from "@/types";
+import { RequestLogEntry, MockRule, SavedRequest, AppConfig } from "@/types";
 import SearchInput from "@/components/common/SearchInput";
 import PanelHeader from "@/components/layout/PanelHeader";
 import CaptureTable from "@/components/capture/CaptureTable";
@@ -9,6 +9,9 @@ import CaptureTypeTabs, { TypeFilter } from "@/components/capture/CaptureTypeTab
 import {
   CaptureType, deriveType, fulfilledBy, buildMockInitial, reqToHeadersBody,
 } from "@/components/capture/captureUtils";
+import {
+  blockKey, blockedKeySet, findBlocksFolder, ensureBlocksFolderId, buildBlockMock,
+} from "@/lib/blocks";
 import { strings } from "@/lib/strings";
 import {
   Play, Pause, Clipboard, Zap, Download, Share2, Ban, Trash2, ArrowUpRight,
@@ -42,6 +45,8 @@ function persistEntries(wsId: string, entries: RequestLogEntry[]) {
 
 interface Props {
   activeWorkspaceId: string;
+  wsConfig: AppConfig;
+  onConfigChange: (next: AppConfig) => Promise<void>;
   onOpenInMocks: (initial: Partial<MockRule>) => void;
   onOpenInRequests: (req: Omit<SavedRequest, "id" | "createdAt" | "workspaceId">) => void;
   onStatsChange?: (stats: CaptureStats) => void;
@@ -54,7 +59,7 @@ interface CtxMenuState {
   entry: RequestLogEntry;
 }
 
-export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenInRequests, onStatsChange }: Props) {
+export default function CapturePanel({ activeWorkspaceId, wsConfig, onConfigChange, onOpenInMocks, onOpenInRequests, onStatsChange }: Props) {
   const [entries, setEntries] = useState<RequestLogEntry[]>(() => loadPersistedEntries(activeWorkspaceId));
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -234,22 +239,34 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
     window.api.getConfig();
   }, []);
 
+  const blockedKeys = useMemo(() => blockedKeySet(wsConfig), [wsConfig.mocks, wsConfig.mockFolders]);
+
+  const reloadConfig = useCallback(async () => {
+    const fresh = await window.api.getConfig();
+    await onConfigChange(fresh);
+  }, [onConfigChange]);
+
   const blockEntries = useCallback(async (list: RequestLogEntry[]) => {
+    if (list.length === 0) return;
+    const folderId = await ensureBlocksFolderId(wsConfig.mockFolders ?? []);
+    const existing = blockedKeySet(wsConfig);
     for (const entry of list) {
-      await window.api.addMock({
-        name: `Block ${entry.method} ${entry.url}`,
-        method: entry.method,
-        urlPattern: entry.url,
-        useRegex: false,
-        responseStatus: 403,
-        responseHeaders: {},
-        responseBody: "",
-        enabled: true,
-        folderId: null,
-      } as any);
+      if (existing.has(blockKey(entry.method, entry.url))) continue;
+      await window.api.addMock(buildBlockMock(entry.method, entry.url, folderId) as any);
     }
-    window.api.getConfig();
-  }, []);
+    await reloadConfig();
+  }, [wsConfig, reloadConfig]);
+
+  const unblockEntries = useCallback(async (list: RequestLogEntry[]) => {
+    const blocks = findBlocksFolder(wsConfig.mockFolders ?? []);
+    if (!blocks) return;
+    const keys = new Set(list.map((e) => blockKey(e.method, e.url)));
+    const toDelete = (wsConfig.mocks ?? []).filter(
+      (m) => m.folderId === blocks.id && keys.has(blockKey(m.method, m.urlPattern)),
+    );
+    for (const m of toDelete) await window.api.deleteMock(m.id);
+    await reloadConfig();
+  }, [wsConfig, reloadConfig]);
 
   const shareEntries = useCallback((list: RequestLogEntry[]) => {
     if (list.length === 0) return;
@@ -268,29 +285,37 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
 
   const ctxItems = useMemo<ContextMenuItem[]>(() => {
     if (!ctxMenu) return [];
+    const close = () => setCtxMenu(null);
+    const run = (fn: () => void) => () => { fn(); close(); };
     if (ctxMenu.multi) {
       const selected = entries.filter((e) => selectedIds.has(e.id));
+      const allBlocked = selected.length > 0 && selected.every((e) => blockedKeys.has(blockKey(e.method, e.url)));
       return [
-        { label: strings.capture.ctxMockMany, icon: <Zap size={14} />, action: () => mockEntries(selected, true) },
-        { label: strings.capture.ctxSaveMany, icon: <Download size={14} />, action: () => saveEntries(selected, true) },
-        { label: strings.capture.ctxBlockMany, icon: <Ban size={14} />, action: () => blockEntries(selected) },
-        { label: strings.capture.ctxShareMany, icon: <Share2 size={14} />, action: () => shareEntries(selected) },
+        { label: strings.capture.ctxMockMany, icon: <Zap size={14} />, action: run(() => mockEntries(selected, true)) },
+        { label: strings.capture.ctxSaveMany, icon: <Download size={14} />, action: run(() => saveEntries(selected, true)) },
+        allBlocked
+          ? { label: strings.capture.ctxUnblockMany, icon: <Ban size={14} />, action: run(() => unblockEntries(selected)) }
+          : { label: strings.capture.ctxBlockMany, icon: <Ban size={14} />, action: run(() => blockEntries(selected)) },
+        { label: strings.capture.ctxShareMany, icon: <Share2 size={14} />, action: run(() => shareEntries(selected)) },
         { sep: true },
-        { label: strings.capture.ctxDeleteMany, icon: <Trash2 size={14} />, danger: true, action: () => { removeEntries(selectedIds); setSelectedIds(new Set()); } },
+        { label: strings.capture.ctxDeleteMany, icon: <Trash2 size={14} />, danger: true, action: run(() => { removeEntries(selectedIds); setSelectedIds(new Set()); }) },
       ];
     }
     const e = ctxMenu.entry;
+    const isBlocked = blockedKeys.has(blockKey(e.method, e.url));
     return [
-      { label: strings.capture.ctxMock, icon: <Zap size={14} />, action: () => onOpenInMocks(buildMockInitial(e)) },
-      { label: strings.capture.ctxOpen, icon: <ArrowUpRight size={14} />, action: () => onOpenInRequests(reqToHeadersBody(e)) },
-      { label: strings.capture.ctxSave, icon: <Download size={14} />, action: () => saveEntries([e], false) },
+      { label: strings.capture.ctxMock, icon: <Zap size={14} />, action: run(() => onOpenInMocks(buildMockInitial(e))) },
+      { label: strings.capture.ctxOpen, icon: <ArrowUpRight size={14} />, action: run(() => onOpenInRequests(reqToHeadersBody(e))) },
+      { label: strings.capture.ctxSave, icon: <Download size={14} />, action: run(() => saveEntries([e], false)) },
       { sep: true },
-      { label: strings.capture.ctxBlock, icon: <Ban size={14} />, action: () => blockEntries([e]) },
-      { label: strings.capture.ctxShare, icon: <Share2 size={14} />, action: () => shareEntries([e]) },
+      isBlocked
+        ? { label: strings.capture.ctxUnblock, icon: <Ban size={14} />, action: run(() => unblockEntries([e])) }
+        : { label: strings.capture.ctxBlock, icon: <Ban size={14} />, action: run(() => blockEntries([e])) },
+      { label: strings.capture.ctxShare, icon: <Share2 size={14} />, action: run(() => shareEntries([e])) },
       { sep: true },
-      { label: strings.capture.ctxDelete, icon: <Trash2 size={14} />, danger: true, action: () => removeEntries(new Set([e.id])) },
+      { label: strings.capture.ctxDelete, icon: <Trash2 size={14} />, danger: true, action: run(() => removeEntries(new Set([e.id]))) },
     ];
-  }, [ctxMenu, entries, selectedIds, mockEntries, saveEntries, blockEntries, shareEntries, removeEntries, onOpenInMocks, onOpenInRequests]);
+  }, [ctxMenu, entries, selectedIds, blockedKeys, mockEntries, saveEntries, blockEntries, unblockEntries, shareEntries, removeEntries, onOpenInMocks, onOpenInRequests]);
 
   // Notify parent of current stats so the global footer can display them
   useEffect(() => {
@@ -314,6 +339,7 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
           entries={visible}
           selectedIds={selectedIds}
           activeId={activeId}
+          blockedKeys={blockedKeys}
           onRowClick={handleRowClick}
           onToggleCheck={handleToggleCheck}
           onToggleAll={handleToggleAll}
@@ -327,7 +353,7 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
     <div className="flex flex-col flex-1 overflow-hidden">
       <PanelHeader
         title={strings.capture.title}
-        subtitle="Captured requests — persisted across sessions · last 200 kept"
+        subtitle={strings.capture.subtitle.replace("{count}", String(MAX_ENTRIES))}
         actions={
           <>
             {selectedIds.size > 0 && (

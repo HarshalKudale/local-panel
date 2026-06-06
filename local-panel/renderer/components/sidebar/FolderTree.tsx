@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Folder as FolderType } from "@/types";
-import { ChevronDown, Folder, FolderOpen, Play, ArrowUp, History, Copy, Trash2, Pencil, Plus, ChevronsUpDown, ToggleLeft, ToggleRight, ExternalLink } from "@/lib/icons";
+import { ChevronDown, Folder, FolderOpen, Play, ArrowUp, History, Copy, Trash2, Pencil, Plus, ChevronsUpDown, ToggleLeft, ToggleRight, ExternalLink, Ban } from "@/lib/icons";
 import { methodColor, methodBg } from "@/lib/utils";
 import ActiveDot from "@/components/ui/ActiveDot";
 import SyncIndicator from "@/components/ui/SyncIndicator";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import ContextMenu, { ContextMenuItem } from "@/components/ui/ContextMenu";
+import { strings } from "@/lib/strings";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -20,6 +21,8 @@ export interface FolderTreeItem {
   relPath?: string;
   /** True for special runner config nodes that open the collection runner when clicked */
   isRunner?: boolean;
+  /** True for application-managed block mocks (live in the Blocks folder, non-editable) */
+  isBlock?: boolean;
 }
 
 interface FolderNode {
@@ -84,7 +87,7 @@ function RenameDialog({ currentName, onSave, onCancel }: {
           if (e.key === "Escape") { e.preventDefault(); onCancel(); }
         }}
       >
-        <div className="text-xs font-semibold text-text-base mb-3">Rename Folder</div>
+        <div className="text-xs font-semibold text-text-base mb-3">{strings.folderTree.renameFolder}</div>
         <input
           ref={ref}
           className="w-full bg-bg3 border border-border focus:border-accent rounded px-2 py-1.5 text-xs text-text-bright outline-none mb-4"
@@ -96,7 +99,7 @@ function RenameDialog({ currentName, onSave, onCancel }: {
             className="px-3 py-1.5 text-xs rounded border border-border hover:bg-bg3 text-text-dim cursor-pointer"
             onClick={onCancel}
           >
-            Cancel
+            {strings.common.cancel}
           </button>
           <button
             className="px-3 py-1.5 text-xs rounded font-semibold cursor-pointer"
@@ -104,7 +107,7 @@ function RenameDialog({ currentName, onSave, onCancel }: {
             disabled={!val.trim()}
             onClick={handleSave}
           >
-            Save
+            {strings.common.save}
           </button>
         </div>
       </div>
@@ -130,14 +133,14 @@ function MoveDialog({ folders, onMove, onCancel }: {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-b border-border">
-          Move to Folder
+          {strings.folderTree.moveToFolder}
         </div>
         <div className="max-h-64 overflow-y-auto py-1">
           <button
             className="w-full text-left px-3 py-1.5 text-xs hover:bg-bg3 text-text-dim cursor-pointer"
             onClick={() => onMove(null)}
           >
-            / root
+            {strings.folderTree.slashRoot}
           </button>
           {folders.map((f) => (
             <button
@@ -154,7 +157,7 @@ function MoveDialog({ folders, onMove, onCancel }: {
             className="w-full text-center text-xs text-text-dim hover:text-text-base cursor-pointer py-0.5"
             onClick={onCancel}
           >
-            Cancel
+            {strings.common.cancel}
           </button>
         </div>
       </div>
@@ -208,6 +211,12 @@ interface Props {
   onOpenRunner?: (folderId: string) => void;
   /** Called synchronously before a folder is deleted — lets the parent close open tabs for items in that folder */
   onBeforeDeleteFolder?: (folderId: string) => void;
+  /** Id of the application-managed "Blocks" folder, if it exists. Used to protect it and render block items specially. */
+  blocksFolderId?: string | null;
+  /** Convert a normal mock into a block (move to Blocks folder, force 403). */
+  onBlockItem?: (id: string) => void;
+  /** Remove a block (delete the block mock). */
+  onUnblockItem?: (id: string) => void;
 }
 
 export default function FolderTree({
@@ -215,6 +224,7 @@ export default function FolderTree({
   onDuplicateItem, onMoveItems, onOpenNewTab, onHistoryItem,
   pathStatusMap, entitySyncStatus, folderStatusMap, onPublishItem, onPublishFolder, onRestoreItem,
   onBeforeCreateFolder, onOpenRunner, onBeforeDeleteFolder,
+  blocksFolderId, onBlockItem, onUnblockItem,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["__root__"]));
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: CtxMenuItem[] } | null>(null);
@@ -300,47 +310,62 @@ export default function FolderTree({
   const closeMenu = () => setCtxMenu(null);
 
   const sep: CtxMenuItem = { sep: true, action: () => { } };
-  const expandAllItem: CtxMenuItem  = { label: "Expand All",   icon: <ChevronsUpDown size={11} />, action: () => { expandAll();   closeMenu(); } };
-  const collapseAllItem: CtxMenuItem = { label: "Collapse All", icon: <ChevronsUpDown size={11} />, action: () => { collapseAll(); closeMenu(); } };
+  const expandAllItem: CtxMenuItem  = { label: strings.folderTree.expandAll,   icon: <ChevronsUpDown size={11} />, action: () => { expandAll();   closeMenu(); } };
+  const collapseAllItem: CtxMenuItem = { label: strings.folderTree.collapseAll, icon: <ChevronsUpDown size={11} />, action: () => { collapseAll(); closeMenu(); } };
 
   function openEmptySpaceMenu(x: number, y: number) {
     const menuItems: CtxMenuItem[] = [
-      { label: "New Subfolder", icon: <Plus size={11} />, action: () => { setNewFolderParent(null); setExpanded((p) => { const s = new Set(p); s.add("__root__"); return s; }); closeMenu(); } },
+      { label: strings.folderTree.newSubfolder, icon: <Plus size={11} />, action: () => { setNewFolderParent(null); setExpanded((p) => { const s = new Set(p); s.add("__root__"); return s; }); closeMenu(); } },
     ];
     if (onOpenNewTab) {
-      menuItems.push({ label: "New Tab", icon: <Plus size={11} />, action: () => { onOpenNewTab(); closeMenu(); } });
+      menuItems.push({ label: strings.folderTree.newTab, icon: <Plus size={11} />, action: () => { onOpenNewTab(); closeMenu(); } });
     }
     menuItems.push(sep, expandAllItem, collapseAllItem);
     setCtxMenu({ x, y, items: menuItems });
   }
 
   function openFolderMenu(x: number, y: number, folderId: string | null) {
+    // The application-managed Blocks folder is protected: no rename/delete/subfolders.
+    if (folderId !== null && folderId === blocksFolderId) {
+      setCtxMenu({ x, y, items: [expandAllItem, collapseAllItem] });
+      return;
+    }
     const menuItems: CtxMenuItem[] = [
-      { label: "New Subfolder", icon: <Plus size={11} />, action: () => { setNewFolderParent(folderId); setExpanded((p) => { const s = new Set(p); s.add(folderId === null ? "__root__" : folderId); return s; }); closeMenu(); } },
+      { label: strings.folderTree.newSubfolder, icon: <Plus size={11} />, action: () => { setNewFolderParent(folderId); setExpanded((p) => { const s = new Set(p); s.add(folderId === null ? "__root__" : folderId); return s; }); closeMenu(); } },
     ];
     if (folderId !== null && onPublishFolder) {
-      menuItems.push({ label: "Commit & Push Folder", icon: <ArrowUp size={11} />, action: () => { onPublishFolder(folderId); closeMenu(); } });
+      menuItems.push({ label: strings.folderTree.commitPushFolder, icon: <ArrowUp size={11} />, action: () => { onPublishFolder(folderId); closeMenu(); } });
     }
     if (folderId !== null && onToggleFolderItems) {
       menuItems.push(
-        { label: "Enable All in Folder",  icon: <ToggleRight size={11} />, action: () => { onToggleFolderItems(folderId, true);  closeMenu(); } },
-        { label: "Disable All in Folder", icon: <ToggleLeft  size={11} />, action: () => { onToggleFolderItems(folderId, false); closeMenu(); } },
+        { label: strings.folderTree.enableAllInFolder,  icon: <ToggleRight size={11} />, action: () => { onToggleFolderItems(folderId, true);  closeMenu(); } },
+        { label: strings.folderTree.disableAllInFolder, icon: <ToggleLeft  size={11} />, action: () => { onToggleFolderItems(folderId, false); closeMenu(); } },
       );
     }
     if (folderId !== null) {
       menuItems.push(
-        { label: "Rename Folder", icon: <Pencil size={11} />, action: () => { setRenaming(folderId); closeMenu(); } },
-        { label: "Delete Folder", icon: <Trash2 size={11} />, danger: true, action: () => { setPendingDelete({ itemIds: [], folderIds: [folderId] }); clearSelection(); closeMenu(); } },
+        { label: strings.folderTree.renameFolder, icon: <Pencil size={11} />, action: () => { setRenaming(folderId); closeMenu(); } },
+        { label: strings.folderTree.deleteFolder, icon: <Trash2 size={11} />, danger: true, action: () => { setPendingDelete({ itemIds: [], folderIds: [folderId] }); clearSelection(); closeMenu(); } },
       );
     }
     if (folderId !== null && onOpenRunner) {
-      menuItems.push({ label: "Run Collection", icon: <Play size={11} />, action: () => { onOpenRunner(folderId); closeMenu(); } });
+      menuItems.push({ label: strings.folderTree.runCollection, icon: <Play size={11} />, action: () => { onOpenRunner(folderId); closeMenu(); } });
     }
     menuItems.push(sep, expandAllItem, collapseAllItem);
     setCtxMenu({ x, y, items: menuItems });
   }
 
   function openItemMenu(x: number, y: number, item: FolderTreeItem) {
+    // Block items are application-managed and non-editable — only Unblock is offered.
+    if (item.isBlock) {
+      const blockMenu: CtxMenuItem[] = [];
+      if (onUnblockItem) {
+        blockMenu.push({ label: strings.folderTree.unblock, icon: <Ban size={11} />, action: () => { onUnblockItem(item.id); closeMenu(); } });
+      }
+      blockMenu.push(sep, expandAllItem, collapseAllItem);
+      setCtxMenu({ x, y, items: blockMenu });
+      return;
+    }
     const isEnabled = item.isEnabled !== false;
     const syncSt = getItemStatus(item);
     const isDeleted = syncSt === "deleted";
@@ -348,37 +373,40 @@ export default function FolderTree({
     const isNew = syncSt === "new";
     const menuItems: CtxMenuItem[] = isDeleted
       ? []
-      : [{ label: "Open", icon: <ExternalLink size={11} />, action: () => { onOpenItem(item.id); closeMenu(); } }];
+      : [{ label: strings.folderTree.open, icon: <ExternalLink size={11} />, action: () => { onOpenItem(item.id); closeMenu(); } }];
     if (onPublishItem && syncSt && syncSt !== "clean") {
       menuItems.push({
-        label: isDeleted ? "Commit Delete" : "Commit & Push",
+        label: isDeleted ? strings.folderTree.commitDelete : strings.folderTree.commitPush,
         icon: <ArrowUp size={11} />,
         action: () => { onPublishItem!(item.id); closeMenu(); },
       });
     }
     if (onRestoreItem && syncSt && syncSt !== "clean") {
       menuItems.push({
-        label: isDeleted ? "Restore" : "Discard Changes",
+        label: isDeleted ? strings.folderTree.restore : strings.folderTree.discardChanges,
         icon: <History size={11} />,
         action: () => { onRestoreItem!(item.id); closeMenu(); },
       });
     }
     if (!isDeleted && onToggleItem) {
       menuItems.push({
-        label: isEnabled ? "Disable" : "Enable",
+        label: isEnabled ? strings.folderTree.disable : strings.folderTree.enable,
         icon: isEnabled ? <ToggleLeft size={11} /> : <ToggleRight size={11} />,
         action: () => { onToggleItem(item.id); closeMenu(); },
       });
     }
     if (!isDeleted && onDuplicateItem) {
-      menuItems.push({ label: "Duplicate", icon: <Copy size={11} />, action: () => { onDuplicateItem(item.id); closeMenu(); } });
+      menuItems.push({ label: strings.folderTree.duplicate, icon: <Copy size={11} />, action: () => { onDuplicateItem(item.id); closeMenu(); } });
     }
     if (!isDeleted && onHistoryItem && isTracked) {
-      menuItems.push({ label: "History", icon: <History size={11} />, action: () => { onHistoryItem(item.id); closeMenu(); } });
+      menuItems.push({ label: strings.folderTree.history, icon: <History size={11} />, action: () => { onHistoryItem(item.id); closeMenu(); } });
+    }
+    if (!isDeleted && onBlockItem) {
+      menuItems.push({ label: strings.folderTree.block, icon: <Ban size={11} />, action: () => { onBlockItem(item.id); closeMenu(); } });
     }
     if (!isDeleted) {
       menuItems.push(
-        { label: "Delete", icon: <Trash2 size={11} />, danger: true, action: () => { setPendingDelete({ itemIds: [item.id], folderIds: [], hasTracked: !isNew }); clearSelection(); closeMenu(); } },
+        { label: strings.folderTree.delete, icon: <Trash2 size={11} />, danger: true, action: () => { setPendingDelete({ itemIds: [item.id], folderIds: [], hasTracked: !isNew }); clearSelection(); closeMenu(); } },
         sep, expandAllItem, collapseAllItem,
       );
     } else {
@@ -394,7 +422,9 @@ export default function FolderTree({
     const hasFolders = folderIds.length > 0;
     const ni = itemIds.length;
     const nf = folderIds.length;
-    const pl = (n: number, s: string) => `${n} ${s}${n !== 1 ? "s" : ""}`;
+    const fmt = (tpl: string, n: number) => tpl.replace(/\{n\}/g, String(n)).replace(/\{s\}/g, n !== 1 ? "s" : "");
+    const items_ = (n: number) => fmt(strings.folderTree.nItems, n);
+    const folders_ = (n: number) => fmt(strings.folderTree.nFolders, n);
 
     const menuItems: CtxMenuItem[] = [];
 
@@ -406,37 +436,37 @@ export default function FolderTree({
       }) : [];
       if (dirtyItems.length > 0 && onPublishItem) {
         menuItems.push({
-          label: `Commit & Push ${pl(dirtyItems.length, "item")}`,
+          label: `${strings.folderTree.commitPush} ${items_(dirtyItems.length)}`,
           icon: <ArrowUp size={11} />,
           action: () => { dirtyItems.forEach((id) => onPublishItem!(id)); clearSelection(); closeMenu(); },
         });
       }
       if (onToggleItem) {
         menuItems.push(
-          { label: `Enable ${pl(ni, "item")}`,  icon: <ToggleRight size={11} />, action: () => { itemIds.forEach(id => { const it = items.find(i => i.id === id); if (it && it.isEnabled === false) onToggleItem(id); }); clearSelection(); closeMenu(); } },
-          { label: `Disable ${pl(ni, "item")}`, icon: <ToggleLeft  size={11} />, action: () => { itemIds.forEach(id => { const it = items.find(i => i.id === id); if (it && it.isEnabled !== false) onToggleItem(id); }); clearSelection(); closeMenu(); } },
+          { label: `${strings.folderTree.enable} ${items_(ni)}`,  icon: <ToggleRight size={11} />, action: () => { itemIds.forEach(id => { const it = items.find(i => i.id === id); if (it && it.isEnabled === false) onToggleItem(id); }); clearSelection(); closeMenu(); } },
+          { label: `${strings.folderTree.disable} ${items_(ni)}`, icon: <ToggleLeft  size={11} />, action: () => { itemIds.forEach(id => { const it = items.find(i => i.id === id); if (it && it.isEnabled !== false) onToggleItem(id); }); clearSelection(); closeMenu(); } },
         );
       }
       if (onMoveItems) {
-        menuItems.push({ label: `Move ${pl(ni, "item")}…`, action: () => { closeMenu(); setShowMove(true); } });
+        menuItems.push({ label: `${strings.folderTree.move} ${items_(ni)}…`, action: () => { closeMenu(); setShowMove(true); } });
       }
-      menuItems.push({ label: `Delete ${pl(ni, "item")}`, icon: <Trash2 size={11} />, danger: true, action: () => { closeMenu(); setPendingDelete({ itemIds, folderIds: [] }); } });
+      menuItems.push({ label: `${strings.folderTree.delete} ${items_(ni)}`, icon: <Trash2 size={11} />, danger: true, action: () => { closeMenu(); setPendingDelete({ itemIds, folderIds: [] }); } });
 
     } else if (hasFolders && !hasItems) {
       menuItems.push(
         {
-          label: `Expand ${pl(nf, "folder")}`, action: () => {
+          label: `${strings.folderTree.expand} ${folders_(nf)}`, action: () => {
             setExpanded((p) => { const s = new Set(p); folderIds.forEach(id => s.add(id)); return s; });
             closeMenu();
           }
         },
         {
-          label: `Collapse ${pl(nf, "folder")}`, action: () => {
+          label: `${strings.folderTree.collapse} ${folders_(nf)}`, action: () => {
             setExpanded((p) => { const s = new Set(p); folderIds.forEach(id => s.delete(id)); return s; });
             closeMenu();
           }
         },
-        { label: `Delete ${pl(nf, "folder")}`, danger: true, action: () => { closeMenu(); setPendingDelete({ itemIds: [], folderIds }); } },
+        { label: `${strings.folderTree.delete} ${folders_(nf)}`, danger: true, action: () => { closeMenu(); setPendingDelete({ itemIds: [], folderIds }); } },
       );
 
     } else {
@@ -444,13 +474,13 @@ export default function FolderTree({
       if (hasItems && onToggleItem) {
         menuItems.push(
           {
-            label: `Enable ${pl(ni, "item")}`, action: () => {
+            label: `${strings.folderTree.enable} ${items_(ni)}`, action: () => {
               itemIds.forEach(id => { const it = items.find(i => i.id === id); if (it && it.isEnabled === false) onToggleItem(id); });
               clearSelection(); closeMenu();
             }
           },
           {
-            label: `Disable ${pl(ni, "item")}`, action: () => {
+            label: `${strings.folderTree.disable} ${items_(ni)}`, action: () => {
               itemIds.forEach(id => { const it = items.find(i => i.id === id); if (it && it.isEnabled !== false) onToggleItem(id); });
               clearSelection(); closeMenu();
             }
@@ -458,7 +488,7 @@ export default function FolderTree({
         );
       }
       menuItems.push({
-        label: `Delete ${pl(ni + nf, "selected")}`,
+        label: `${strings.folderTree.delete} ${fmt(strings.folderTree.nSelected, ni + nf)}`,
         danger: true,
         action: () => { closeMenu(); setPendingDelete({ itemIds, folderIds }); },
       });
@@ -555,7 +585,7 @@ export default function FolderTree({
           </span>
         ) : (
           <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-text-bright)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
-            {isRoot ? "root" : node.folder!.name}
+            {isRoot ? strings.folderTree.root : node.folder!.name}
           </span>
         )}
         {(node.items.length > 0 || node.children.length > 0) && (
@@ -629,6 +659,11 @@ export default function FolderTree({
             else onOpenItem(item.id);
             return;
           }
+          if (item.isBlock) {
+            // Block items are non-editable; clicking does not open an editor.
+            clearSelection();
+            return;
+          }
           if (e.ctrlKey || e.metaKey) {
             setSelectedItemIds((p) => { const s = new Set(p); s.has(item.id) ? s.delete(item.id) : s.add(item.id); return s; });
           } else if (isDeleted) {
@@ -675,10 +710,16 @@ export default function FolderTree({
           </>
         ) : (
           <>
-            {/* Enabled/disabled dot with sync status indicator */}
+            {/* Block items show a ban marker; normal items show enabled/sync dots */}
             <span style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 2 }}>
-              <ActiveDot active={isEnabled} color="green" size="sm" />
-              <SyncIndicator status={syncSt} />
+              {item.isBlock ? (
+                <Ban size={12} style={{ color: "var(--c-red)" }} />
+              ) : (
+                <>
+                  <ActiveDot active={isEnabled} color="green" size="sm" />
+                  <SyncIndicator status={syncSt} />
+                </>
+              )}
             </span>
             {/* Method badge — shown when not hovered */}
             {item.method && hoveredItemId !== item.id && (
@@ -686,12 +727,12 @@ export default function FolderTree({
                 {item.method === "*" ? "ANY" : item.method}
               </span>
             )}
-            {/* Name — theme color, strikethrough = pending delete, dim = disabled */}
+            {/* Name — theme color, strikethrough = pending delete or block, dim = disabled/block */}
             <span style={{
               fontSize: 13, lineHeight: 1, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis",
               color: "var(--c-text-bright)",
-              textDecoration: isDeleted ? "line-through" : "none",
-              opacity: !isEnabled ? 0.5 : 1,
+              textDecoration: isDeleted || item.isBlock ? "line-through" : "none",
+              opacity: !isEnabled || item.isBlock ? 0.6 : 1,
             }}>
               {item.name}
             </span>
@@ -724,13 +765,14 @@ export default function FolderTree({
       <ConfirmDialog
         open={!!pendingDelete}
         message={pendingDelete ? (() => {
+          const plural = (tpl: string, n: number) => tpl.replace(/\{n\}/g, String(n)).replace(/\{s\}/g, n !== 1 ? "s" : "");
           const what = [
-            pendingDelete.itemIds.length > 0 && `${pendingDelete.itemIds.length} item${pendingDelete.itemIds.length !== 1 ? "s" : ""}`,
-            pendingDelete.folderIds.length > 0 && `${pendingDelete.folderIds.length} folder${pendingDelete.folderIds.length !== 1 ? "s" : ""}`,
-          ].filter(Boolean).join(" and ");
+            pendingDelete.itemIds.length > 0 && plural(strings.folderTree.nItems, pendingDelete.itemIds.length),
+            pendingDelete.folderIds.length > 0 && plural(strings.folderTree.nFolders, pendingDelete.folderIds.length),
+          ].filter(Boolean).join(strings.folderTree.and);
           return pendingDelete.hasTracked
-            ? `Delete ${what}? The item will be removed locally. You can still restore it or commit the deletion later from the context menu.`
-            : `Delete ${what}? This item has never been committed and will be permanently removed.`;
+            ? strings.folderTree.deleteConfirmTracked.replace("{what}", what)
+            : strings.folderTree.deleteConfirmUntracked.replace("{what}", what);
         })() : ""}
         onConfirm={doBulkDelete}
         onCancel={() => setPendingDelete(null)}
@@ -756,25 +798,25 @@ export default function FolderTree({
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--c-sync-modified)" }}>
-              Pending Deletion
+              {strings.folderTree.pendingDeletion}
             </div>
             <div style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.5 }}>
               <span style={{ color: "var(--c-text-bright)", fontWeight: 500 }}>{deletedItemPopup.name}</span>
-              {" "}has been deleted locally but not yet committed. You can restore it or commit the deletion to git.
+              {" "}{strings.folderTree.pendingDeletionBody}
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
                 className="px-3 py-1.5 text-xs rounded border border-border hover:bg-bg3 text-text-base cursor-pointer"
                 onClick={() => setDeletedItemPopup(null)}
               >
-                Cancel
+                {strings.common.cancel}
               </button>
               {onRestoreItem && (
                 <button
                   className="px-3 py-1.5 text-xs rounded border border-accent text-accent hover:bg-accent/10 cursor-pointer"
                   onClick={() => { onRestoreItem(deletedItemPopup.id); setDeletedItemPopup(null); }}
                 >
-                  Restore
+                  {strings.folderTree.restore}
                 </button>
               )}
               {onPublishItem && (
@@ -782,7 +824,7 @@ export default function FolderTree({
                   className="px-3 py-1.5 text-xs rounded bg-red/80 hover:bg-red text-white cursor-pointer"
                   onClick={() => { onPublishItem(deletedItemPopup.id); setDeletedItemPopup(null); }}
                 >
-                  Commit Delete
+                  {strings.folderTree.commitDelete}
                 </button>
               )}
             </div>

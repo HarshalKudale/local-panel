@@ -1,5 +1,6 @@
 import React from "react";
 import Button from "@/components/ui/Button";
+import { strings } from "@/lib/strings";
 
 interface ModalFooterProps {
   onCancel: () => void;
@@ -13,10 +14,10 @@ interface ModalFooterProps {
 export default function ModalFooter({
   onCancel,
   onConfirm,
-  confirmLabel = "Save",
+  confirmLabel = strings.common.save,
   confirmVariant = "primary",
   confirmDisabled,
-  cancelLabel = "Cancel",
+  cancelLabel = strings.common.cancel,
 }: ModalFooterProps) {
   return (
     <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-border">

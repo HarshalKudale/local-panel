@@ -6,6 +6,7 @@ import ReplayResultModal from "@/components/capture/ReplayResultModal";
 import ViaBadge, { VIA_LABEL } from "@/components/common/ViaBadge";
 import { Play, Pause, Zap, Clipboard } from "@/lib/icons";
 import { Button } from "@/components/ui";
+import { strings } from "@/lib/strings";
 
 const MAX_ENTRIES = 100;
 
@@ -126,11 +127,11 @@ export default function LogsPanel({ onMockAdded }: Props) {
     <div className="flex flex-col flex-1 overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center gap-3 flex-shrink-0">
         <div>
-          <h1 className="text-base font-semibold text-text-bright">Logs</h1>
-          <p className="text-xs text-text-dim mt-0.5">HTTP traffic through the app — via proxy or RFC 6761</p>
+          <h1 className="text-base font-semibold text-text-bright">{strings.logs.title}</h1>
+          <p className="text-xs text-text-dim mt-0.5">{strings.logs.subtitle}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <SearchInput value={search} onChange={setSearch} placeholder="URL, method, host…" />
+          <SearchInput value={search} onChange={setSearch} placeholder={strings.logs.searchPlaceholder} />
           <button
             onClick={() => setPaused((v) => !v)}
             className={`px-3 py-1.5 rounded border text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
@@ -139,9 +140,9 @@ export default function LogsPanel({ onMockAdded }: Props) {
                 : "border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-text-base"
             }`}
           >
-            {paused ? <><Play size={10} fill="currentColor" className="inline mr-1" /> Resume</> : <><Pause size={10} fill="currentColor" className="inline mr-1" /> Pause</>}
+            {paused ? <><Play size={10} fill="currentColor" className="inline mr-1" /> {strings.logs.resume}</> : <><Pause size={10} fill="currentColor" className="inline mr-1" /> {strings.logs.pause}</>}
           </button>
-          <Button variant="secondary" onClick={clear}>Clear</Button>
+          <Button variant="secondary" onClick={clear}>{strings.logs.clear}</Button>
         </div>
       </div>
 
@@ -149,23 +150,23 @@ export default function LogsPanel({ onMockAdded }: Props) {
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-16">
             <div className="opacity-15 mb-3"><Clipboard size={36} /></div>
-            <div className="text-sm font-medium text-text-base font-sans mb-1">No log entries</div>
+            <div className="text-sm font-medium text-text-base font-sans mb-1">{strings.logs.noEntries}</div>
             <p className="text-xs text-text-dim font-sans">
               {entries.length === 0
-                ? "HTTP traffic will appear here as requests pass through the app."
-                : "No entries match your search."}
+                ? strings.logs.emptyHint
+                : strings.logs.noMatch}
             </p>
           </div>
         ) : (
           <table className="w-full border-collapse">
             <thead className="sticky top-0 bg-bg0 z-10">
               <tr className="border-b border-border">
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim whitespace-nowrap">Time</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-12">Mth</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-10">St</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim">URL</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-16">Via</th>
-                <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-14">Dur</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim whitespace-nowrap">{strings.logs.colTime}</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-12">{strings.logs.colMethod}</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-10">{strings.logs.colStatus}</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim">{strings.logs.colUrl}</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-16">{strings.logs.colVia}</th>
+                <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-14">{strings.logs.colDur}</th>
                 <th className="px-3 py-2 w-28" />
               </tr>
             </thead>
@@ -195,16 +196,16 @@ export default function LogsPanel({ onMockAdded }: Props) {
                       <button
                         onClick={() => handleReplay(e)}
                         className="px-2 py-0.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-accent text-[10px] font-medium transition-all cursor-pointer"
-                        title="Replay this request"
+                        title={strings.logs.replayTitle}
                       >
-                        <Play size={10} fill="currentColor" className="inline mr-0.5" /> Replay
+                        <Play size={10} fill="currentColor" className="inline mr-0.5" /> {strings.logs.replay}
                       </button>
                       <button
                         onClick={() => setMockEntry(e)}
                         className="px-2 py-0.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-yellow text-[10px] font-medium transition-all cursor-pointer"
-                        title="Create mock from this request"
+                        title={strings.logs.mockTitle}
                       >
-                        <Zap size={10} className="inline mr-0.5" /> Mock
+                        <Zap size={10} className="inline mr-0.5" /> {strings.logs.mock}
                       </button>
                     </div>
                   </td>
@@ -216,10 +217,10 @@ export default function LogsPanel({ onMockAdded }: Props) {
       </div>
 
       <div className="px-4 py-1.5 border-t border-border flex items-center gap-3 text-[10px] text-text-dim font-mono flex-shrink-0">
-        <span>{entries.length} entries</span>
-        {q && <span>· {filtered.length} shown</span>}
-        {paused && <span className="text-yellow">· paused</span>}
-        <span className="ml-auto">newest first · last {MAX_ENTRIES} kept · auto-cleared when full</span>
+        <span>{entries.length} {strings.logs.entries}</span>
+        {q && <span>· {filtered.length} {strings.logs.shown}</span>}
+        {paused && <span className="text-yellow">· {strings.logs.paused}</span>}
+        <span className="ml-auto">{strings.logs.footerNote.replace("{max}", String(MAX_ENTRIES))}</span>
       </div>
 
       <ReplayResultModal

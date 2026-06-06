@@ -111,7 +111,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     dispatch({ type: "SET_FIELD", field: "useRegex", value: checked });
     dispatch({ type: "SET_FIELD", field: "regexError", value: "" });
     if (checked && state.url) {
-      try { new RegExp(state.url); } catch { dispatch({ type: "SET_FIELD", field: "regexError", value: "Invalid regex" }); }
+      try { new RegExp(state.url); } catch { dispatch({ type: "SET_FIELD", field: "regexError", value: strings.editor.invalidRegex }); }
     }
   }, [state.url]);
 
@@ -119,7 +119,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     dispatch({ type: "SET_URL", url: v });
     if (state.useRegex) {
       try { new RegExp(v); dispatch({ type: "SET_FIELD", field: "regexError", value: "" }); }
-      catch { dispatch({ type: "SET_FIELD", field: "regexError", value: "Invalid regex" }); }
+      catch { dispatch({ type: "SET_FIELD", field: "regexError", value: strings.editor.invalidRegex }); }
     }
   }, [state.useRegex]);
 
@@ -140,7 +140,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
 
       if (state.preScript.trim()) {
         const pre = await runPreScript(state.preScript, { method: state.method, url: finalUrl, headers: finalHeaders, body: finalBody }, activeEnv);
-        if (pre.error) dispatch({ type: "SET_FIELD", field: "scriptErr", value: `Pre-script: ${pre.error}` });
+        if (pre.error) dispatch({ type: "SET_FIELD", field: "scriptErr", value: strings.editor.preScriptError.replace("{error}", pre.error) });
         finalUrl = pre.req.url;
         finalHeaders = pre.req.headers;
         finalBody = pre.req.body;
@@ -164,7 +164,8 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         );
         if (post.error) {
           const existing = state.scriptErr;
-          dispatch({ type: "SET_FIELD", field: "scriptErr", value: existing ? `${existing}; Post-script: ${post.error}` : `Post-script: ${post.error}` });
+          const postErr = strings.editor.postScriptError.replace("{error}", post.error);
+          dispatch({ type: "SET_FIELD", field: "scriptErr", value: existing ? `${existing}; ${postErr}` : postErr });
         }
       }
 
@@ -179,7 +180,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         dispatch({ type: "RUN_TESTS_DONE", results: testResult.tests, logs: testResult.logs });
       }
     } catch (e) {
-      dispatch({ type: "SEND_ERROR", error: e instanceof Error ? e.message : "Request failed" });
+      dispatch({ type: "SEND_ERROR", error: e instanceof Error ? e.message : strings.editor.requestFailed });
     }
   }, [state.url, state.method, state.reqHeaders, state.reqBody, state.preScript, state.postScript, state.testScript, state.resMode, state.scriptErr, activeEnv]);
 
@@ -211,7 +212,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         resBodyEncoding: isBinaryRes ? "base64" : "utf8",
       });
     } catch (e) {
-      dispatch({ type: "TEST_ERROR", error: e instanceof Error ? e.message : "Request failed" });
+      dispatch({ type: "TEST_ERROR", error: e instanceof Error ? e.message : strings.editor.requestFailed });
     }
   }, [state.url, state.method, state.reqHeaders, state.reqBody, state.resMode, state.resHeaders, activeEnv]);
 
@@ -226,7 +227,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
       markSaved();
       dispatch({ type: "SAVE_SUCCESS" });
     } catch (e) {
-      dispatch({ type: "SAVE_ERROR", error: e instanceof Error ? e.message : "Save failed" });
+      dispatch({ type: "SAVE_ERROR", error: e instanceof Error ? e.message : strings.editor.saveFailed });
     }
   }, [state, tabType, onSave, markSaved]);
 
@@ -354,7 +355,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
           tabType === "mock" ? (
             <label
               className="flex items-center gap-1.5 px-3 border-l border-border cursor-pointer select-none flex-shrink-0 hover:bg-bg2 transition-colors"
-              title="Match URL as regular expression"
+              title={strings.editor.matchUrlAsRegex}
             >
               <input
                 type="checkbox"
@@ -435,7 +436,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         onFolderChange={(v) => dispatch({ type: "SET_FIELD", field: "folderId", value: v })}
         onCancel={onClose}
         onSave={handleSave}
-        saveLabel={draftTabId ? (tabType === "request" ? "Save Request" : "Save Mock") : (tabType === "request" ? "Update Request" : "Update Mock")}
+        saveLabel={draftTabId ? (tabType === "request" ? strings.editor.saveRequest : strings.mocks.saveMock) : (tabType === "request" ? strings.editor.updateRequest : strings.editor.updateMock)}
         saveDisabled={!canSave}
         saving={state.saving}
         savingLabel={strings.server.saving}

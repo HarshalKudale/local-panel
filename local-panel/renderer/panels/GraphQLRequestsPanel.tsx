@@ -10,6 +10,7 @@ import { Braces } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { strings } from "@/lib/strings";
 
 
 // ── Draft tab prefix ───────────────────────────────────────────────────────
@@ -74,7 +75,7 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
     }, [loadedEntities, requests, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
-        const ok = await confirm("Delete this request? This cannot be undone.");
+        const ok = await confirm(strings.graphql.deleteRequestConfirm);
         if (!ok) return;
         await window.api.deleteGraphQLRequest(id);
         await reloadConfig();
@@ -89,7 +90,7 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
         }
         if (!r) return;
         const { id: _id, createdAt: _ca, workspaceId: _ws, ...rest } = r;
-        await window.api.addGraphQLRequest({ ...rest, name: r.name ? `${r.name} (copy)` : "" });
+        await window.api.addGraphQLRequest({ ...rest, name: r.name ? strings.graphql.copySuffix.replace("{name}", r.name) : "" });
         await reloadConfig();
     }, [loadedEntities, config.activeWorkspaceId, reloadConfig]);
 
@@ -118,17 +119,17 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
             const draft = loadDraft<{ name?: string; endpointUrl?: string }>(tabId);
             if (draft?.name) return draft.name;
             if (draft?.endpointUrl) return draft.endpointUrl.slice(0, 30);
-            return "New GraphQL Request";
+            return strings.graphql.newRequestTab;
         }
         const r = requests.find((x) => x.id === tabId);
         if (!r) return "…";
-        return r.name || r.endpointUrl?.slice(0, 30) || "Untitled";
+        return r.name || r.endpointUrl?.slice(0, 30) || strings.graphql.untitled;
     };
 
     const folderViewItems: FolderTreeItem[] = useMemo(() => {
         return filteredRequests.map((r): FolderTreeItem => ({
             id: r.id,
-            name: r.name || r.endpointUrl?.slice(0, 40) || "Untitled",
+            name: r.name || r.endpointUrl?.slice(0, 40) || strings.graphql.untitled,
             folderId: r.folderId ?? null,
             isActive: activeTab === r.id,
             isEnabled: true,
@@ -139,13 +140,13 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
 
     const sidebarContent = (
         <>
-            <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle="Collapse sidebar">
-                <SearchInput value={search} onChange={setSearch} placeholder="Search requests…" />
+            <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle={strings.graphql.collapseSidebar}>
+                <SearchInput value={search} onChange={setSearch} placeholder={strings.graphql.searchRequests} />
             </SidebarHeader>
             <div className="flex-1 overflow-y-auto overflow-x-auto min-w-0" style={{ display: "flex", flexDirection: "column" }}>
                 {draftTabIds.length > 0 && (
                     <DraftsFolder
-                        label="Drafts"
+                        label={strings.graphql.drafts}
                         draftTabIds={draftTabIds}
                         activeTab={activeTab}
                         onOpenTab={(id) => setActiveTab(id)}
@@ -179,8 +180,8 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
                 onTabClick={setActiveTab}
                 onTabClose={closeTab}
                 onNewTab={openNewTab}
-                newTabTitle="New GraphQL request"
-                closeTabTitle="Close tab"
+                newTabTitle={strings.graphql.newRequestTabTitle}
+                closeTabTitle={strings.graphql.closeTab}
                 onCloseOthers={closeOtherTabs}
                 onCloseAll={closeAllTabs}
                 onTabDuplicate={handleDuplicate}
@@ -190,9 +191,9 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
                 {openTabs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center gap-2">
                         <div className="opacity-10 mb-1"><Braces size={48} /></div>
-                        <div className="text-sm font-medium text-text-base">No GraphQL requests open</div>
+                        <div className="text-sm font-medium text-text-base">{strings.graphql.noRequestsOpen}</div>
                         <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-                            Send GraphQL queries and mutations. Import a schema or use server introspection to get started.
+                            {strings.graphql.noRequestsOpenHint}
                         </p>
                     </div>
                 ) : (
@@ -231,11 +232,11 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
                 sidebarOpen={sidebarOpen}
                 onToggle={() => setSidebarOpen(true)}
                 sidebar={sidebarContent}
-                collapseTitle="Collapse sidebar"
-                expandTitle="Expand sidebar"
+                collapseTitle={strings.graphql.collapseSidebar}
+                expandTitle={strings.graphql.expandSidebar}
                 storageKey="graphql-requests-panel-sidebar"
                 collapsedBadge={requests.length > 0 ? (
-                    <span className="text-[9px] text-text-dim font-mono" title={`${requests.length} requests`}
+                    <span className="text-[9px] text-text-dim font-mono" title={strings.graphql.requestCount.replace("{count}", String(requests.length))}
                         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{requests.length}</span>
                 ) : undefined}
             >

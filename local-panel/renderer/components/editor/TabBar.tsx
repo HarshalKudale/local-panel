@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Plus, ChevronLeft, ChevronRight, X, Copy } from "@/lib/icons";
 import ContextMenu, { ContextMenuItem } from "@/components/ui/ContextMenu";
+import { strings } from "@/lib/strings";
 
 export interface TabBarTab {
   id: string;
@@ -130,10 +131,10 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
         const tab = tabs.find((t) => t.id === tabId);
         const isDraft = tab?.isDraft ?? false;
         const items: ContextMenuItem[] = [
-          { label: "Close",  icon: <X size={11} />, action: () => { onTabClose(tabId); setTabCtxMenu(null); } },
-          ...(tabs.length > 1 && onCloseOthers ? [{ label: "Close Others", action: () => { onCloseOthers(tabId); setTabCtxMenu(null); } } as ContextMenuItem] : []),
-          ...(onCloseAll ? [{ label: "Close All", action: () => { onCloseAll(); setTabCtxMenu(null); } } as ContextMenuItem] : []),
-          ...(!isDraft && onTabDuplicate ? [{ sep: true, action: () => {} } as ContextMenuItem, { label: "Duplicate", icon: <Copy size={11} />, action: () => { onTabDuplicate(tabId); setTabCtxMenu(null); } } as ContextMenuItem] : []),
+          { label: strings.editor.ctxClose,  icon: <X size={11} />, action: () => { onTabClose(tabId); setTabCtxMenu(null); } },
+          ...(tabs.length > 1 && onCloseOthers ? [{ label: strings.editor.ctxCloseOthers, action: () => { onCloseOthers(tabId); setTabCtxMenu(null); } } as ContextMenuItem] : []),
+          ...(onCloseAll ? [{ label: strings.editor.ctxCloseAll, action: () => { onCloseAll(); setTabCtxMenu(null); } } as ContextMenuItem] : []),
+          ...(!isDraft && onTabDuplicate ? [{ sep: true, action: () => {} } as ContextMenuItem, { label: strings.editor.ctxDuplicate, icon: <Copy size={11} />, action: () => { onTabDuplicate(tabId); setTabCtxMenu(null); } } as ContextMenuItem] : []),
         ];
         return <ContextMenu x={tabCtxMenu.x} y={tabCtxMenu.y} items={items} onClose={() => setTabCtxMenu(null)} minWidth={160} />;
       })()}

@@ -56,7 +56,7 @@ export default function HeaderTable({ rows, onChange, readOnly = false, emptyMes
             <input
               className="w-full h-full bg-transparent font-mono text-xs px-3 py-2 outline-none focus:bg-bg2/60 min-w-0"
               style={{ color: "var(--c-accent)" }}
-              placeholder={readOnly ? "—" : "key"}
+              placeholder={readOnly ? "—" : strings.editor.placeholderKey}
               value={row.key}
               onChange={(e) => update(row.id, { key: e.target.value })}
               readOnly={readOnly}
@@ -66,7 +66,7 @@ export default function HeaderTable({ rows, onChange, readOnly = false, emptyMes
           <div className="flex-1 min-w-0">
             <input
               className="w-full h-full bg-transparent font-mono text-xs text-text-bright px-3 py-2 outline-none focus:bg-bg2/60 min-w-0"
-              placeholder={readOnly ? "—" : "value"}
+              placeholder={readOnly ? "—" : strings.editor.placeholderValue}
               value={row.value}
               onChange={(e) => update(row.id, { value: e.target.value })}
               readOnly={readOnly}

@@ -1,6 +1,7 @@
 import React, { useEffect, useReducer } from "react";
 import Modal from "@/components/common/Modal";
 import { Button } from "@/components/ui";
+import { strings } from "@/lib/strings";
 import {
   ImportExportEntityKind, CollisionStrategy,
   ImportExportFormatsMap, ImportExportFormatDef,
@@ -10,25 +11,25 @@ import {
 // ── Kind metadata ──────────────────────────────────────────────────────────
 
 const KIND_LABELS: Record<ImportExportEntityKind, string> = {
-  workspace: "Workspace",
-  requests: "Requests",
-  mocks: "Mocks",
-  environments: "Environments",
-  mappings: "Mappings",
-  proxyRules: "Proxy Rules",
-  websockets: "WebSockets",
-  webhooks: "Webhooks",
+  workspace: strings.importExport.kindWorkspace,
+  requests: strings.importExport.kindRequests,
+  mocks: strings.importExport.kindMocks,
+  environments: strings.importExport.kindEnvironments,
+  mappings: strings.importExport.kindMappings,
+  proxyRules: strings.importExport.kindProxyRules,
+  websockets: strings.importExport.kindWebsockets,
+  webhooks: strings.importExport.kindWebhooks,
 };
 
 const KIND_DESC: Record<ImportExportEntityKind, string> = {
-  workspace: "Export/import entire workspace with all entities",
-  requests: "Saved HTTP requests and folders",
-  mocks: "Mock response rules and folders",
-  environments: "Environment variable sets",
-  mappings: "Domain-to-target proxy mappings",
-  proxyRules: "URL pattern proxy rules",
-  websockets: "WebSocket connection definitions",
-  webhooks: "Webhook endpoint definitions",
+  workspace: strings.importExport.descWorkspace,
+  requests: strings.importExport.descRequests,
+  mocks: strings.importExport.descMocks,
+  environments: strings.importExport.descEnvironments,
+  mappings: strings.importExport.descMappings,
+  proxyRules: strings.importExport.descProxyRules,
+  websockets: strings.importExport.descWebsockets,
+  webhooks: strings.importExport.descWebhooks,
 };
 
 const ALL_KINDS: ImportExportEntityKind[] = [
@@ -117,7 +118,7 @@ export default function ImportExportModal({ open, mode, wsId, onClose, onImportD
     }
   }, [open]);
 
-  const title = mode === "export" ? "Export Data" : "Import Data";
+  const title = mode === "export" ? strings.importExport.exportData : strings.importExport.importData;
   const kindFormats: ImportExportFormatDef[] = state.kind
     ? (formats[state.kind] ?? []).filter((f) =>
       mode === "export" ? f.supportsExport : f.supportsImport,
@@ -130,7 +131,7 @@ export default function ImportExportModal({ open, mode, wsId, onClose, onImportD
     const req: ExportRequest = { kind: state.kind, format: state.format, wsId };
     const res = await window.api.exportData(req);
     if (res.canceled) { dispatch({ type: "reset" }); return; }
-    dispatch({ type: "done", ok: res.ok, message: res.ok ? "Export complete." : (res.error ?? "Export failed.") });
+    dispatch({ type: "done", ok: res.ok, message: res.ok ? strings.importExport.exportComplete : (res.error ?? strings.importExport.exportFailed) });
   }
 
   async function handleImportPreflight() {
@@ -140,7 +141,7 @@ export default function ImportExportModal({ open, mode, wsId, onClose, onImportD
     const res = await window.api.preflightImport(req);
     if (res.canceled) { dispatch({ type: "reset" }); return; }
     if (!res.ok) {
-      dispatch({ type: "done", ok: false, message: res.error ?? "Could not read file." });
+      dispatch({ type: "done", ok: false, message: res.error ?? strings.importExport.couldNotReadFile });
       return;
     }
     const collisionCount = res.collisionIds?.length ?? 0;
@@ -158,9 +159,12 @@ export default function ImportExportModal({ open, mode, wsId, onClose, onImportD
     const res = await window.api.importData(req);
     if (res.ok) {
       onImportDone?.();
-      dispatch({ type: "done", ok: true, message: `Imported ${res.imported ?? 0} item${(res.imported ?? 0) !== 1 ? "s" : ""}${res.skipped ? `, skipped ${res.skipped}` : ""}.` });
+      const n = res.imported ?? 0;
+      const imported = strings.importExport.importedItems.replace("{n}", String(n)).replace("{s}", n !== 1 ? "s" : "");
+      const skipped = res.skipped ? strings.importExport.skippedSuffix.replace("{n}", String(res.skipped)) : "";
+      dispatch({ type: "done", ok: true, message: `${imported}${skipped}.` });
     } else {
-      dispatch({ type: "done", ok: false, message: res.error ?? "Import failed." });
+      dispatch({ type: "done", ok: false, message: res.error ?? strings.importExport.importFailed });
     }
   }
 
@@ -201,7 +205,7 @@ export default function ImportExportModal({ open, mode, wsId, onClose, onImportD
         {state.step.name === "working" && (
           <div className="flex items-center gap-3 py-6">
             <span className="inline-block w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin flex-shrink-0" />
-            <span className="text-sm text-text-dim">{mode === "export" ? "Exporting…" : "Importing…"}</span>
+            <span className="text-sm text-text-dim">{mode === "export" ? strings.importExport.exporting : strings.importExport.importing}</span>
           </div>
         )}
         {state.step.name === "done" && (
@@ -216,7 +220,7 @@ export default function ImportExportModal({ open, mode, wsId, onClose, onImportD
 function StepSelectKind({ kinds, onSelect }: { kinds: ImportExportEntityKind[]; onSelect(k: ImportExportEntityKind): void }) {
   return (
     <div>
-      <p className="text-xs text-text-dim mb-3">What would you like to work with?</p>
+      <p className="text-xs text-text-dim mb-3">{strings.importExport.whatToWorkWith}</p>
       <div className="grid grid-cols-2 gap-2">
         {kinds.map((k) => (
           <button
@@ -247,11 +251,11 @@ function StepSelectFormat({
   return (
     <div>
       <p className="text-xs text-text-dim mb-3">
-        {mode === "export" ? "Choose export format for" : "Choose import format for"}{" "}
+        {mode === "export" ? strings.importExport.chooseExportFormatFor : strings.importExport.chooseImportFormatFor}{" "}
         <span className="text-text-base font-medium">{KIND_LABELS[kind]}</span>
       </p>
       {formats.length === 0 ? (
-        <p className="text-sm text-text-dim py-4 text-center">No formats available.</p>
+        <p className="text-sm text-text-dim py-4 text-center">{strings.importExport.noFormatsAvailable}</p>
       ) : (
         <div className="space-y-1.5">
           {formats.map((f) => (
@@ -279,13 +283,13 @@ function StepSelectFormat({
         </div>
       )}
       <div className="flex justify-between mt-5 pt-4 border-t border-border">
-        <Button variant="secondary" onClick={onBack}>Back</Button>
+        <Button variant="secondary" onClick={onBack}>{strings.importExport.back}</Button>
         <Button
           variant="primary"
           onClick={onConfirm}
           disabled={!selected}
         >
-          {mode === "export" ? "Export…" : "Choose File…"}
+          {mode === "export" ? strings.importExport.exportEllipsis : strings.importExport.chooseFile}
         </Button>
       </div>
     </div>
@@ -305,10 +309,10 @@ function StepCollision({
     <div>
       <div className="bg-yellow/10 border border-yellow/30 rounded px-4 py-3 mb-4">
         <p className="text-sm text-yellow font-medium">
-          {step.collisionCount} of {step.itemCount} items have matching IDs in this workspace.
+          {strings.importExport.collisionSummary.replace("{count}", String(step.collisionCount)).replace("{total}", String(step.itemCount))}
         </p>
       </div>
-      <p className="text-xs text-text-dim mb-3">How should conflicts be handled?</p>
+      <p className="text-xs text-text-dim mb-3">{strings.importExport.howConflictsHandled}</p>
       <div className="space-y-2">
         {(["keep", "override", "new"] as CollisionStrategy[]).map((s) => (
           <label key={s} className={`flex items-start gap-3 px-4 py-3 rounded border cursor-pointer transition-colors ${strategy === s ? "border-accent/50 bg-accent/10" : "border-border bg-bg2 hover:bg-bg3"
@@ -329,22 +333,22 @@ function StepCollision({
         ))}
       </div>
       <div className="flex justify-between mt-5 pt-4 border-t border-border">
-        <Button variant="secondary" onClick={onBack}>Back</Button>
-        <Button variant="primary" onClick={onConfirm}>Import</Button>
+        <Button variant="secondary" onClick={onBack}>{strings.importExport.back}</Button>
+        <Button variant="primary" onClick={onConfirm}>{strings.importExport.import}</Button>
       </div>
     </div>
   );
 }
 
 const COLLISION_LABELS: Record<CollisionStrategy, string> = {
-  keep: "Keep existing",
-  override: "Override with imported",
-  new: "Import as new copies",
+  keep: strings.importExport.collisionKeepLabel,
+  override: strings.importExport.collisionOverrideLabel,
+  new: strings.importExport.collisionNewLabel,
 };
 const COLLISION_DESC: Record<CollisionStrategy, string> = {
-  keep: "Conflicting items are skipped; only new items are imported.",
-  override: "Imported items replace the existing ones with the same ID.",
-  new: "All imported items get new IDs — no conflicts.",
+  keep: strings.importExport.collisionKeepDesc,
+  override: strings.importExport.collisionOverrideDesc,
+  new: strings.importExport.collisionNewDesc,
 };
 
 function StepDone({ step, onClose }: { step: Extract<Step, { name: "done" }>; onClose(): void }) {
@@ -355,7 +359,7 @@ function StepDone({ step, onClose }: { step: Extract<Step, { name: "done" }>; on
         {step.message}
       </div>
       <div className="flex justify-end">
-        <Button variant="primary" onClick={onClose}>Close</Button>
+        <Button variant="primary" onClick={onClose}>{strings.common.close}</Button>
       </div>
     </div>
   );

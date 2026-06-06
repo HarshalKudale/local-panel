@@ -3,8 +3,8 @@ import { Panel, PanelEntry } from "@/lib/panelRegistry";
 import { Workspace } from "@/types";
 import NavItem from "@/components/sidebar/NavItem";
 import NavSection from "@/components/sidebar/NavSection";
-import { MoreHorizontal, Plus, Pencil, Trash2, ClipboardList, Settings } from "@/lib/icons";
-import { Search } from "lucide-react";
+import { MoreHorizontal, Plus, Pencil, Trash2, ClipboardList, Settings, Search } from "@/lib/icons";
+import { strings } from "@/lib/strings";
 
 interface Props {
     entries: PanelEntry[];
@@ -129,7 +129,7 @@ export default function AppSidebar({
                         onKeyDown={(e) => {
                             if (e.key === "Escape") { setSearch(""); e.currentTarget.blur(); }
                         }}
-                        placeholder="Search panels…"
+                        placeholder={strings.sidebar.searchPanels}
                         className="flex-1 bg-transparent outline-none text-xs text-text-base placeholder:text-text-dim/50 min-w-0"
                     />
                     {!search && (
@@ -143,7 +143,7 @@ export default function AppSidebar({
                 {isSearching ? (
                     filteredEntries.length === 0 ? (
                         <div className="px-2.5 py-4 text-xs text-text-dim opacity-50 text-center">
-                            No panels found
+                            {strings.sidebar.noPanelsFound}
                         </div>
                     ) : (
                         <div className="flex flex-col gap-0.5">
@@ -205,7 +205,7 @@ export default function AppSidebar({
                     <button
                         className="flex items-center gap-2 flex-1 min-w-0 rounded hover:bg-bg2 px-1 py-1 transition-colors cursor-pointer"
                         onClick={() => { setWsSwitcherOpen((v) => !v); setWsMenuOpen(false); }}
-                        title="Switch workspace"
+                        title={strings.sidebar.switchWorkspace}
                         style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                     >
                         <span
@@ -215,7 +215,7 @@ export default function AppSidebar({
                             {wsInitials(activeWs?.name ?? "")}
                         </span>
                         <span className="text-xs text-text-base font-medium truncate flex-1 text-left">
-                            {activeWs?.name ?? "Workspace"}
+                            {activeWs?.name ?? strings.sidebar.workspace}
                         </span>
                     </button>
 
@@ -224,7 +224,7 @@ export default function AppSidebar({
                         <button
                             className="w-6 h-6 flex items-center justify-center rounded text-text-dim hover:text-text-base hover:bg-bg2 transition-colors cursor-pointer"
                             onClick={() => { setWsMenuOpen((v) => !v); setWsSwitcherOpen(false); }}
-                            title="Workspace options"
+                            title={strings.sidebar.workspaceOptions}
                             style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                         >
                             <MoreHorizontal size={14} />
@@ -237,14 +237,14 @@ export default function AppSidebar({
                                     onClick={() => { onPanelSelect("workspace"); setWsMenuOpen(false); }}
                                 >
                                     <Settings size={12} className="text-text-dim flex-shrink-0" />
-                                    Workspace Settings
+                                    {strings.sidebar.workspaceSettings}
                                 </button>
                                 <button
                                     className="w-full text-left px-3 py-1.5 text-xs text-text-base hover:bg-bg3 cursor-pointer transition-colors flex items-center gap-2"
                                     onClick={() => { onPanelSelect("audit"); setWsMenuOpen(false); }}
                                 >
                                     <ClipboardList size={12} className="text-text-dim flex-shrink-0" />
-                                    Audit Log
+                                    {strings.sidebar.auditLog}
                                 </button>
                             </div>
                         )}
@@ -267,11 +267,11 @@ export default function AppSidebar({
                                 className="w-full text-left px-3 py-1.5 text-xs text-accent hover:bg-bg3 cursor-pointer transition-colors flex items-center gap-1.5 border-b border-border/60"
                             >
                                 <Plus size={12} />
-                                Create Workspace
+                                {strings.sidebar.createWorkspace}
                             </button>
 
                             <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-dim">
-                                Workspaces
+                                {strings.sidebar.workspaces}
                             </div>
 
                             {workspaces.map((ws) => {
@@ -314,7 +314,7 @@ export default function AppSidebar({
                                                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
                                                     <button
                                                         className="text-text-dim hover:text-accent text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer"
-                                                        title="Rename workspace"
+                                                        title={strings.sidebar.renameWorkspace}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setRenamingId(ws.id);
@@ -327,7 +327,7 @@ export default function AppSidebar({
                                                     {canDelete && (
                                                         <button
                                                             className="text-text-dim hover:text-red text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer"
-                                                            title="Delete workspace"
+                                                            title={strings.sidebar.deleteWorkspace}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setConfirmDeleteId(isConfirming ? null : ws.id);
@@ -347,20 +347,20 @@ export default function AppSidebar({
                                                 onClick={(e) => e.stopPropagation()}
                                             >
                                                 <p className="text-[10px] text-text-dim leading-snug mb-2">
-                                                    Delete <span className="font-semibold text-text-base">"{ws.name}"</span>? All data in this workspace will be permanently removed.
+                                                    {strings.sidebar.deleteWorkspacePrefix} <span className="font-semibold text-text-base">"{ws.name}"</span>{strings.sidebar.deleteWorkspaceSuffix}
                                                 </p>
                                                 <div className="flex gap-1.5">
                                                     <button
                                                         onClick={() => handleDeleteConfirm(ws.id)}
                                                         className="flex-1 px-2 py-1 rounded bg-red/15 border border-red/40 text-red text-[10px] font-semibold hover:bg-red/25 cursor-pointer transition-colors"
                                                     >
-                                                        Delete
+                                                        {strings.common.delete}
                                                     </button>
                                                     <button
                                                         onClick={() => setConfirmDeleteId(null)}
                                                         className="flex-1 px-2 py-1 rounded bg-bg3 border border-border text-text-dim text-[10px] hover:text-text-base cursor-pointer transition-colors"
                                                     >
-                                                        Cancel
+                                                        {strings.common.cancel}
                                                     </button>
                                                 </div>
                                             </div>

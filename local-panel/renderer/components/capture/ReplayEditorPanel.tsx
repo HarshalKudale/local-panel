@@ -77,7 +77,7 @@ export default function ReplayEditorPanel({ entry, onCreateMock, onClose }: Prop
       setResult(res);
       setResTab("body");
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      setError(e instanceof Error ? e.message : strings.capture.requestFailed);
     } finally {
       setLoading(false);
     }
@@ -190,7 +190,7 @@ export default function ReplayEditorPanel({ entry, onCreateMock, onClose }: Prop
               <BodyEditor
                 value={reqBody}
                 onChange={setReqBody}
-                placeholder="Request body (optional)"
+                placeholder={strings.capture.requestBodyPlaceholder}
                 mode={reqMode}
                 onModeChange={handleReqModeChange}
               />
@@ -248,7 +248,7 @@ export default function ReplayEditorPanel({ entry, onCreateMock, onClose }: Prop
               <div className="flex items-center justify-center h-full text-center">
                 <div>
                   <div className="text-3xl opacity-20 mb-2">→</div>
-                  <p className="text-xs text-text-dim">Send the request to see the response</p>
+                  <p className="text-xs text-text-dim">{strings.capture.sendToSeeResponse}</p>
                 </div>
               </div>
             )}
@@ -282,7 +282,7 @@ export default function ReplayEditorPanel({ entry, onCreateMock, onClose }: Prop
           )}
           {result && (
             <span className="text-[10px] text-text-dim">
-              {Object.keys(result.headers).length} headers
+              {strings.capture.headerCount.replace("{count}", String(Object.keys(result.headers).length))}
             </span>
           )}
         </div>
@@ -296,9 +296,9 @@ export default function ReplayEditorPanel({ entry, onCreateMock, onClose }: Prop
           <button
             onClick={handleCreateMock}
             className="px-4 py-1.5 rounded bg-yellow/20 hover:bg-yellow/30 border border-yellow/30 text-yellow text-xs font-semibold transition-all cursor-pointer"
-            title={result ? "Create mock pre-filled with this response" : "Create mock from request (send first to auto-fill response)"}
+            title={result ? strings.capture.createMockResponseTitle : strings.capture.createMockRequestTitle}
           >
-            <Zap size={11} className="inline mr-1" /> {result ? "Mock this response" : "Create Mock"}
+            <Zap size={11} className="inline mr-1" /> {result ? strings.capture.mockThisResponse : strings.requests.createMock}
           </button>
         </div>
       </div>

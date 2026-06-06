@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { AuditEntry, AuditListOptions, AuditAction, AuditEntity } from "@/types";
 import { ChevronRight, ChevronDown, Download } from "@/lib/icons";
 import { formatFieldLabel } from "@/lib/utils";
+import { strings } from "@/lib/strings";
 import CodeEditor from "@/components/common/CodeEditor";
 import { Button, Input, Select } from "@/components/ui";
 
@@ -11,22 +12,22 @@ interface Props {
 }
 
 const ENTITY_OPTIONS: { value: AuditEntity | ""; label: string }[] = [
-  { value: "", label: "All entities" },
-  { value: "mock", label: "Mock" },
-  { value: "mapping", label: "Mapping" },
-  { value: "rule", label: "Proxy Rule" },
-  { value: "environment", label: "Environment" },
-  { value: "request", label: "Request" },
-  { value: "wsConnection", label: "WebSocket" },
-  { value: "folder", label: "Folder" },
-  { value: "workspace", label: "Workspace" },
+  { value: "", label: strings.auditLog.allEntities },
+  { value: "mock", label: strings.auditLog.entityMock },
+  { value: "mapping", label: strings.auditLog.entityMapping },
+  { value: "rule", label: strings.auditLog.entityRule },
+  { value: "environment", label: strings.auditLog.entityEnvironment },
+  { value: "request", label: strings.auditLog.entityRequest },
+  { value: "wsConnection", label: strings.auditLog.entityWebSocket },
+  { value: "folder", label: strings.auditLog.entityFolder },
+  { value: "workspace", label: strings.auditLog.entityWorkspace },
 ];
 
 const ACTION_OPTIONS: { value: AuditAction | ""; label: string }[] = [
-  { value: "", label: "All actions" },
-  { value: "create", label: "Create" },
-  { value: "update", label: "Update" },
-  { value: "delete", label: "Delete" },
+  { value: "", label: strings.auditLog.allActions },
+  { value: "create", label: strings.auditLog.actionCreate },
+  { value: "update", label: strings.auditLog.actionUpdate },
+  { value: "delete", label: strings.auditLog.actionDelete },
 ];
 
 const ACTION_COLORS: Record<AuditAction, string> = {
@@ -146,9 +147,9 @@ export default function AuditLogPanel({ activeWorkspaceId }: Props) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-border flex items-center gap-3 flex-shrink-0">
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-semibold text-text-bright">Audit Log</h1>
+            <h1 className="text-base font-semibold text-text-bright">{strings.auditLog.title}</h1>
             <p className="text-xs text-text-dim mt-0.5">
-              Every configuration change in this workspace — {total} entries
+              {strings.auditLog.subtitle} {total} {strings.auditLog.entries}
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -187,13 +188,13 @@ export default function AuditLogPanel({ activeWorkspaceId }: Props) {
         <div className="flex-1 overflow-y-auto">
           {loading && entries.length === 0 && (
             <div className="flex items-center justify-center h-32 text-xs text-text-dim">
-              Loading…
+              {strings.auditLog.loading}
             </div>
           )}
 
           {!loading && entries.length === 0 && (
             <div className="flex items-center justify-center h-32 text-xs text-text-dim">
-              No audit entries found.
+              {strings.auditLog.noEntries}
             </div>
           )}
 
@@ -274,7 +275,7 @@ export default function AuditLogPanel({ activeWorkspaceId }: Props) {
                       </span>
                     </div>
                     {isDiffLoading ? (
-                      <div className="text-xs text-text-dim py-2">Loading diff…</div>
+                      <div className="text-xs text-text-dim py-2">{strings.auditLog.loadingDiff}</div>
                     ) : entryDiff ? (
                       <InlineDiff before={entryDiff.before} after={entryDiff.after} />
                     ) : null}
@@ -316,13 +317,13 @@ function InlineDiff({ before, after }: DiffProps) {
   const afterObj = (after && typeof after === "object") ? (after as Record<string, unknown>) : {};
 
   if (!before && !after) {
-    return <p className="text-xs text-text-dim">No snapshot data available.</p>;
+    return <p className="text-xs text-text-dim">{strings.auditLog.noSnapshot}</p>;
   }
 
   if (before && !after) {
     return (
       <div className="text-xs text-text-dim italic">
-        Entity was deleted. <span className="font-mono text-[10px] text-text-dim/60">Before state stored in git history.</span>
+        {strings.auditLog.entityDeleted} <span className="font-mono text-[10px] text-text-dim/60">{strings.auditLog.beforeStateStored}</span>
       </div>
     );
   }
@@ -330,7 +331,7 @@ function InlineDiff({ before, after }: DiffProps) {
   if (!before && after) {
     return (
       <div className="text-xs text-text-dim italic">
-        Entity was created — no prior state.
+        {strings.auditLog.entityCreated}
       </div>
     );
   }
@@ -342,7 +343,7 @@ function InlineDiff({ before, after }: DiffProps) {
   const unchanged = allKeys.filter((k) => !changed.includes(k));
 
   if (changed.length === 0) {
-    return <p className="text-xs text-text-dim">No field changes detected.</p>;
+    return <p className="text-xs text-text-dim">{strings.auditLog.noFieldChanges}</p>;
   }
 
   const displayKeys = showUnchanged ? allKeys : changed;

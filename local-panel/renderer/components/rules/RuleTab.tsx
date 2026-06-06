@@ -140,15 +140,15 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
 
   const validate = (): boolean => {
     const errs: Partial<Record<keyof RuleTabState, string>> = {};
-    if (!state.pattern.trim()) errs.pattern = "Pattern is required";
+    if (!state.pattern.trim()) errs.pattern = strings.proxyRules.patternRequired;
     if (state.useRegex) {
-      try { new RegExp(state.pattern); } catch { errs.pattern = "Invalid regex pattern"; }
+      try { new RegExp(state.pattern); } catch { errs.pattern = strings.proxyRules.invalidRegexPattern; }
     }
     if (state.targetType === "mapping" && !state.targetMappingId) {
-      errs.targetMappingId = "Select a target mapping";
+      errs.targetMappingId = strings.proxyRules.selectTargetMapping;
     }
     if (state.targetType === "external" && !state.targetExternal.trim()) {
-      errs.targetExternal = "Enter a host:port or domain";
+      errs.targetExternal = strings.proxyRules.enterHostPort;
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -180,7 +180,7 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
   return (
     <div className="flex flex-col flex-1 overflow-hidden h-full">
       <EditorTitleBar
-        label="Proxy Rule"
+        label={s.ruleLabel}
         namePlaceholder={s.ruleNamePlaceholder}
         name={state.name}
         onNameChange={(v) => set("name", v)}
@@ -190,7 +190,7 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 min-h-0">
         {/* Match pattern */}
-        <FormField label="Match URL" error={errors.pattern}>
+        <FormField label={s.matchUrl} error={errors.pattern}>
           <div className="flex items-center gap-2">
             <Input
               className="flex-1 font-mono"
@@ -206,19 +206,19 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
                 ? "border-accent bg-accent/10 text-accent"
                 : "border-border bg-bg2 text-text-dim hover:text-text-base"
                 }`}
-              title={state.useRegex ? "Switch to exact match" : "Switch to regex match"}
+              title={state.useRegex ? s.switchToExact : s.switchToRegex}
             >
               {state.useRegex ? s.regexToggle : s.exactToggle}
             </button>
           </div>
           <p className="text-xs text-text-dim mt-1">
-            {state.useRegex ? "Tested as a JavaScript regex against the full request URL." : "Exact string match against the full request URL."}
+            {state.useRegex ? s.regexHelp : s.exactHelp}
           </p>
         </FormField>
 
         {/* Target */}
         <div>
-          <div className="text-xs text-text-dim font-medium mb-2 uppercase tracking-wider">Forward To</div>
+          <div className="text-xs text-text-dim font-medium mb-2 uppercase tracking-wider">{s.forwardTo}</div>
           <div className="flex items-center gap-3 mb-3">
             {(["mapping", "external"] as const).map((type) => (
               <label key={type} className="flex items-center gap-1.5 cursor-pointer text-sm text-text-base">
@@ -241,13 +241,13 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
                 value={state.targetMappingId}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => set("targetMappingId", e.target.value)}
               >
-                <option value="">— select a mapping —</option>
+                <option value="">{s.selectMapping}</option>
                 {(config.mappings ?? []).map((m) => (
                   <option key={m.id} value={m.id}>{m.domain} → {m.target}</option>
                 ))}
               </Select>
               {config.mappings.length === 0 && (
-                <p className="text-xs text-text-dim mt-1">No mappings defined. Add one in the Mappings panel.</p>
+                <p className="text-xs text-text-dim mt-1">{s.noMappingsDefined}</p>
               )}
             </FormField>
           ) : (
@@ -313,7 +313,7 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
         onFolderChange={(id) => set("folderId", id)}
         onCancel={onClose}
         onSave={handleSave}
-        saveLabel={isDraft ? "Save Rule" : "Update Rule"}
+        saveLabel={isDraft ? s.saveRule : s.updateRule}
         saving={saving}
         savingLabel={strings.server.saving}
       />

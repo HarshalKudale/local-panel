@@ -10,6 +10,7 @@ import { FileCode } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { strings } from "@/lib/strings";
 
 
 // ── Draft tab prefix ───────────────────────────────────────────────────────
@@ -71,7 +72,7 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
     }, [loadedEntities, requests, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
-        const ok = await confirm("Delete this request? This cannot be undone.");
+        const ok = await confirm(strings.soap.deleteRequestConfirm);
         if (!ok) return;
         await window.api.deleteSoapRequest(id);
         await reloadConfig();
@@ -86,7 +87,7 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
         }
         if (!r) return;
         const { id: _id, createdAt: _ca, workspaceId: _ws, ...rest } = r;
-        await window.api.addSoapRequest({ ...rest, name: r.name ? `${r.name} (copy)` : "" });
+        await window.api.addSoapRequest({ ...rest, name: r.name ? strings.soap.copySuffix.replace("{name}", r.name) : "" });
         await reloadConfig();
     }, [loadedEntities, config.activeWorkspaceId, reloadConfig]);
 
@@ -116,7 +117,7 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
             if (d?.endpointUrl) {
                 try { const u = new URL(d.endpointUrl); return u.pathname || u.host; } catch { return d.endpointUrl.slice(0, 20); }
             }
-            return "New SOAP Request";
+            return strings.soap.newRequestTab;
         }
         const r = requests.find((x) => x.id === tabId);
         if (!r) return "…";
@@ -124,7 +125,7 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
         if (r.endpointUrl) {
             try { const u = new URL(r.endpointUrl); return u.pathname || u.host; } catch { return r.endpointUrl.slice(0, 20); }
         }
-        return "SOAP Request";
+        return strings.soap.requestLabel;
     };
 
     const folderViewItems: FolderTreeItem[] = useMemo(() => {
@@ -134,7 +135,7 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
             : requests
         ).map((r): FolderTreeItem => ({
             id: r.id,
-            name: r.name || r.endpointUrl?.slice(0, 40) || "SOAP Request",
+            name: r.name || r.endpointUrl?.slice(0, 40) || strings.soap.requestLabel,
             folderId: r.folderId ?? null,
             isActive: activeTab === r.id,
             isEnabled: true,
@@ -145,13 +146,13 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
 
     const sidebarContent = (
         <>
-            <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle="Collapse sidebar">
-                <SearchInput value={search} onChange={setSearch} placeholder="Search SOAP requests…" />
+            <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle={strings.soap.collapseSidebar}>
+                <SearchInput value={search} onChange={setSearch} placeholder={strings.soap.searchRequests} />
             </SidebarHeader>
             <div className="flex-1 overflow-y-auto overflow-x-auto min-w-0" style={{ display: "flex", flexDirection: "column" }}>
                 {draftTabIds.length > 0 && (
                     <DraftsFolder
-                        label="Drafts"
+                        label={strings.soap.drafts}
                         draftTabIds={draftTabIds}
                         activeTab={activeTab}
                         onOpenTab={(id) => setActiveTab(id)}
@@ -185,8 +186,8 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
                 onTabClick={setActiveTab}
                 onTabClose={closeTab}
                 onNewTab={openNewTab}
-                newTabTitle="New SOAP request"
-                closeTabTitle="Close tab"
+                newTabTitle={strings.soap.newRequestTabTitle}
+                closeTabTitle={strings.soap.closeTab}
                 onCloseOthers={closeOtherTabs}
                 onCloseAll={closeAllTabs}
                 onTabDuplicate={handleDuplicate}
@@ -196,9 +197,9 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
                 {openTabs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center gap-2">
                         <div className="opacity-10 mb-1"><FileCode size={48} /></div>
-                        <div className="text-sm font-medium text-text-base">No SOAP requests open</div>
+                        <div className="text-sm font-medium text-text-base">{strings.soap.noRequestsOpen}</div>
                         <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-                            Send SOAP requests. Import a WSDL to discover available operations and auto-generate envelopes.
+                            {strings.soap.noRequestsOpenHint}
                         </p>
                     </div>
                 ) : (
@@ -236,11 +237,11 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
                 sidebarOpen={sidebarOpen}
                 onToggle={() => setSidebarOpen(true)}
                 sidebar={sidebarContent}
-                collapseTitle="Collapse sidebar"
-                expandTitle="Expand sidebar"
+                collapseTitle={strings.soap.collapseSidebar}
+                expandTitle={strings.soap.expandSidebar}
                 storageKey="soap-requests-panel-sidebar"
                 collapsedBadge={requests.length > 0 ? (
-                    <span className="text-[9px] text-text-dim font-mono" title={`${requests.length} SOAP requests`}
+                    <span className="text-[9px] text-text-dim font-mono" title={strings.soap.requestCount.replace("{count}", String(requests.length))}
                         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{requests.length}</span>
                 ) : undefined}
             >

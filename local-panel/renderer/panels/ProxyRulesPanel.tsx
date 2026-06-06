@@ -91,7 +91,7 @@ export default function ProxyRulesPanel({
   }, [rules, loadedEntities, config.activeWorkspaceId, setLoadedEntities, reloadRules]);
 
   const handleDelete = useCallback(async (id: string) => {
-    const ok = await confirm("Delete this rule? This cannot be undone.");
+    const ok = await confirm(strings.proxyRules.deleteConfirm);
     if (!ok) return;
     await window.api.deleteRule(id);
     await reloadRules();
@@ -103,7 +103,7 @@ export default function ProxyRulesPanel({
       .then((r) => r.ok && r.entity ? r.entity as ProxyRule : null);
     if (!full) return;
     const { id: _id, createdAt: _ca, workspaceId: _ws, ...rest } = full;
-    await window.api.addRule({ ...rest, name: full.name ? `${full.name} (copy)` : "", enabled: false });
+    await window.api.addRule({ ...rest, name: full.name ? `${full.name}${strings.proxyRules.copySuffix}` : "", enabled: false });
     await reloadRules();
   }, [loadedEntities, config.activeWorkspaceId, reloadRules]);
 
@@ -226,7 +226,7 @@ export default function ProxyRulesPanel({
             <div className="opacity-10 mb-1"><Settings size={48} /></div>
             <div className="text-sm font-medium text-text-base">{strings.proxyRules.noRulesOpen}</div>
             <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-              Click a rule in the tree, or press <span className="text-accent font-semibold">+</span> to create a new one.
+              {strings.proxyRules.noRulesOpenHintPrefix} <span className="text-accent font-semibold">+</span> {strings.proxyRules.noRulesOpenHintSuffix}
             </p>
           </div>
         ) : (
@@ -267,7 +267,7 @@ export default function ProxyRulesPanel({
         expandTitle={strings.proxyRules.expandSidebar}
         storageKey="proxy-rules-panel-sidebar"
         collapsedBadge={rules.length > 0 ? (
-          <span className="text-[9px] text-text-dim font-mono" title={`${rules.length} rules`}
+          <span className="text-[9px] text-text-dim font-mono" title={strings.proxyRules.rulesCountTitle.replace("{count}", String(rules.length))}
             style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{rules.length}</span>
         ) : undefined}
       >

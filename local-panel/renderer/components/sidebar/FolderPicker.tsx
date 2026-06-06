@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Folder as FolderType } from "@/types";
 import { Folder, ChevronDown } from "@/lib/icons";
+import { strings } from "@/lib/strings";
 
 interface Props {
   folders: FolderType[];
@@ -11,7 +12,7 @@ interface Props {
 export default function FolderPicker({ folders, value, onChange }: Props) {
   const [open, setOpen] = useState(false);
 
-  const selectedName = value ? (folders.find((f) => f.id === value)?.name ?? "—") : "root";
+  const selectedName = value ? (folders.find((f) => f.id === value)?.name ?? "—") : strings.folderTree.root;
 
   function buildOptions(): { folder: FolderType; depth: number }[] {
     const result: { folder: FolderType; depth: number }[] = [];
@@ -49,7 +50,7 @@ export default function FolderPicker({ folders, value, onChange }: Props) {
               onClick={() => { onChange(null); setOpen(false); }}
               className={`w-full text-left px-3 py-1.5 text-xs cursor-pointer hover:bg-bg3 flex items-center gap-1.5 ${value === null ? "text-accent font-semibold" : "text-text-base"}`}
             >
-              <Folder size={11} /> root
+              <Folder size={11} /> {strings.folderTree.root}
             </button>
             {options.map(({ folder, depth }) => (
               <button

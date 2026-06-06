@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { GitBranch, RefreshCw, Cloud } from "@/lib/icons";
 import { Button } from "@/components/ui";
+import { strings } from "@/lib/strings";
 import type { SyncStatus, Workspace } from "@/types";
 
 // ── Panel → git path prefix ────────────────────────────────────────────────
@@ -97,7 +98,7 @@ export default function GlobalFooter({
             return (
                 <div className="flex items-center gap-1.5">
                     <RefreshCw size={10} className="animate-spin text-yellow flex-shrink-0" />
-                    <span className="text-yellow text-[10px]">syncing</span>
+                    <span className="text-yellow text-[10px]">{strings.footer.syncing}</span>
                     <GitBranch size={10} className="text-accent flex-shrink-0" />
                     <span className="font-mono text-accent text-[10px]">{branch}</span>
                     {outgoingCount > 0 && prefix && (
@@ -105,7 +106,7 @@ export default function GlobalFooter({
                             <span className="text-text-dim/50 text-[10px]">·</span>
                             <span className="font-semibold text-text-base text-[10px]">{outgoingCount}</span>
                             <span className="text-text-dim text-[10px]">
-                                {pluralLabel} changes waiting to be published
+                                {pluralLabel} {strings.footer.changesWaitingToPublish}
                             </span>
                         </>
                     )}
@@ -117,8 +118,8 @@ export default function GlobalFooter({
         if (outgoingCount > 0 && prefix) {
             // No remote: commit-only (no push)
             const changeLabel = hasRemote
-                ? `${pluralLabel} changes waiting to be published`
-                : `${pluralLabel} changes not yet committed`;
+                ? `${pluralLabel} ${strings.footer.changesWaitingToPublish}`
+                : `${pluralLabel} ${strings.footer.changesNotYetCommitted}`;
             return (
                 <div className="flex items-center gap-1.5">
                     {/* Publish button — shown for all panels with publishable entities */}
@@ -130,13 +131,13 @@ export default function GlobalFooter({
                             disabled={publishDisabled}
                             onClick={handlePublish}
                             className="flex-shrink-0 !text-[10px] !py-0.5 !px-2"
-                            title={!hasRemote ? "Commit local changes (no remote configured)" : undefined}
+                            title={!hasRemote ? strings.footer.commitLocalChangesTitle : undefined}
                         >
-                            {publishing ? "Publishing…" : "Publish"}
+                            {publishing ? strings.footer.publishing : strings.footer.publish}
                         </Button>
                     )}
                     <GitBranch size={10} className="text-accent flex-shrink-0" />
-                    <span className="text-text-dim text-[10px]">{hasRemote ? "sync" : "local"}</span>
+                    <span className="text-text-dim text-[10px]">{hasRemote ? strings.footer.sync : strings.footer.local}</span>
                     <span className="font-mono text-accent text-[10px]">{branch}</span>
                     <span className="text-text-dim/50 text-[10px]">·</span>
                     <span className="font-semibold text-yellow text-[10px]">{outgoingCount}</span>
@@ -150,10 +151,10 @@ export default function GlobalFooter({
         return (
             <div className="flex items-center gap-1.5">
                 <GitBranch size={10} className="text-text-dim flex-shrink-0" />
-                <span className="text-text-dim text-[10px]">{hasRemote ? "sync" : "local"}</span>
+                <span className="text-text-dim text-[10px]">{hasRemote ? strings.footer.sync : strings.footer.local}</span>
                 <span className="font-mono text-text-dim text-[10px]">{branch}</span>
                 <span className="text-text-dim/50 text-[10px]">·</span>
-                <span className="text-green text-[10px]">up to date</span>
+                <span className="text-green text-[10px]">{strings.footer.upToDate}</span>
             </div>
         );
     };

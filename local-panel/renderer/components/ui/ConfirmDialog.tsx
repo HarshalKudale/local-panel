@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { strings } from "@/lib/strings";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -14,7 +15,7 @@ export default function ConfirmDialog({
   open,
   title = "Confirm",
   message,
-  confirmLabel = "Delete",
+  confirmLabel = strings.common.delete,
   confirmVariant = "danger",
   onConfirm,
   onCancel,
@@ -45,7 +46,7 @@ export default function ConfirmDialog({
             className="px-3 py-1.5 text-xs rounded border border-border hover:bg-bg3 text-text-dim cursor-pointer"
             onClick={onCancel}
           >
-            Cancel
+            {strings.common.cancel}
           </button>
           <button
             className="px-3 py-1.5 text-xs rounded font-semibold text-white cursor-pointer"

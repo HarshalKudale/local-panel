@@ -6,7 +6,7 @@ import SearchInput from "@/components/common/SearchInput";
 import PanelHeader from "@/components/layout/PanelHeader";
 import { strings } from "@/lib/strings";
 import { flatEntityRelPath } from "@/lib/utils";
-import { ArrowLeftRight, History } from "@/lib/icons";
+import { ArrowLeftRight, History, Pencil } from "@/lib/icons";
 import { Button, IconButton, Input, FormField, EmptyState, DataTable, ModalFooter, StatusDot } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import type { TableColumn } from "@/components/ui";
@@ -170,7 +170,7 @@ export default function MappingsPanel({
         return (
           <div className="flex items-center gap-2">
             {syncSt && <StatusDot color={syncDotColor(syncSt)} />}
-            <IconButton icon="✎" title="Edit" onClick={() => openEdit(m)} />
+            <IconButton icon={<Pencil size={14} />} title={strings.common.edit} onClick={() => openEdit(m)} />
           </div>
         );
       },
@@ -209,25 +209,25 @@ export default function MappingsPanel({
         return (
           <div className="flex items-center justify-end gap-1">
             {onPublish && syncSt && syncSt !== "clean" && (
-              <Button variant="ghost" size="sm" onClick={() => onPublish(m.id)}>Publish</Button>
+              <Button variant="ghost" size="sm" onClick={() => onPublish(m.id)}>{strings.mappings.publish}</Button>
             )}
             {onRevert && syncSt && syncSt !== "clean" && (
               <button
                 onClick={() => onRevert(m.id)}
                 className="px-2.5 py-1 rounded text-yellow hover:bg-yellow/10 text-xs font-medium transition-all cursor-pointer"
               >
-                Revert
+                {strings.mappings.revert}
               </button>
             )}
             {onHistoryOpen && (
               <IconButton
                 icon={<History size={11} />}
-                title="View history"
+                title={strings.mappings.viewHistory}
                 onClick={() => onHistoryOpen(`mappings/${m.id}.json`)}
                 className="hover:text-accent"
               />
             )}
-            <Button variant="danger" size="sm" onClick={() => remove(m.id)}>Delete</Button>
+            <Button variant="danger" size="sm" onClick={() => remove(m.id)}>{strings.common.delete}</Button>
           </div>
         );
       },

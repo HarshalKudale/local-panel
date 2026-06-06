@@ -141,6 +141,8 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
     capture: (ctx) => (
         <CapturePanel
             activeWorkspaceId={ctx.wsId}
+            wsConfig={ctx.wsConfig}
+            onConfigChange={ctx.handleWsConfigChange}
             onOpenInMocks={ctx.handleOpenMockEditor}
             onOpenInRequests={ctx.handleOpenInRequests}
             onStatsChange={ctx.onStatsChange}

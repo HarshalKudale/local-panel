@@ -6,7 +6,8 @@ import DraftsFolder from "@/components/sidebar/DraftsFolder";
 import { loadDraft, useDraftPersist, clearDraft, getDraftIds } from "@/lib/useDraftPersist";
 import { usePersistedState } from "@/lib/usePersistedState";
 import { entityRelPath, calculateFolderStatus } from "@/lib/utils";
-import { Plus, X, Play, Square } from "@/lib/icons";
+import { Plus, X, Play, Square, Webhook } from "@/lib/icons";
+import { strings } from "@/lib/strings";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
@@ -101,7 +102,7 @@ function WebhookEditor({
   const formattedBody = useMemo(() => {
     if (!selectedPayload) return "";
     const body = selectedPayload.body;
-    if (!body) return "(empty body)";
+    if (!body) return strings.webhooks.emptyBody;
     const t = body.trimStart();
     if (t.startsWith("{") || t.startsWith("[")) {
       try { return JSON.stringify(JSON.parse(body), null, 2); } catch { /* fall through */ }
@@ -118,8 +119,8 @@ function WebhookEditor({
   return (
     <div className="flex flex-col h-full overflow-hidden bg-bg1">
       <EditorTitleBar
-        label={isNew ? "New Webhook" : "Webhook"}
-        namePlaceholder="Webhook name (optional)"
+        label={isNew ? strings.webhooks.newWebhook : strings.webhooks.webhook}
+        namePlaceholder={strings.webhooks.namePlaceholder}
         name={name}
         onNameChange={setName}
         onClose={onClose}
@@ -152,12 +153,12 @@ function WebhookEditor({
               ? "bg-yellow/10 text-yellow"
               : "bg-text-dim/10 text-text-dim"
             }`}>
-            {isActive ? "● Active" : isAtLimit ? "⚠ At limit" : "○ Inactive"}
+            {isActive ? strings.webhooks.statusActive : isAtLimit ? strings.webhooks.statusAtLimit : strings.webhooks.statusInactive}
           </span>
         </div>
         {isAtLimit && !isActive && (
           <p className="mt-1 text-[11px] text-yellow">
-            Max {MAX_ACTIVE_WEBHOOKS} webhooks active — close another tab to activate this one.
+            {strings.webhooks.maxActive.replace("{n}", String(MAX_ACTIVE_WEBHOOKS))}
           </p>
         )}
       </div>
@@ -167,7 +168,7 @@ function WebhookEditor({
         {/* Left: payload list */}
         <div className="flex flex-col border-r border-border flex-shrink-0 overflow-hidden" style={{ width: 220 }}>
           <div className="px-3 py-2 border-b border-border flex-shrink-0 flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-dim">Received</span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-dim">{strings.webhooks.received}</span>
             {payloads.length > 0 && (
               <span className="text-[10px] text-text-dim">{payloads.length}</span>
             )}
@@ -175,9 +176,9 @@ function WebhookEditor({
           <div className="flex-1 overflow-y-auto min-h-0">
             {payloads.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8 px-3">
-                <div className="text-3xl opacity-15">⬇</div>
+                <div className="opacity-15"><Webhook size={28} /></div>
                 <p className="text-xs text-text-dim">
-                  {isActive ? "Waiting for POST requests…" : "Activate this webhook to receive payloads."}
+                  {isActive ? strings.webhooks.waitingForPost : strings.webhooks.activateToReceive}
                 </p>
               </div>
             ) : (
@@ -196,7 +197,7 @@ function WebhookEditor({
                       <span className="font-mono text-text-dim truncate flex-1">{t}</span>
                     </div>
                     <div className="text-[10px] font-mono text-text-dim mt-0.5 truncate">
-                      {p.body ? p.body.slice(0, 30) : "(empty)"}
+                      {p.body ? p.body.slice(0, 30) : strings.webhooks.empty}
                     </div>
                   </button>
                 );
@@ -230,8 +231,8 @@ function WebhookEditor({
             </>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8 px-6">
-              <div className="text-3xl opacity-15">⬇</div>
-              <p className="text-xs text-text-dim">Select a payload to view its body</p>
+              <div className="opacity-15"><Webhook size={28} /></div>
+              <p className="text-xs text-text-dim">{strings.webhooks.selectPayload}</p>
             </div>
           )}
         </div>
@@ -243,9 +244,9 @@ function WebhookEditor({
         onFolderChange={setFolderId}
         onCancel={onClose}
         onSave={handleSave}
-        saveLabel={isNew ? "Save Webhook" : "Update Webhook"}
+        saveLabel={isNew ? strings.webhooks.saveWebhook : strings.webhooks.updateWebhook}
         saving={saving}
-        savingLabel="Saving…"
+        savingLabel={strings.server.saving}
         extraLeft={saveErr ? <span className="text-xs text-red">{saveErr}</span> : undefined}
       />
     </div>
@@ -503,11 +504,11 @@ export default function WebhooksPanel({
   const tabLabel = (tabId: string) => {
     if (isDraftId(tabId)) {
       const d = loadDraft<WebhookDraft>(tabId);
-      return d?.name || d?.urlSuffix || "New Webhook";
+      return d?.name || d?.urlSuffix || strings.webhooks.newWebhook;
     }
     const h = webhooks.find((x) => x.id === tabId);
     if (!h) return "…";
-    return h.name || h.urlSuffix || "Webhook";
+    return h.name || h.urlSuffix || strings.webhooks.webhook;
   };
 
   // ── Folder view items ─────────────────────────────────────────────────────
@@ -518,7 +519,7 @@ export default function WebhooksPanel({
       : webhooks
     ).map((h): FolderTreeItem => ({
       id: h.id,
-      name: h.name || h.urlSuffix || "Webhook",
+      name: h.name || h.urlSuffix || strings.webhooks.webhook,
       folderId: h.folderId ?? null,
       isActive: activeTab === h.id,
       isEnabled: activeTabs.has(h.id),
@@ -540,8 +541,8 @@ export default function WebhooksPanel({
 
   const sidebarContent = (
     <>
-      <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle="Collapse sidebar">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search webhooks…" />
+      <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle={strings.titleBar.collapseSidebar}>
+        <SearchInput value={search} onChange={setSearch} placeholder={strings.webhooks.searchPlaceholder} />
       </SidebarHeader>
       {/* Webhook server toggle */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
@@ -552,7 +553,7 @@ export default function WebhooksPanel({
             ? "border-green/40 bg-green/10 hover:bg-red/15 hover:border-red/40 text-green hover:text-red"
             : "border-border bg-bg2 hover:bg-green/15 hover:border-green/40 text-text-dim hover:text-green"
             }`}
-          title={serverRunning ? "Stop webhook server" : "Start webhook server"}
+          title={serverRunning ? strings.webhooks.stopServer : strings.webhooks.startServer}
         >
           {serverLoading ? (
             <span className="inline-block w-2.5 h-2.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
@@ -563,7 +564,7 @@ export default function WebhooksPanel({
           )}
         </button>
         <span className="text-[10px] text-text-dim">
-          {serverRunning ? `Webhook server :${webhookPort}` : "Webhook server stopped"}
+          {serverRunning ? `${strings.webhooks.serverLabel} :${webhookPort}` : strings.webhooks.serverStopped}
         </span>
         {serverError && (
           <span className="text-[9px] text-red truncate max-w-[120px]" title={serverError}>
@@ -575,14 +576,14 @@ export default function WebhooksPanel({
       <div className="flex-1 overflow-y-auto overflow-x-auto min-w-0" style={{ display: "flex", flexDirection: "column" }}>
         {openTabs.some(isDraftId) && (
           <DraftsFolder
-            label="Drafts"
+            label={strings.webhooks.drafts}
             draftTabIds={openTabs.filter(isDraftId)}
             activeTab={activeTab}
             onOpenTab={openTab}
             onCloseTab={closeTab}
             tabLabel={(id) => {
               const d = loadDraft<WebhookDraft>(id);
-              return d?.name || d?.urlSuffix || "New Webhook";
+              return d?.name || d?.urlSuffix || strings.webhooks.newWebhook;
             }}
           />
         )}
@@ -618,13 +619,13 @@ export default function WebhooksPanel({
     <div className="flex flex-col flex-1 overflow-hidden">
       {openTabs.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 gap-4 text-center py-16 px-8">
-          <div className="text-5xl opacity-10">⬇</div>
-          <p className="text-sm text-text-dim">Open a webhook to start receiving POST requests</p>
+          <div className="opacity-10"><Webhook size={48} /></div>
+          <p className="text-sm text-text-dim">{strings.webhooks.openToReceive}</p>
           <button
             onClick={openNewTab}
             className="flex items-center gap-2 px-4 py-2 rounded bg-accent/10 hover:bg-accent/20 text-accent text-sm font-medium transition-colors cursor-pointer border border-accent/20"
           >
-            <Plus size={14} /> New Webhook
+            <Plus size={14} /> {strings.webhooks.newWebhook}
           </button>
         </div>
       ) : (
@@ -658,7 +659,7 @@ export default function WebhooksPanel({
             onTabClick={openTab}
             onTabClose={closeTab}
             onNewTab={openNewTab}
-            newTabTitle="New webhook"
+            newTabTitle={strings.webhooks.newTab}
             onCloseOthers={(id) => {
               openTabs.filter((t) => t !== id).forEach(closeTab);
             }}
@@ -709,7 +710,7 @@ export default function WebhooksPanel({
         storageKey="webhooks-panel-sidebar"
         collapsedBadge={
           <span className="text-[10px] text-text-dim rotate-90 whitespace-nowrap" style={{ writingMode: "vertical-rl" }}>
-            Webhooks
+            {strings.webhooks.title}
           </span>
         }
       >

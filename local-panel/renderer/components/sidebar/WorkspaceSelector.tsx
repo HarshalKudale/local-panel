@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Workspace } from "@/types";
 import { Layers, ChevronDown, Plus, Pencil, Trash2 } from "@/lib/icons";
+import { strings } from "@/lib/strings";
 
 interface Props {
   workspaces: Workspace[];
@@ -54,10 +55,10 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
       <button
         onClick={() => { setOpen((v) => !v); setRenamingId(null); setConfirmDeleteId(null); }}
         className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-border bg-bg2 text-text-dim hover:bg-bg3 hover:text-text-base text-xs font-medium transition-colors cursor-pointer"
-        title="Switch workspace"
+        title={strings.sidebar.switchWorkspace}
       >
         <Layers size={11} />
-        <span className="max-w-[120px] truncate">{active?.name ?? "Workspace"}</span>
+        <span className="max-w-[120px] truncate">{active?.name ?? strings.sidebar.workspace}</span>
         <ChevronDown size={10} className="opacity-60" />
       </button>
 
@@ -71,11 +72,11 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
               className="w-full text-left px-3 py-1.5 text-xs text-accent hover:bg-bg3 cursor-pointer transition-colors flex items-center gap-1.5 border-b border-border/60"
             >
               <Plus size={12} />
-              Create Workspace
+              {strings.sidebar.createWorkspace}
             </button>
 
             <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-dim">
-              Workspaces
+              {strings.sidebar.workspaces}
             </div>
 
             {workspaces.map((ws) => {
@@ -118,7 +119,7 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
                         <button
                           className="text-text-dim hover:text-accent text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer"
-                          title="Rename workspace"
+                          title={strings.sidebar.renameWorkspace}
                           onClick={(e) => {
                             e.stopPropagation();
                             setRenamingId(ws.id);
@@ -131,7 +132,7 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
                         {canDelete && (
                           <button
                             className="text-text-dim hover:text-red text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer"
-                            title="Delete workspace"
+                            title={strings.sidebar.deleteWorkspace}
                             onClick={(e) => {
                               e.stopPropagation();
                               setConfirmDeleteId(isConfirming ? null : ws.id);
@@ -152,20 +153,20 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p className="text-[10px] text-text-dim leading-snug mb-2">
-                        Delete <span className="font-semibold text-text-base">"{ws.name}"</span>? All data in this workspace will be permanently removed.
+                        {strings.sidebar.deleteWorkspacePrefix} <span className="font-semibold text-text-base">"{ws.name}"</span>{strings.sidebar.deleteWorkspaceSuffix}
                       </p>
                       <div className="flex gap-1.5">
                         <button
                           onClick={() => handleDeleteConfirm(ws.id)}
                           className="flex-1 px-2 py-1 rounded bg-red/15 border border-red/40 text-red text-[10px] font-semibold hover:bg-red/25 cursor-pointer transition-colors"
                         >
-                          Delete
+                          {strings.common.delete}
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
                           className="flex-1 px-2 py-1 rounded bg-bg3 border border-border text-text-dim text-[10px] hover:text-text-base cursor-pointer transition-colors"
                         >
-                          Cancel
+                          {strings.common.cancel}
                         </button>
                       </div>
                     </div>

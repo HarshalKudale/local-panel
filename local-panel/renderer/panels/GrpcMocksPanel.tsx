@@ -11,6 +11,7 @@ import { Network, Play, Square } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { strings } from "@/lib/strings";
 
 import { GrpcMockDraft } from "@/components/grpc/grpcTabReducer";
 
@@ -97,7 +98,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
     }, [loadedEntities, mocks, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
-        const ok = await confirm("Delete this mock? This cannot be undone.");
+        const ok = await confirm(strings.grpc.deleteMockConfirm);
         if (!ok) return;
         await window.api.deleteGrpcMock(id);
         await reloadConfig();
@@ -112,7 +113,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
         }
         if (!m) return;
         const { id: _id, createdAt: _ca, workspaceId: _ws, ...rest } = m;
-        await window.api.addGrpcMock({ ...rest, name: m.name ? `${m.name} (copy)` : "" });
+        await window.api.addGrpcMock({ ...rest, name: m.name ? strings.grpc.copySuffix.replace("{name}", m.name) : "" });
         await reloadConfig();
     }, [loadedEntities, config.activeWorkspaceId, reloadConfig]);
 
@@ -137,13 +138,13 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
             const draft = loadDraft<GrpcMockDraft>(tabId);
             if (draft?.serviceName && draft?.methodName) return `${draft.serviceName}/${draft.methodName}`;
             if (draft?.serviceName) return draft.serviceName;
-            return "New gRPC Mock";
+            return strings.grpc.newMockTab;
         }
         const m = mocks.find((x) => x.id === tabId);
         if (!m) return "…";
         if (m.name) return m.name;
         if (m.serviceName && m.methodName) return `${m.serviceName}/${m.methodName}`;
-        return m.serviceName || "gRPC Mock";
+        return m.serviceName || strings.grpc.mockLabel;
     };
 
     const folderViewItems: FolderTreeItem[] = useMemo(() => {
@@ -153,7 +154,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
             : mocks;
         return filtered.map((m): FolderTreeItem => ({
             id: m.id,
-            name: m.name || `${m.serviceName}/${m.methodName}` || "Unnamed",
+            name: m.name || `${m.serviceName}/${m.methodName}` || strings.grpc.unnamed,
             folderId: m.folderId ?? null,
             isActive: activeTab === m.id,
             isEnabled: m.enabled,
@@ -168,8 +169,8 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
 
     const sidebarContent = (
         <>
-            <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle="Collapse sidebar">
-                <SearchInput value={search} onChange={setSearch} placeholder="Search gRPC mocks…" />
+            <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle={strings.grpc.collapseSidebar}>
+                <SearchInput value={search} onChange={setSearch} placeholder={strings.grpc.searchMocks} />
             </SidebarHeader>
             {/* Mock server toggle */}
             <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
@@ -180,7 +181,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                         ? "border-green/40 bg-green/10 hover:bg-red/15 hover:border-red/40 text-green hover:text-red"
                         : "border-border bg-bg2 hover:bg-green/15 hover:border-green/40 text-text-dim hover:text-green"
                         }`}
-                    title={mockServerRunning ? "Stop gRPC mock server" : "Start gRPC mock server"}
+                    title={mockServerRunning ? strings.grpc.stopMockServer : strings.grpc.startMockServer}
                 >
                     {serverBusy ? (
                         <span className="inline-block w-2.5 h-2.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
@@ -191,13 +192,13 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                     )}
                 </button>
                 <span className="text-[10px] text-text-dim">
-                    {mockServerRunning ? `Mock server :${mockServerPort}` : "Mock server stopped"}
+                    {mockServerRunning ? strings.grpc.mockServerRunning.replace("{port}", String(mockServerPort)) : strings.grpc.mockServerStopped}
                 </span>
             </div>
             <div className="flex-1 overflow-y-auto overflow-x-auto min-w-0" style={{ display: "flex", flexDirection: "column" }}>
                 {draftTabIds.length > 0 && (
                     <DraftsFolder
-                        label="Drafts"
+                        label={strings.grpc.drafts}
                         draftTabIds={draftTabIds}
                         activeTab={activeTab}
                         onOpenTab={(id) => setActiveTab(id)}
@@ -232,8 +233,8 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                 onTabClick={setActiveTab}
                 onTabClose={closeTab}
                 onNewTab={openNewTab}
-                newTabTitle="New gRPC mock"
-                closeTabTitle="Close tab"
+                newTabTitle={strings.grpc.newMockTabTitle}
+                closeTabTitle={strings.grpc.closeTab}
                 onCloseOthers={closeOtherTabs}
                 onCloseAll={closeAllTabs}
                 onTabDuplicate={handleDuplicate}
@@ -243,9 +244,9 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                 {openTabs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center gap-2">
                         <div className="opacity-10 mb-1"><Network size={48} /></div>
-                        <div className="text-sm font-medium text-text-base">No gRPC mocks open</div>
+                        <div className="text-sm font-medium text-text-base">{strings.grpc.noMocksOpen}</div>
                         <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-                            Run a local gRPC mock server. Import proto definitions to register service methods and configure responses.
+                            {strings.grpc.noMocksOpenHint}
                         </p>
                     </div>
                 ) : (
@@ -282,11 +283,11 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                 sidebarOpen={sidebarOpen}
                 onToggle={() => setSidebarOpen(true)}
                 sidebar={sidebarContent}
-                collapseTitle="Collapse sidebar"
-                expandTitle="Expand sidebar"
+                collapseTitle={strings.grpc.collapseSidebar}
+                expandTitle={strings.grpc.expandSidebar}
                 storageKey="grpc-mocks-panel-sidebar"
                 collapsedBadge={mocks.length > 0 ? (
-                    <span className="text-[9px] text-text-dim font-mono" title={`${mocks.length} mocks`}
+                    <span className="text-[9px] text-text-dim font-mono" title={strings.grpc.mockCount.replace("{count}", String(mocks.length))}
                         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{mocks.length}</span>
                 ) : undefined}
             >

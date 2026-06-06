@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { SavedProtoFile } from "@/types";
 import { cn } from "@/components/ui/cn";
+import { strings } from "@/lib/strings";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -103,10 +104,10 @@ function getStreamingType(method: ProtoMethod): "unary" | "server" | "client" | 
 }
 
 const STREAMING_LABELS: Record<string, { label: string; color: string }> = {
-    unary: { label: "Unary", color: "text-text-dim" },
-    server: { label: "Server Stream", color: "text-yellow" },
-    client: { label: "Client Stream", color: "text-accent" },
-    bidi: { label: "Bidi Stream", color: "text-green" },
+    unary: { label: strings.grpc.streamUnary, color: "text-text-dim" },
+    server: { label: strings.grpc.streamServer, color: "text-yellow" },
+    client: { label: strings.grpc.streamClient, color: "text-accent" },
+    bidi: { label: strings.grpc.streamBidi, color: "text-green" },
 };
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -166,10 +167,10 @@ export default function ProtoExplorer({ protoFileId, onSelectMethod, onProtoChan
                 setServices(res.services);
                 setError(null);
             } else {
-                setError(res.error ?? "Reflection failed");
+                setError(res.error ?? strings.grpc.reflectionFailed);
             }
         } catch (err: any) {
-            setError(err.message ?? "Connection failed");
+            setError(err.message ?? strings.grpc.connectionFailed);
         } finally {
             setLoading(false);
         }
@@ -196,12 +197,12 @@ export default function ProtoExplorer({ protoFileId, onSelectMethod, onProtoChan
         <div className="flex flex-col h-full overflow-hidden bg-bg0">
             {/* Header */}
             <div className="flex items-center gap-2 px-3 py-2 border-b border-border flex-shrink-0">
-                <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider flex-1">Proto</span>
+                <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider flex-1">{strings.grpc.proto}</span>
                 <button
                     onClick={() => setMode(mode === "import" ? "list" : "import")}
                     className="text-[10px] text-accent hover:text-accent-dim cursor-pointer"
                 >
-                    {mode === "import" ? "Back" : "+ Import"}
+                    {mode === "import" ? strings.grpc.back : strings.grpc.import}
                 </button>
             </div>
 
@@ -212,11 +213,11 @@ export default function ProtoExplorer({ protoFileId, onSelectMethod, onProtoChan
                         onClick={handleImportFile}
                         className="px-3 py-1.5 rounded bg-accent text-bg0 text-xs font-semibold cursor-pointer"
                     >
-                        Import .proto File
+                        {strings.grpc.importProtoFile}
                     </button>
                     <div className="flex items-center gap-2">
                         <div className="flex-1 h-px bg-border" />
-                        <span className="text-[9px] text-text-dim">OR</span>
+                        <span className="text-[9px] text-text-dim">{strings.grpc.or}</span>
                         <div className="flex-1 h-px bg-border" />
                     </div>
                     <input
@@ -231,7 +232,7 @@ export default function ProtoExplorer({ protoFileId, onSelectMethod, onProtoChan
                         disabled={loading || !reflectAddress.trim()}
                         className="px-3 py-1.5 rounded bg-bg3 border border-border text-text-bright text-xs font-semibold disabled:opacity-40 cursor-pointer"
                     >
-                        {loading ? "Reflecting…" : "Server Reflection"}
+                        {loading ? strings.grpc.reflecting : strings.grpc.serverReflection}
                     </button>
                     {error && <span className="text-xs text-red">{error}</span>}
                 </div>
@@ -252,7 +253,7 @@ export default function ProtoExplorer({ protoFileId, onSelectMethod, onProtoChan
                         }}
                         className="w-full bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs text-text-bright outline-none focus:border-accent"
                     >
-                        <option value="">Select proto file…</option>
+                        <option value="">{strings.grpc.selectProtoFile}</option>
                         {protos.map((p) => (
                             <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
@@ -265,7 +266,7 @@ export default function ProtoExplorer({ protoFileId, onSelectMethod, onProtoChan
                 <div className="px-3 py-2 border-b border-border">
                     <input
                         className="w-full bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
-                        placeholder="Filter methods…"
+                        placeholder={strings.grpc.filterMethods}
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
                     />
@@ -276,7 +277,7 @@ export default function ProtoExplorer({ protoFileId, onSelectMethod, onProtoChan
             <div className="flex-1 overflow-y-auto">
                 {services.length === 0 && protos.length === 0 && mode === "list" && (
                     <div className="p-4 text-xs text-text-dim text-center">
-                        No proto files loaded. Click "Import" to add a .proto file or use server reflection.
+                        {strings.grpc.noProtoFiles}
                     </div>
                 )}
                 {filteredServices.map((service) => (
@@ -292,7 +293,7 @@ export default function ProtoExplorer({ protoFileId, onSelectMethod, onProtoChan
                                     key={`${service.name}.${method.name}`}
                                     onClick={() => handleSelectMethod(service, method)}
                                     className="w-full text-left px-3 py-2 hover:bg-bg2 transition-colors cursor-pointer border-b border-border/50"
-                                    title={`Select ${service.name}/${method.name}`}
+                                    title={strings.grpc.selectMethod.replace("{service}", service.name).replace("{method}", method.name)}
                                 >
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs text-text-bright font-mono truncate flex-1">{method.name}</span>

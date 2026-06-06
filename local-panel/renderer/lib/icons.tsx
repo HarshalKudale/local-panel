@@ -79,4 +79,7 @@ export {
   Ban,           // block request
   Share2,        // share / export to file
   CheckSquare,   // checkbox checked (row selection)
+  Search,        // search input
+  Star,          // star on GitHub
+  Heart,         // support project
 } from "lucide-react";

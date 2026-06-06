@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MultipartPart, formatBytes } from "@/lib/bodyUtils";
 import { X, Upload } from "@/lib/icons";
+import { strings } from "@/lib/strings";
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 
@@ -66,7 +67,7 @@ export default function MultipartEditor({ value, onChange, readOnly = false }: P
             const result = await (window as any).api.openFileDialog();
             if (!result) return; // cancelled
             if (result.size > MAX_FILE_SIZE) {
-                setError(`File too large (${formatBytes(result.size)}). Max: 1 MB`);
+                setError(strings.editor.fileTooLarge.replace("{size}", formatBytes(result.size)));
                 return;
             }
             emitChange(parts.map((p) =>
@@ -75,7 +76,7 @@ export default function MultipartEditor({ value, onChange, readOnly = false }: P
                     : p
             ));
         } catch (e) {
-            setError(e instanceof Error ? e.message : "Failed to open file");
+            setError(e instanceof Error ? e.message : strings.editor.failedToOpenFile);
         }
     };
 
@@ -90,19 +91,19 @@ export default function MultipartEditor({ value, onChange, readOnly = false }: P
             {/* Column headers */}
             <div className="flex items-center border-b border-border/40 bg-bg0/10 flex-shrink-0">
                 <div className="w-32 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim border-r border-border/40">
-                    Key
+                    {strings.common.key}
                 </div>
                 <div className="w-16 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim border-r border-border/40 text-center">
-                    Type
+                    {strings.editor.colType}
                 </div>
                 <div className="flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim">
-                    Value
+                    {strings.common.value}
                 </div>
                 {!readOnly && <div className="w-9 flex-shrink-0" />}
             </div>
 
             {parts.length === 0 && readOnly && (
-                <p className="px-4 py-5 text-xs text-text-dim italic">No multipart fields</p>
+                <p className="px-4 py-5 text-xs text-text-dim italic">{strings.editor.noMultipartFields}</p>
             )}
 
             {parts.map((part) => (
@@ -112,7 +113,7 @@ export default function MultipartEditor({ value, onChange, readOnly = false }: P
                         <input
                             className="w-full h-full bg-transparent font-mono text-xs px-3 py-2 outline-none focus:bg-bg2/60"
                             style={{ color: "var(--c-accent)" }}
-                            placeholder={readOnly ? "—" : "field name"}
+                            placeholder={readOnly ? "—" : strings.editor.placeholderFieldName}
                             value={part.key}
                             onChange={(e) => handleFieldChange(part._id, "key", e.target.value)}
                             readOnly={readOnly}
@@ -128,7 +129,7 @@ export default function MultipartEditor({ value, onChange, readOnly = false }: P
                                 onClick={() => handleTypeToggle(part._id, part.type === "text" ? "file" : "text")}
                                 className="px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer bg-bg2 hover:bg-accent/20 text-text-dim hover:text-accent"
                             >
-                                {part.type === "text" ? "T" : "F"}
+                                {part.type === "text" ? strings.editor.typeTextToggle : strings.editor.typeFileToggle}
                             </button>
                         )}
                     </div>
@@ -138,7 +139,7 @@ export default function MultipartEditor({ value, onChange, readOnly = false }: P
                         {part.type === "text" ? (
                             <input
                                 className="w-full h-full bg-transparent font-mono text-xs text-text-bright px-3 py-2 outline-none focus:bg-bg2/60"
-                                placeholder={readOnly ? "—" : "value"}
+                                placeholder={readOnly ? "—" : strings.editor.placeholderValue}
                                 value={part.value}
                                 onChange={(e) => handleFieldChange(part._id, "value", e.target.value)}
                                 readOnly={readOnly}
@@ -155,7 +156,7 @@ export default function MultipartEditor({ value, onChange, readOnly = false }: P
                                         )}
                                     </span>
                                 ) : (
-                                    <span className="text-xs text-text-dim italic">No file selected</span>
+                                    <span className="text-xs text-text-dim italic">{strings.editor.noFileSelected}</span>
                                 )}
                                 {!readOnly && (
                                     <button
@@ -163,7 +164,7 @@ export default function MultipartEditor({ value, onChange, readOnly = false }: P
                                         className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-bg2 border border-border hover:border-accent text-text-dim hover:text-accent cursor-pointer transition-colors ml-auto"
                                     >
                                         <Upload size={10} />
-                                        Browse
+                                        {strings.editor.browse}
                                     </button>
                                 )}
                             </div>
@@ -186,7 +187,7 @@ export default function MultipartEditor({ value, onChange, readOnly = false }: P
                     className="flex items-center gap-2 px-4 py-2.5 text-xs text-text-dim hover:text-text-base hover:bg-bg2/30 transition-colors cursor-pointer text-left border-t border-border/20"
                 >
                     <span className="text-accent font-semibold text-sm leading-none">+</span>
-                    Add field
+                    {strings.editor.addField}
                 </button>
             )}
         </div>

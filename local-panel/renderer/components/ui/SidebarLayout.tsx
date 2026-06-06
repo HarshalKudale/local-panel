@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronLeft, ChevronRight } from "@/lib/icons";
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
+import { strings } from "@/lib/strings";
 
 interface SidebarLayoutProps {
   sidebarOpen: boolean;
@@ -26,8 +27,8 @@ export default function SidebarLayout({
   sidebar,
   children,
   collapsedBadge,
-  collapseTitle = "Collapse sidebar",
-  expandTitle = "Expand sidebar",
+  collapseTitle = strings.titleBar.collapseSidebar,
+  expandTitle = strings.titleBar.expandSidebar,
   defaultSize = 230,
   minSize = 230,
   maxSize = 400,
@@ -88,7 +89,7 @@ interface SidebarHeaderProps {
   collapseTitle?: string;
 }
 
-export function SidebarHeader({ children, onCollapse, collapseTitle = "Collapse sidebar" }: SidebarHeaderProps) {
+export function SidebarHeader({ children, onCollapse, collapseTitle = strings.titleBar.collapseSidebar }: SidebarHeaderProps) {
   return (
     <div className="flex items-center gap-1.5 px-2 py-2 border-b border-border flex-shrink-0">
       <div className="flex-1 min-w-0">{children}</div>

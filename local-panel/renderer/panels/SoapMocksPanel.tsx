@@ -11,6 +11,7 @@ import { FileCode } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { strings } from "@/lib/strings";
 
 
 // ── Draft tab prefix ───────────────────────────────────────────────────────
@@ -72,7 +73,7 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
     }, [loadedEntities, mocks, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
-        const ok = await confirm("Delete this mock? This cannot be undone.");
+        const ok = await confirm(strings.soap.deleteMockConfirm);
         if (!ok) return;
         await window.api.deleteSoapMock(id);
         await reloadConfig();
@@ -87,7 +88,7 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
         }
         if (!m) return;
         const { id: _id, createdAt: _ca, workspaceId: _ws, ...rest } = m;
-        await window.api.addSoapMock({ ...rest, name: m.name ? `${m.name} (copy)` : "" });
+        await window.api.addSoapMock({ ...rest, name: m.name ? strings.soap.copySuffix.replace("{name}", m.name) : "" });
         await reloadConfig();
     }, [loadedEntities, config.activeWorkspaceId, reloadConfig]);
 
@@ -115,11 +116,11 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
         if (isDraft(tabId)) {
             const d = loadDraft<DraftSnapshot>(tabId);
             if (d?.soapActionPattern) return d.soapActionPattern.slice(0, 30);
-            return "New SOAP Mock";
+            return strings.soap.newMockTab;
         }
         const m = mocks.find((x) => x.id === tabId);
         if (!m) return "…";
-        return m.name || m.soapActionPattern || "SOAP Mock";
+        return m.name || m.soapActionPattern || strings.soap.mockLabel;
     };
 
     const folderViewItems: FolderTreeItem[] = useMemo(() => {
@@ -129,7 +130,7 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
             : mocks
         ).map((m): FolderTreeItem => ({
             id: m.id,
-            name: m.name || m.soapActionPattern || "SOAP Mock",
+            name: m.name || m.soapActionPattern || strings.soap.mockLabel,
             folderId: m.folderId ?? null,
             isActive: activeTab === m.id,
             isEnabled: m.enabled,
@@ -142,13 +143,13 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
 
     const sidebarContent = (
         <>
-            <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle="Collapse sidebar">
-                <SearchInput value={search} onChange={setSearch} placeholder="Search SOAP mocks…" />
+            <SidebarHeader onCollapse={() => setSidebarOpen(false)} collapseTitle={strings.soap.collapseSidebar}>
+                <SearchInput value={search} onChange={setSearch} placeholder={strings.soap.searchMocks} />
             </SidebarHeader>
             <div className="flex-1 overflow-y-auto overflow-x-auto min-w-0" style={{ display: "flex", flexDirection: "column" }}>
                 {draftTabIds.length > 0 && (
                     <DraftsFolder
-                        label="Drafts"
+                        label={strings.soap.drafts}
                         draftTabIds={draftTabIds}
                         activeTab={activeTab}
                         onOpenTab={(id) => setActiveTab(id)}
@@ -183,8 +184,8 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
                 onTabClick={setActiveTab}
                 onTabClose={closeTab}
                 onNewTab={openNewTab}
-                newTabTitle="New SOAP mock"
-                closeTabTitle="Close tab"
+                newTabTitle={strings.soap.newMockTabTitle}
+                closeTabTitle={strings.soap.closeTab}
                 onCloseOthers={closeOtherTabs}
                 onCloseAll={closeAllTabs}
                 onTabDuplicate={handleDuplicate}
@@ -194,9 +195,9 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
                 {openTabs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center gap-2">
                         <div className="opacity-10 mb-1"><FileCode size={48} /></div>
-                        <div className="text-sm font-medium text-text-base">No SOAP mocks open</div>
+                        <div className="text-sm font-medium text-text-base">{strings.soap.noMocksOpen}</div>
                         <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-                            Mock SOAP services by matching SOAPAction headers and operation names. Click <span className="text-accent font-semibold">+</span> to create your first mock.
+                            {strings.soap.noMocksOpenHintBefore} <span className="text-accent font-semibold">+</span> {strings.soap.noMocksOpenHintAfter}
                         </p>
                     </div>
                 ) : (
@@ -234,11 +235,11 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
                 sidebarOpen={sidebarOpen}
                 onToggle={() => setSidebarOpen(true)}
                 sidebar={sidebarContent}
-                collapseTitle="Collapse sidebar"
-                expandTitle="Expand sidebar"
+                collapseTitle={strings.soap.collapseSidebar}
+                expandTitle={strings.soap.expandSidebar}
                 storageKey="soap-mocks-panel-sidebar"
                 collapsedBadge={mocks.length > 0 ? (
-                    <span className="text-[9px] text-text-dim font-mono" title={`${mocks.length} SOAP mocks`}
+                    <span className="text-[9px] text-text-dim font-mono" title={strings.soap.mockCount.replace("{count}", String(mocks.length))}
                         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{mocks.length}</span>
                 ) : undefined}
             >

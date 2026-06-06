@@ -1,7 +1,8 @@
 import React from "react";
 import { RequestLogEntry } from "@/types";
-import { Square, CheckSquare } from "@/lib/icons";
+import { Square, CheckSquare, Ban } from "@/lib/icons";
 import { strings } from "@/lib/strings";
+import { blockKey } from "@/lib/blocks";
 import {
   statusColor, fmtTime, fmtDur, urlName, deriveType, fulfilledBy, fulfilledColor, resBodySize,
 } from "./captureUtils";
@@ -21,6 +22,7 @@ interface Props {
   entries: RequestLogEntry[];
   selectedIds: Set<string>;
   activeId: string | null;
+  blockedKeys: Set<string>;
   onRowClick: (entry: RequestLogEntry, ev: React.MouseEvent) => void;
   onToggleCheck: (id: string, ev: React.MouseEvent) => void;
   onToggleAll: () => void;
@@ -30,7 +32,7 @@ interface Props {
 const TH = "text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim";
 
 export default function CaptureTable({
-  entries, selectedIds, activeId, onRowClick, onToggleCheck, onToggleAll, onContextMenu,
+  entries, selectedIds, activeId, blockedKeys, onRowClick, onToggleCheck, onToggleAll, onContextMenu,
 }: Props) {
   const allSelected = entries.length > 0 && entries.every((e) => selectedIds.has(e.id));
 
@@ -60,6 +62,7 @@ export default function CaptureTable({
         {entries.map((e) => {
           const checked = selectedIds.has(e.id);
           const isActive = e.id === activeId;
+          const blocked = blockedKeys.has(blockKey(e.method, e.url));
           return (
             <tr
               key={e.id}
@@ -74,8 +77,11 @@ export default function CaptureTable({
                   {checked ? <CheckSquare size={13} /> : <Square size={13} />}
                 </span>
               </td>
-              <td className="px-3 py-1.5 text-text-base max-w-[320px]">
-                <span className="block truncate" title={e.url}>{urlName(e.url)}</span>
+              <td className={`px-3 py-1.5 max-w-[320px] ${blocked ? "text-text-dim" : "text-text-base"}`}>
+                <span className="flex items-center gap-1.5 min-w-0" title={blocked ? `${strings.capture.blockedPrefix} ${e.url}` : e.url}>
+                  {blocked && <Ban size={11} className="flex-shrink-0 text-red" />}
+                  <span className={`block truncate ${blocked ? "line-through" : ""}`}>{urlName(e.url)}</span>
+                </span>
               </td>
               <td className="px-3 py-1.5 text-accent whitespace-nowrap">{e.method}</td>
               <td className={`px-3 py-1.5 whitespace-nowrap font-semibold ${statusColor(e.status)}`}>{e.status ?? "—"}</td>

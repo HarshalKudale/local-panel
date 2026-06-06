@@ -205,7 +205,7 @@ export default function RequestsPanel({
     if (isRunner(tabId)) {
       const fId = tabId.slice(RUNNER_PREFIX.length);
       const folder = folders.find((f) => f.id === fId);
-      return `Runner: ${folder?.name ?? "Collection"}`;
+      return `Runner: ${folder?.name ?? strings.requests.collectionFallback}`;
     }
     if (isDraft(tabId)) {
       const draft = loadDraft<RequestDraftSnapshot>(tabId);

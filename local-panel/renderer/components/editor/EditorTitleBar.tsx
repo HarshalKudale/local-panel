@@ -1,5 +1,6 @@
 import React from "react";
 import { strings } from "@/lib/strings";
+import { X } from "@/lib/icons";
 
 interface Props {
   label: string;
@@ -27,7 +28,7 @@ export default function EditorTitleBar({ label, namePlaceholder, name, onNameCha
         onClick={onClose}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-text-base cursor-pointer text-xs font-medium transition-colors flex-shrink-0"
       >
-        ✕ {strings.common.close}
+        <X size={12} /> {strings.common.close}
       </button>
     </div>
   );

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, Folder, FolderOpen, X } from "@/lib/icons";
+import { strings } from "@/lib/strings";
 
 interface Props {
   label: string;
@@ -54,7 +55,7 @@ export default function DraftsFolder({ label, draftTabIds, activeTab, onOpenTab,
                 <span style={{ fontSize: 12, lineHeight: 1, flex: 1, overflow: "hidden", textOverflow: "ellipsis", color: isActive ? "var(--c-accent)" : "var(--c-text-dim)", fontStyle: "italic" }}>
                   {tabLabel(tabId)}
                 </span>
-                <button onClick={(e) => { e.stopPropagation(); onCloseTab(tabId); }} title="Discard draft"
+                <button onClick={(e) => { e.stopPropagation(); onCloseTab(tabId); }} title={strings.sidebar.discardDraft}
                   style={{ flexShrink: 0, width: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 3, lineHeight: 1, color: "var(--c-text-dim)", background: "transparent", border: "none", cursor: "pointer" }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--c-bg3)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--c-red)"; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "var(--c-text-dim)"; }}

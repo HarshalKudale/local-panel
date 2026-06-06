@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { SavedWsdl } from "@/types";
 import { cn } from "@/components/ui/cn";
+import { strings } from "@/lib/strings";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -152,10 +153,10 @@ export default function WsdlExplorer({ wsdlId, onInsertEnvelope }: WsdlExplorerP
                 setOperations(parseWsdlOperations(res.content));
                 setMode("list");
             } else {
-                setError(res.error ?? "Failed to fetch WSDL");
+                setError(res.error ?? strings.soap.fetchWsdlFailed);
             }
         } catch (err: any) {
-            setError(err.message ?? "Network error");
+            setError(err.message ?? strings.soap.networkError);
         } finally {
             setLoading(false);
         }
@@ -176,12 +177,12 @@ export default function WsdlExplorer({ wsdlId, onInsertEnvelope }: WsdlExplorerP
         <div className="flex flex-col h-full overflow-hidden bg-bg0">
             {/* Header */}
             <div className="flex items-center gap-2 px-3 py-2 border-b border-border flex-shrink-0">
-                <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider flex-1">WSDL</span>
+                <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider flex-1">{strings.soap.wsdl}</span>
                 <button
                     onClick={() => setMode(mode === "fetch" ? "list" : "fetch")}
                     className="text-[10px] text-accent hover:text-accent-dim cursor-pointer"
                 >
-                    {mode === "fetch" ? "Back" : "+ Fetch WSDL"}
+                    {mode === "fetch" ? strings.soap.back : strings.soap.fetchWsdl}
                 </button>
             </div>
 
@@ -200,7 +201,7 @@ export default function WsdlExplorer({ wsdlId, onInsertEnvelope }: WsdlExplorerP
                         disabled={loading || !fetchUrl.trim()}
                         className="px-3 py-1.5 rounded bg-accent text-bg0 text-xs font-semibold disabled:opacity-40 cursor-pointer"
                     >
-                        {loading ? "Fetching…" : "Fetch & Import"}
+                        {loading ? strings.soap.fetching : strings.soap.fetchAndImport}
                     </button>
                     {error && <span className="text-xs text-red">{error}</span>}
                 </div>
@@ -220,7 +221,7 @@ export default function WsdlExplorer({ wsdlId, onInsertEnvelope }: WsdlExplorerP
                         }}
                         className="w-full bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs text-text-bright outline-none focus:border-accent"
                     >
-                        <option value="">Select WSDL…</option>
+                        <option value="">{strings.soap.selectWsdl}</option>
                         {wsdls.map((w) => (
                             <option key={w.id} value={w.id}>{w.name}{w.sourceUrl ? ` (${w.sourceUrl})` : ""}</option>
                         ))}
@@ -233,7 +234,7 @@ export default function WsdlExplorer({ wsdlId, onInsertEnvelope }: WsdlExplorerP
                 <div className="px-3 py-2 border-b border-border">
                     <input
                         className="w-full bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
-                        placeholder="Filter operations…"
+                        placeholder={strings.soap.filterOperations}
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
                     />
@@ -244,12 +245,12 @@ export default function WsdlExplorer({ wsdlId, onInsertEnvelope }: WsdlExplorerP
             <div className="flex-1 overflow-y-auto">
                 {!selectedWsdl && wsdls.length === 0 && (
                     <div className="p-4 text-xs text-text-dim text-center">
-                        No WSDLs imported. Click "Fetch WSDL" to import a WSDL from a URL.
+                        {strings.soap.noWsdlsImported}
                     </div>
                 )}
                 {selectedWsdl && operations.length === 0 && (
                     <div className="p-4 text-xs text-text-dim text-center">
-                        No operations found in WSDL.
+                        {strings.soap.noOperationsInWsdl}
                     </div>
                 )}
                 {filteredOps.map((op) => (
@@ -257,11 +258,11 @@ export default function WsdlExplorer({ wsdlId, onInsertEnvelope }: WsdlExplorerP
                         key={op.name}
                         onClick={() => handleSelectOperation(op)}
                         className="w-full text-left px-3 py-2 hover:bg-bg2 transition-colors cursor-pointer border-b border-border/50"
-                        title={`Insert ${op.name} SOAP envelope`}
+                        title={strings.soap.insertEnvelope.replace("{name}", op.name)}
                     >
                         <div className="text-xs text-text-bright font-mono truncate">{op.name}</div>
                         <div className="text-[10px] text-text-dim truncate mt-0.5">
-                            SOAPAction: {op.soapAction}
+                            {strings.soap.soapAction} {op.soapAction}
                         </div>
                         {op.inputFields.length > 0 && (
                             <div className="text-[10px] text-accent/70 truncate">

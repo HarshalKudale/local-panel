@@ -16,6 +16,7 @@ import { KVRow, mkRowId, headersToRows, rowsToHeaders, statusColor } from "@/lib
 import { resolveVars, resolveHeaders } from "@/lib/resolveVars";
 import { cn } from "@/components/ui/cn";
 import WsdlExplorer from "@/components/soap/WsdlExplorer";
+import { strings } from "@/lib/strings";
 
 // ── Public handle for imperative refresh ───────────────────────────────────
 
@@ -103,7 +104,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                 durationMs: result.durationMs,
             });
         } catch (err: any) {
-            dispatch({ type: "SEND_ERROR", error: err?.message ?? "Request failed" });
+            dispatch({ type: "SEND_ERROR", error: err?.message ?? strings.soap.requestFailed });
         }
     }, [state.endpointUrl, state.soapAction, state.headers, state.body, activeEnv]);
 
@@ -125,20 +126,20 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
 
     const reqTabs = tabType === "request"
         ? [
-            { id: "body" as const, label: "Body" },
-            { id: "headers" as const, label: "Headers" },
-            { id: "pre-script" as const, label: "Pre-Script" },
-            { id: "post-script" as const, label: "Post-Script" },
-            { id: "wsdl" as const, label: "WSDL" },
+            { id: "body" as const, label: strings.soap.tabBody },
+            { id: "headers" as const, label: strings.soap.tabHeaders },
+            { id: "pre-script" as const, label: strings.soap.tabPreScript },
+            { id: "post-script" as const, label: strings.soap.tabPostScript },
+            { id: "wsdl" as const, label: strings.soap.tabWsdl },
         ]
         : [
-            { id: "body" as const, label: "Response Body" },
-            { id: "headers" as const, label: "Response Headers" },
+            { id: "body" as const, label: strings.soap.tabResponseBody },
+            { id: "headers" as const, label: strings.soap.tabResponseHeaders },
         ];
 
     const resTabs = [
-        { id: "body" as const, label: "Body" },
-        { id: "headers" as const, label: "Headers" },
+        { id: "body" as const, label: strings.soap.tabBody },
+        { id: "headers" as const, label: strings.soap.tabHeaders },
     ];
 
     // ── Render ───────────────────────────────────────────────────────────
@@ -147,8 +148,8 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
         <div className="flex flex-col h-full overflow-hidden">
             {/* Title bar */}
             <EditorTitleBar
-                label={label ?? (tabType === "request" ? "SOAP Request" : "SOAP Mock")}
-                namePlaceholder={tabType === "request" ? "Untitled Request" : "Untitled Mock"}
+                label={label ?? (tabType === "request" ? strings.soap.requestTitle : strings.soap.mockTitle)}
+                namePlaceholder={tabType === "request" ? strings.soap.requestNamePlaceholder : strings.soap.mockNamePlaceholder}
                 name={state.name}
                 onNameChange={(v) => dispatch({ type: "SET_FIELD", field: "name", value: v })}
                 onClose={onClose}
@@ -162,7 +163,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                             className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden flex-1"
                             style={{ background: "var(--c-bg2)" }}
                         >
-                            <span className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 text-green flex-shrink-0">POST</span>
+                            <span className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 text-green flex-shrink-0">{strings.soap.methodPost}</span>
                             <input
                                 className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
                                 placeholder="https://example.com/ws/service"
@@ -177,12 +178,12 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                             className="px-4 py-2.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
                         >
                             {state.sending
-                                ? <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />Sending</>
-                                : "Send"}
+                                ? <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />{strings.soap.sending}</>
+                                : strings.server.send}
                         </button>
                     </div>
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-text-dim flex-shrink-0">SOAPAction:</label>
+                        <label className="text-xs text-text-dim flex-shrink-0">{strings.soap.soapAction}</label>
                         <input
                             className="flex-1 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
                             placeholder='"http://example.com/Action"'
@@ -197,7 +198,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
             {tabType === "mock" && (
                 <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex flex-col gap-2">
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-text-dim flex-shrink-0 w-28">Endpoint Pattern:</label>
+                        <label className="text-xs text-text-dim flex-shrink-0 w-28">{strings.soap.endpointPattern}</label>
                         <input
                             className="flex-1 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
                             placeholder="/ws/service"
@@ -211,11 +212,11 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                                 onChange={(e) => dispatch({ type: "SET_FIELD", field: "useRegex", value: e.target.checked })}
                                 className="accent-accent"
                             />
-                            Regex
+                            {strings.soap.regex}
                         </label>
                     </div>
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-text-dim flex-shrink-0 w-28">SOAPAction Match:</label>
+                        <label className="text-xs text-text-dim flex-shrink-0 w-28">{strings.soap.soapActionMatch}</label>
                         <input
                             className="flex-1 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
                             placeholder="*"
@@ -224,14 +225,14 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-text-dim flex-shrink-0 w-28">Response Status:</label>
+                        <label className="text-xs text-text-dim flex-shrink-0 w-28">{strings.soap.responseStatus}</label>
                         <input
                             type="number"
                             className="w-20 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent"
                             value={state.responseStatus}
                             onChange={(e) => dispatch({ type: "SET_FIELD", field: "responseStatus", value: parseInt(e.target.value) || 200 })}
                         />
-                        <label className="text-xs text-text-dim flex-shrink-0 ml-4">Delay (ms):</label>
+                        <label className="text-xs text-text-dim flex-shrink-0 ml-4">{strings.soap.delay}</label>
                         <input
                             type="number"
                             className="w-20 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent"
@@ -333,7 +334,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                                                 </div>
                                             ))}
                                             {Object.keys(state.resHeaders).length === 0 && (
-                                                <div className="text-text-dim text-xs">No response yet</div>
+                                                <div className="text-text-dim text-xs">{strings.soap.noResponseYet}</div>
                                             )}
                                         </div>
                                     )}
@@ -373,10 +374,10 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                 onFolderChange={(id) => dispatch({ type: "SET_FIELD", field: "folderId", value: id })}
                 onCancel={onClose}
                 onSave={handleSave}
-                saveLabel={draftTabId ? "Save" : "Update"}
+                saveLabel={draftTabId ? strings.common.save : strings.soap.update}
                 saveDisabled={tabType === "request" ? !state.name && !state.endpointUrl : !state.name && !state.endpointPattern}
                 saving={state.saving}
-                savingLabel="Saving…"
+                savingLabel={strings.server.saving}
             />
         </div>
     );

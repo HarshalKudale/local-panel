@@ -8,6 +8,7 @@ import { loadDraft } from "@/lib/useDraftPersist";
 import { useEntityTabs } from "@/lib/useEntityTabs";
 import { strings } from "@/lib/strings";
 import { entityRelPath, calculateFolderStatus } from "@/lib/utils";
+import { findBlocksFolder, ensureBlocksFolderId, buildBlockMock } from "@/lib/blocks";
 import { Zap } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
@@ -169,6 +170,26 @@ export default function MocksPanel({
     await onConfigChange(fresh);
   }, [onConfigChange]);
 
+  const blocksFolder = useMemo(() => findBlocksFolder(folders), [folders]);
+
+  // Block = move a mock into the application-managed Blocks folder as a 403 block-mock.
+  const handleBlockItem = useCallback(async (id: string) => {
+    const m = mocks.find((x) => x.id === id);
+    if (!m) return;
+    const folderId = await ensureBlocksFolderId(folders);
+    await window.api.deleteMock(id);
+    closeTab(id);
+    await window.api.addMock(buildBlockMock(m.method, m.urlPattern, folderId));
+    await reloadMocks();
+  }, [mocks, folders, closeTab, reloadMocks]);
+
+  // Unblock = delete the block mock entirely.
+  const handleUnblockItem = useCallback(async (id: string) => {
+    closeTab(id);
+    await window.api.deleteMock(id);
+    await reloadMocks();
+  }, [closeTab, reloadMocks]);
+
 
   const filteredMocks = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -218,9 +239,10 @@ export default function MocksPanel({
       folderId: m.folderId ?? null,
       isActive: activeTab === m.id,
       isEnabled: m.enabled,
+      isBlock: !!blocksFolder && m.folderId === blocksFolder.id,
       relPath: entityRelPath("mocks", m, folders),
     }));
-  }, [mocks, folders, search, activeTab]);
+  }, [mocks, folders, search, activeTab, blocksFolder]);
 
   const folderStatusMap = useMemo(() => calculateFolderStatus(mocks, folders), [mocks, folders]);
 
@@ -267,6 +289,9 @@ export default function MocksPanel({
           onPublishFolder={onPublishFolder}
           onRestoreItem={onRestoreItem}
           onBeforeDeleteFolder={handleBeforeDeleteFolder}
+          blocksFolderId={blocksFolder?.id ?? null}
+          onBlockItem={handleBlockItem}
+          onUnblockItem={handleUnblockItem}
         />
       </div>
     </>
@@ -295,7 +320,7 @@ export default function MocksPanel({
             <div className="opacity-10 mb-1"><Zap size={48} /></div>
             <div className="text-sm font-medium text-text-base">{strings.mocks.noMocksOpen}</div>
             <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-              Click a mock in the tree, or press <span className="text-accent font-semibold">+</span> to create a new one.
+              {strings.mocks.noMocksOpenHint}
             </p>
           </div>
         ) : (

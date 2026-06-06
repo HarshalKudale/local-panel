@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { isImageContentType, getImageDataUrl, formatBytes } from "@/lib/bodyUtils";
 import { Upload } from "@/lib/icons";
+import { strings } from "@/lib/strings";
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 
@@ -57,7 +58,7 @@ export default function BinaryViewer({ data, contentType, editable = false, onCh
             const result = await (window as any).api.openFileDialog();
             if (!result) return;
             if (result.size > MAX_FILE_SIZE) {
-                setError(`File too large (${formatBytes(result.size)}). Max: 1 MB`);
+                setError(strings.binary.fileTooLarge.replace("{size}", formatBytes(result.size)));
                 return;
             }
             onChange?.(result.base64);
@@ -73,7 +74,7 @@ export default function BinaryViewer({ data, contentType, editable = false, onCh
         const file = e.dataTransfer.files?.[0];
         if (!file) return;
         if (file.size > MAX_FILE_SIZE) {
-            setError(`File too large (${formatBytes(file.size)}). Max: 1 MB`);
+            setError(strings.binary.fileTooLarge.replace("{size}", formatBytes(file.size)));
             return;
         }
         const reader = new FileReader();
@@ -104,18 +105,18 @@ export default function BinaryViewer({ data, contentType, editable = false, onCh
                             onClick={() => setViewMode("preview")}
                             className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer ${viewMode === "preview" ? "bg-accent/20 text-accent" : "text-text-dim hover:text-text-base"
                                 }`}
-                        >Preview</button>
+                        >{strings.binary.preview}</button>
                     )}
                     <button
                         onClick={() => setViewMode("hex")}
                         className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer ${viewMode === "hex" ? "bg-accent/20 text-accent" : "text-text-dim hover:text-text-base"
                             }`}
-                    >Hex</button>
+                    >{strings.binary.hex}</button>
                     <button
                         onClick={() => setViewMode("base64")}
                         className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer ${viewMode === "base64" ? "bg-accent/20 text-accent" : "text-text-dim hover:text-text-base"
                             }`}
-                    >Base64</button>
+                    >{strings.binary.base64}</button>
                 </div>
 
                 <div className="flex-1" />
@@ -126,7 +127,7 @@ export default function BinaryViewer({ data, contentType, editable = false, onCh
                 <button
                     onClick={handleCopyBase64}
                     className="text-[10px] text-text-dim hover:text-accent cursor-pointer transition-colors font-medium"
-                >Copy base64</button>
+                >{strings.binary.copyBase64}</button>
 
                 {editable && (
                     <button
@@ -134,7 +135,7 @@ export default function BinaryViewer({ data, contentType, editable = false, onCh
                         className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-bg2 border border-border hover:border-accent text-text-dim hover:text-accent cursor-pointer transition-colors"
                     >
                         <Upload size={10} />
-                        Upload
+                        {strings.binary.upload}
                     </button>
                 )}
             </div>
@@ -152,10 +153,10 @@ export default function BinaryViewer({ data, contentType, editable = false, onCh
                         {editable ? (
                             <>
                                 <Upload size={24} className="text-text-dim/40 mb-2" />
-                                <p className="text-xs text-text-dim">Drop a file here or click Upload</p>
+                                <p className="text-xs text-text-dim">{strings.binary.dropFile}</p>
                             </>
                         ) : (
-                            <p className="text-xs text-text-dim italic">No binary data</p>
+                            <p className="text-xs text-text-dim italic">{strings.binary.noBinaryData}</p>
                         )}
                     </div>
                 ) : viewMode === "preview" && isImage ? (
