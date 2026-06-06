@@ -165,6 +165,8 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("log:chunk", handler);
     return () => ipcRenderer.off("log:chunk", handler);
   },
+  shareCaptureJson: (entries: unknown[], suggestedName?: string) =>
+    ipcRenderer.invoke("capture:shareJson", entries, suggestedName),
 
   // ── First-launch ───────────────────────────────────────────────────────────
   isFirstLaunch: () => ipcRenderer.invoke("app:isFirstLaunch"),

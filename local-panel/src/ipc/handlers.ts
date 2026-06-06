@@ -1604,6 +1604,21 @@ export function registerIpcHandlers(): void {
     return { ok: true };
   });
 
+  ipcMain.handle("capture:shareJson", async (_e, entries: unknown[], suggestedName?: string) => {
+    try {
+      const { filePath, canceled } = await dialog.showSaveDialog({
+        title: "Share Captured Requests",
+        defaultPath: suggestedName || "captured-requests.json",
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      });
+      if (canceled || !filePath) return { ok: false, canceled: true };
+      fs.writeFileSync(filePath, JSON.stringify(entries, null, 2), "utf-8");
+      return { ok: true, filePath };
+    } catch (err: any) {
+      return { ok: false, error: err?.message ?? "Share failed" };
+    }
+  });
+
   // ── Replay ─────────────────────────────────────────────────────────────────
 
   ipcMain.handle("request:replay",

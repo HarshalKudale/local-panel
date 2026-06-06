@@ -76,4 +76,7 @@ export {
   FolderSearch2, // browse for folder/file
   ExternalLink,  // open in browser
   Link2,         // add mapping / link
+  Ban,           // block request
+  Share2,        // share / export to file
+  CheckSquare,   // checkbox checked (row selection)
 } from "lucide-react";

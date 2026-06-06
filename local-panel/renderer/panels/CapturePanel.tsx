@@ -1,13 +1,19 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { Group as PanelGroup, Panel, Separator as ResizeHandle } from "react-resizable-panels";
 import { RequestLogEntry, MockRule, SavedRequest } from "@/types";
 import SearchInput from "@/components/common/SearchInput";
 import PanelHeader from "@/components/layout/PanelHeader";
-import CapturePreviewModal from "@/components/capture/CapturePreviewModal";
-import ViaBadge, { VIA_LABEL } from "@/components/common/ViaBadge";
+import CaptureTable from "@/components/capture/CaptureTable";
+import CaptureDetail from "@/components/capture/CaptureDetail";
+import CaptureTypeTabs, { TypeFilter } from "@/components/capture/CaptureTypeTabs";
+import {
+  CaptureType, deriveType, fulfilledBy, buildMockInitial, reqToHeadersBody,
+} from "@/components/capture/captureUtils";
 import { strings } from "@/lib/strings";
-import { Play, Pause, ArrowUpRight, Zap, Clipboard, Download } from "@/lib/icons";
-import { Button } from "@/components/ui";
-import { isBinaryContentType } from "@/lib/bodyUtils";
+import {
+  Play, Pause, Clipboard, Zap, Download, Share2, Ban, Trash2, ArrowUpRight,
+} from "@/lib/icons";
+import { Button, ContextMenu, ContextMenuItem } from "@/components/ui";
 
 export interface CaptureStats {
   total: number;
@@ -17,24 +23,6 @@ export interface CaptureStats {
 
 const MAX_ENTRIES = 200;
 const storageKey = (wsId: string) => `capture:entries:${wsId}`;
-
-function statusColor(s: number | null): string {
-  if (s === null) return "text-text-dim";
-  if (s < 300) return "text-green";
-  if (s < 400) return "text-yellow";
-  return "text-red";
-}
-
-function fmtTime(ts: number): string {
-  const d = new Date(ts);
-  return d.toTimeString().slice(0, 8) + "." + String(d.getMilliseconds()).padStart(3, "0");
-}
-
-function fmtDur(ms: number | null): string {
-  if (ms === null) return "—";
-  if (ms < 1000) return `${ms}ms`;
-  return `${(ms / 1000).toFixed(1)}s`;
-}
 
 function loadPersistedEntries(wsId: string): RequestLogEntry[] {
   try {
@@ -59,16 +47,31 @@ interface Props {
   onStatsChange?: (stats: CaptureStats) => void;
 }
 
+interface CtxMenuState {
+  x: number;
+  y: number;
+  multi: boolean;
+  entry: RequestLogEntry;
+}
+
 export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenInRequests, onStatsChange }: Props) {
   const [entries, setEntries] = useState<RequestLogEntry[]>(() => loadPersistedEntries(activeWorkspaceId));
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [paused, setPaused] = useState(true);
   const pausedRef = useRef(true);
   pausedRef.current = paused;
-  const [previewEntry, setPreviewEntry] = useState<RequestLogEntry | null>(null);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [anchorId, setAnchorId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
 
   useEffect(() => {
     setEntries(loadPersistedEntries(activeWorkspaceId));
+    setSelectedIds(new Set());
+    setAnchorId(null);
+    setActiveId(null);
   }, [activeWorkspaceId]);
 
   useEffect(() => {
@@ -93,91 +96,113 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
       if (chunk.done) return; // Final log:entry will have the full body
       setEntries((prev) => prev.map((e) => {
         if (e.id !== chunk.logId) return e;
-        // Accumulate base64 chunks into resBody for live display
         return { ...e, resBody: e.resBody + chunk.chunk };
       }));
     });
     return unsub;
   }, []);
 
+  // Prune stale selection / active id when entries shrink
+  useEffect(() => {
+    const ids = new Set(entries.map((e) => e.id));
+    setSelectedIds((prev) => {
+      const next = new Set([...prev].filter((id) => ids.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+    setActiveId((prev) => (prev && !ids.has(prev) ? null : prev));
+  }, [entries]);
+
   const clear = useCallback(() => {
     setEntries([]);
+    setSelectedIds(new Set());
+    setAnchorId(null);
+    setActiveId(null);
     localStorage.removeItem(storageKey(activeWorkspaceId));
   }, [activeWorkspaceId]);
 
-  const removeEntry = useCallback((id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+  const removeEntries = useCallback((ids: Set<string>) => {
+    setEntries((prev) => prev.filter((e) => !ids.has(e.id)));
   }, []);
 
-  const buildMockInitial = (e: RequestLogEntry): Partial<MockRule> => {
-    const resCt = (e.resHeaders["content-type"] ?? e.resHeaders["Content-Type"] ?? "").toLowerCase();
-    const isBinaryRes = isBinaryContentType(resCt);
-    return {
-      name: "",
-      method: e.method,
-      urlPattern: e.url,
-      useRegex: false,
-      capturedHeaders: e.reqHeaders,
-      capturedBody: e.reqBody,
-      responseStatus: e.resStatus ?? 200,
-      responseHeaders: e.resHeaders,
-      responseBody: isBinaryRes
-        ? e.resBody
-        : (() => {
-          if (!e.resBody) return "{}";
-          try {
-            const bytes = Uint8Array.from(atob(e.resBody), (c) => c.charCodeAt(0));
-            return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-          } catch { return "{}"; }
-        })(),
-      responseBodyEncoding: isBinaryRes ? "base64" : undefined,
-    };
-  };
-
-  const handleOpenClick = useCallback((entry: RequestLogEntry) => {
-    const SKIP = new Set(["host", "proxy-connection", "connection", "content-length", "transfer-encoding"]);
-    const headers: Record<string, string> = {};
-    for (const [k, v] of Object.entries(entry.reqHeaders)) {
-      if (!SKIP.has(k.toLowerCase())) headers[k] = v;
-    }
-    let body = "";
-    if (entry.reqBody) {
-      try {
-        const bytes = Uint8Array.from(atob(entry.reqBody), (c) => c.charCodeAt(0));
-        body = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-      } catch { body = ""; }
-    }
-    onOpenInRequests({ name: "", method: entry.method, url: entry.url, headers, body });
-  }, [onOpenInRequests]);
-
-  const handleMockClick = useCallback((entry: RequestLogEntry) => {
-    onOpenInMocks(buildMockInitial(entry));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onOpenInMocks]);
-
   const q = search.trim().toLowerCase();
-  const filtered = useMemo(
-    () =>
-      q
-        ? entries.filter(
-          (e) =>
-            e.url.toLowerCase().includes(q) ||
-            e.method.toLowerCase().includes(q) ||
-            e.host.toLowerCase().includes(q) ||
-            (e.target ?? "").toLowerCase().includes(q) ||
-            String(e.status ?? "").includes(q) ||
-            VIA_LABEL[e.via].toLowerCase().includes(q),
-        )
-        : entries,
-    [entries, q],
+  const visible = useMemo(
+    () => entries.filter((e) => {
+      if (typeFilter !== "all" && deriveType(e) !== typeFilter) return false;
+      if (!q) return true;
+      return (
+        e.url.toLowerCase().includes(q) ||
+        e.method.toLowerCase().includes(q) ||
+        e.host.toLowerCase().includes(q) ||
+        (e.target ?? "").toLowerCase().includes(q) ||
+        String(e.status ?? "").includes(q) ||
+        fulfilledBy(e.via).toLowerCase().includes(q)
+      );
+    }),
+    [entries, q, typeFilter],
   );
 
-  const handleMockAll = useCallback(async () => {
-    const items = filtered.length > 0 ? filtered : entries;
-    if (items.length === 0) return;
-    const folderName = `Capture ${new Date().toLocaleString().replace(/[/:]/g, "-")}`;
-    const folder = await window.api.addFolder("mock", { name: folderName, parentId: null });
-    for (const entry of items) {
+  const typeCounts = useMemo(() => {
+    const counts = { all: entries.length } as Record<TypeFilter, number>;
+    for (const e of entries) {
+      const t = deriveType(e) as CaptureType;
+      counts[t] = (counts[t] ?? 0) + 1;
+    }
+    return counts;
+  }, [entries]);
+
+  const activeEntry = activeId ? entries.find((e) => e.id === activeId) ?? null : null;
+
+  // ── Selection handlers ──────────────────────────────────────────────────────
+  const handleRowClick = useCallback((entry: RequestLogEntry, ev: React.MouseEvent) => {
+    if (ev.shiftKey && anchorId) {
+      const from = visible.findIndex((e) => e.id === anchorId);
+      const to = visible.findIndex((e) => e.id === entry.id);
+      if (from !== -1 && to !== -1) {
+        const [lo, hi] = from < to ? [from, to] : [to, from];
+        setSelectedIds(new Set(visible.slice(lo, hi + 1).map((e) => e.id)));
+        return;
+      }
+    }
+    if (ev.ctrlKey || ev.metaKey) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.has(entry.id) ? next.delete(entry.id) : next.add(entry.id);
+        return next;
+      });
+      setAnchorId(entry.id);
+      return;
+    }
+    setActiveId(entry.id);
+    setAnchorId(entry.id);
+  }, [anchorId, visible]);
+
+  const handleToggleCheck = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+    setAnchorId(id);
+  }, []);
+
+  const handleToggleAll = useCallback(() => {
+    setSelectedIds((prev) => (
+      visible.length > 0 && visible.every((e) => prev.has(e.id))
+        ? new Set()
+        : new Set(visible.map((e) => e.id))
+    ));
+  }, [visible]);
+
+  // ── Bulk actions (also used by toolbar Mock All / Save All) ──────────────────
+  const mockEntries = useCallback(async (list: RequestLogEntry[], inFolder: boolean) => {
+    if (list.length === 0) return;
+    let folderId: string | null = null;
+    if (inFolder) {
+      const folderName = `Capture ${new Date().toLocaleString().replace(/[/:]/g, "-")}`;
+      const folder = await window.api.addFolder("mock", { name: folderName, parentId: null });
+      folderId = folder.id;
+    }
+    for (const entry of list) {
       const mock = buildMockInitial(entry);
       await window.api.addMock({
         name: `${entry.method} ${entry.url}`,
@@ -189,56 +214,128 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
         responseBody: mock.responseBody ?? "",
         responseBodyEncoding: mock.responseBodyEncoding,
         enabled: true,
-        folderId: folder.id,
+        folderId,
       } as any);
     }
     window.api.getConfig();
-  }, [filtered, entries]);
+  }, []);
 
-  const handleSaveAll = useCallback(async () => {
-    const items = filtered.length > 0 ? filtered : entries;
-    if (items.length === 0) return;
-    const folderName = `Capture ${new Date().toLocaleString().replace(/[/:]/g, "-")}`;
-    const folder = await window.api.addFolder("request", { name: folderName, parentId: null });
-    for (const entry of items) {
-      const SKIP = new Set(["host", "proxy-connection", "connection", "content-length", "transfer-encoding"]);
-      const headers: Record<string, string> = {};
-      for (const [k, v] of Object.entries(entry.reqHeaders)) {
-        if (!SKIP.has(k.toLowerCase())) headers[k] = v;
-      }
-      let body = "";
-      if (entry.reqBody) {
-        try {
-          const bytes = Uint8Array.from(atob(entry.reqBody), (c) => c.charCodeAt(0));
-          body = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-        } catch { body = ""; }
-      }
-      await window.api.addRequest({
-        name: `${entry.method} ${entry.url}`,
+  const saveEntries = useCallback(async (list: RequestLogEntry[], inFolder: boolean) => {
+    if (list.length === 0) return;
+    let folderId: string | null = null;
+    if (inFolder) {
+      const folderName = `Capture ${new Date().toLocaleString().replace(/[/:]/g, "-")}`;
+      const folder = await window.api.addFolder("request", { name: folderName, parentId: null });
+      folderId = folder.id;
+    }
+    for (const entry of list) {
+      await window.api.addRequest({ ...reqToHeadersBody(entry), name: `${entry.method} ${entry.url}`, folderId } as any);
+    }
+    window.api.getConfig();
+  }, []);
+
+  const blockEntries = useCallback(async (list: RequestLogEntry[]) => {
+    for (const entry of list) {
+      await window.api.addMock({
+        name: `Block ${entry.method} ${entry.url}`,
         method: entry.method,
-        url: entry.url,
-        headers,
-        body,
-        folderId: folder.id,
+        urlPattern: entry.url,
+        useRegex: false,
+        responseStatus: 403,
+        responseHeaders: {},
+        responseBody: "",
+        enabled: true,
+        folderId: null,
       } as any);
     }
     window.api.getConfig();
-  }, [filtered, entries]);
+  }, []);
+
+  const shareEntries = useCallback((list: RequestLogEntry[]) => {
+    if (list.length === 0) return;
+    const name = list.length === 1
+      ? `capture-${list[0].method}-${list[0].id}.json`
+      : `captured-requests-${list.length}.json`;
+    window.api.shareCaptureJson(list, name);
+  }, []);
+
+  // ── Context menu ─────────────────────────────────────────────────────────────
+  const handleContextMenu = useCallback((entry: RequestLogEntry, ev: React.MouseEvent) => {
+    ev.preventDefault();
+    const multi = selectedIds.size > 1 && selectedIds.has(entry.id);
+    setCtxMenu({ x: ev.clientX, y: ev.clientY, multi, entry });
+  }, [selectedIds]);
+
+  const ctxItems = useMemo<ContextMenuItem[]>(() => {
+    if (!ctxMenu) return [];
+    if (ctxMenu.multi) {
+      const selected = entries.filter((e) => selectedIds.has(e.id));
+      return [
+        { label: strings.capture.ctxMockMany, icon: <Zap size={14} />, action: () => mockEntries(selected, true) },
+        { label: strings.capture.ctxSaveMany, icon: <Download size={14} />, action: () => saveEntries(selected, true) },
+        { label: strings.capture.ctxBlockMany, icon: <Ban size={14} />, action: () => blockEntries(selected) },
+        { label: strings.capture.ctxShareMany, icon: <Share2 size={14} />, action: () => shareEntries(selected) },
+        { sep: true },
+        { label: strings.capture.ctxDeleteMany, icon: <Trash2 size={14} />, danger: true, action: () => { removeEntries(selectedIds); setSelectedIds(new Set()); } },
+      ];
+    }
+    const e = ctxMenu.entry;
+    return [
+      { label: strings.capture.ctxMock, icon: <Zap size={14} />, action: () => onOpenInMocks(buildMockInitial(e)) },
+      { label: strings.capture.ctxOpen, icon: <ArrowUpRight size={14} />, action: () => onOpenInRequests(reqToHeadersBody(e)) },
+      { label: strings.capture.ctxSave, icon: <Download size={14} />, action: () => saveEntries([e], false) },
+      { sep: true },
+      { label: strings.capture.ctxBlock, icon: <Ban size={14} />, action: () => blockEntries([e]) },
+      { label: strings.capture.ctxShare, icon: <Share2 size={14} />, action: () => shareEntries([e]) },
+      { sep: true },
+      { label: strings.capture.ctxDelete, icon: <Trash2 size={14} />, danger: true, action: () => removeEntries(new Set([e.id])) },
+    ];
+  }, [ctxMenu, entries, selectedIds, mockEntries, saveEntries, blockEntries, shareEntries, removeEntries, onOpenInMocks, onOpenInRequests]);
 
   // Notify parent of current stats so the global footer can display them
   useEffect(() => {
-    onStatsChange?.({ total: entries.length, shown: filtered.length, paused });
-  }, [entries.length, filtered.length, paused, onStatsChange]);
+    onStatsChange?.({ total: entries.length, shown: visible.length, paused });
+  }, [entries.length, visible.length, paused, onStatsChange]);
 
+  const list = (
+    <div className="flex-1 overflow-y-auto font-mono text-xs">
+      {visible.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-full text-center py-16">
+          <div className="opacity-15 mb-3"><Clipboard size={36} /></div>
+          <div className="text-sm font-medium text-text-base font-sans mb-1">{strings.capture.emptyTitle}</div>
+          <p className="text-xs text-text-dim font-sans">
+            {entries.length === 0
+              ? paused ? strings.capture.emptyPausedHint : strings.capture.emptyLiveHint
+              : strings.capture.emptyNoMatch}
+          </p>
+        </div>
+      ) : (
+        <CaptureTable
+          entries={visible}
+          selectedIds={selectedIds}
+          activeId={activeId}
+          onRowClick={handleRowClick}
+          onToggleCheck={handleToggleCheck}
+          onToggleAll={handleToggleAll}
+          onContextMenu={handleContextMenu}
+        />
+      )}
+    </div>
+  );
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <PanelHeader
-        title="Capture"
+        title={strings.capture.title}
         subtitle="Captured requests — persisted across sessions · last 200 kept"
         actions={
           <>
-            <SearchInput value={search} onChange={setSearch} placeholder="URL, method, host…" />
+            {selectedIds.size > 0 && (
+              <span className="text-xs text-text-dim whitespace-nowrap">
+                {strings.capture.selectedCount.replace("{count}", String(selectedIds.size))}
+              </span>
+            )}
+            <SearchInput value={search} onChange={setSearch} placeholder={strings.capture.searchPlaceholder} />
             <button
               onClick={() => setPaused((v) => !v)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${paused
@@ -246,107 +343,38 @@ export default function CapturePanel({ activeWorkspaceId, onOpenInMocks, onOpenI
                 : "border-green/40 bg-green/10 text-green hover:bg-green/20"
                 }`}
             >
-              {paused ? <><Play size={10} fill="currentColor" /> Start</> : <><Pause size={10} fill="currentColor" /> Pause</>}
+              {paused ? <><Play size={10} fill="currentColor" /> {strings.capture.start}</> : <><Pause size={10} fill="currentColor" /> {strings.capture.pause}</>}
             </button>
-            <Button variant="secondary" onClick={clear}>Clear</Button>
-            {(filtered.length > 0 || entries.length > 0) && (
+            <Button variant="secondary" onClick={clear}>{strings.capture.clear}</Button>
+            {entries.length > 0 && (
               <>
-                <Button variant="secondary" onClick={handleMockAll} icon={<Zap size={10} />}>Mock All</Button>
-                <Button variant="secondary" onClick={handleSaveAll} icon={<Download size={10} />}>Save All</Button>
+                <Button variant="secondary" onClick={() => mockEntries(visible, true)} icon={<Zap size={10} />}>{strings.capture.mockAll}</Button>
+                <Button variant="secondary" onClick={() => saveEntries(visible, true)} icon={<Download size={10} />}>{strings.capture.saveAll}</Button>
               </>
             )}
           </>
         }
       />
 
-      <div className="flex-1 overflow-y-auto font-mono text-xs">
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center py-16">
-            <div className="opacity-15 mb-3"><Clipboard size={36} /></div>
-            <div className="text-sm font-medium text-text-base font-sans mb-1">No captured requests</div>
-            <p className="text-xs text-text-dim font-sans">
-              {entries.length === 0
-                ? paused
-                  ? "Click Start to begin capturing HTTP traffic."
-                  : "HTTP traffic will appear here as requests pass through the app."
-                : "No entries match your search."}
-            </p>
-          </div>
-        ) : (
-          <table className="w-full border-collapse">
-            <thead className="sticky top-0 bg-bg0 z-10">
-              <tr className="border-b border-border">
-                <th className="px-3 py-2 w-24" />
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim">Time</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim">URL</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-12">Mth</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-10">St</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-16">Via</th>
-                <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-14">Dur</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((e) => (
-                <tr
-                  key={e.id}
-                  className="border-b border-border/30 hover:bg-bg1 transition-colors group cursor-pointer"
-                  title="Click to preview request details"
-                  onClick={() => setPreviewEntry(e)}
-                >
-                  <td className="px-3 py-1.5 whitespace-nowrap" onClick={(ev) => ev.stopPropagation()}>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleOpenClick(e)}
-                        className="px-2 py-0.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-accent text-[10px] font-medium transition-all cursor-pointer"
-                        title="Open in Requests panel"
-                      >
-                        <ArrowUpRight size={10} className="inline mr-0.5" /> Open
-                      </button>
-                      <button
-                        onClick={() => handleMockClick(e)}
-                        className="px-2 py-0.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-yellow text-[10px] font-medium transition-all cursor-pointer"
-                        title="Create mock from this request"
-                      >
-                        <Zap size={10} className="inline mr-0.5" /> Mock
-                      </button>
-                      <button
-                        onClick={() => removeEntry(e.id)}
-                        className="px-2 py-0.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-red text-[10px] font-medium transition-all cursor-pointer opacity-0 group-hover:opacity-100"
-                        title="Remove this entry"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-3 py-1.5 text-text-base">
-                    <span className="block">{fmtTime(e.ts)}</span>
-                  </td>
-                  <td className="px-3 py-1.5 text-text-dim max-w-[320px]">
-                    <span className="block truncate" title={e.url}>{e.url}</span>
-                  </td>
-                  <td className="px-3 py-1.5 text-accent whitespace-nowrap">{e.method}</td>
-                  <td className={`px-3 py-1.5 whitespace-nowrap font-semibold ${statusColor(e.status)}`}>
-                    {e.status ?? "—"}
-                  </td>
-                  <td className="px-3 py-1.5 whitespace-nowrap">
-                    <ViaBadge via={e.via} />
-                  </td>
-                  <td className="px-3 py-1.5 text-right text-text-dim whitespace-nowrap">
-                    {fmtDur(e.durationMs)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <CaptureTypeTabs active={typeFilter} counts={typeCounts} onChange={setTypeFilter} />
 
-      <CapturePreviewModal
-        entry={previewEntry}
-        onClose={() => setPreviewEntry(null)}
-        onMock={onOpenInMocks}
-        onAddToRequests={onOpenInRequests}
-      />
+      {activeEntry ? (
+        <PanelGroup orientation="horizontal" className="flex flex-1 min-h-0 overflow-hidden">
+          <Panel defaultSize={60} minSize={30} className="flex flex-col overflow-hidden">
+            {list}
+          </Panel>
+          <ResizeHandle className="w-1 bg-border hover:bg-accent/40 active:bg-accent/60 transition-colors cursor-col-resize flex-shrink-0" />
+          <Panel defaultSize={40} minSize={25} className="flex flex-col overflow-hidden">
+            <CaptureDetail key={activeEntry.id} entry={activeEntry} onClose={() => setActiveId(null)} />
+          </Panel>
+        </PanelGroup>
+      ) : (
+        list
+      )}
+
+      {ctxMenu && (
+        <ContextMenu x={ctxMenu.x} y={ctxMenu.y} items={ctxItems} onClose={() => setCtxMenu(null)} />
+      )}
     </div>
   );
 }

@@ -566,6 +566,7 @@ declare global {
       pickFolderPath(title: string): Promise<string | null>;
       platform: string;
       onLogChunk(cb: (chunk: LogChunk) => void): () => void;
+      shareCaptureJson(entries: unknown[], suggestedName?: string): Promise<{ ok: boolean; filePath?: string; canceled?: boolean; error?: string }>;
       // ── Auth ─────────────────────────────────────────────────────────────────
       authConfigured(): Promise<boolean>;
       authGetUser(): Promise<AuthUser | null>;
