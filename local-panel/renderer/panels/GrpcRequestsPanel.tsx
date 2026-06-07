@@ -9,6 +9,7 @@ import { useEntityTabs } from "@/lib/useEntityTabs";
 import { Network } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 import { GrpcRequestDraft } from "@/components/grpc/grpcTabReducer";
 
@@ -31,6 +32,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
     const requests = config.grpcRequests ?? [];
     const folders = config.grpcRequestFolders ?? [];
 
+    const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
     const [search, setSearch] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -38,7 +40,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
     const {
         openTabs, activeTab, setActiveTab,
         loadedEntities, setLoadedEntities,
-        openTab, openNewTab, closeTab, replaceTab,
+        openTab, openNewTab, closeTab, replaceTab, closeOtherTabs, closeAllTabs,
     } = useEntityTabs<SavedGrpcRequest>({
         storageKey: "grpcRequests",
         draftPrefix: DRAFT_PREFIX,
@@ -68,10 +70,12 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
     }, [loadedEntities, requests, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
+        const ok = await confirm("Delete this request? This cannot be undone.");
+        if (!ok) return;
         await window.api.deleteGrpcRequest(id);
         await reloadConfig();
         closeTab(id);
-    }, [reloadConfig, closeTab]);
+    }, [confirm, reloadConfig, closeTab]);
 
     const handleDuplicate = useCallback(async (id: string) => {
         let r = loadedEntities[id];
@@ -177,6 +181,9 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                 onNewTab={openNewTab}
                 newTabTitle="New gRPC request"
                 closeTabTitle="Close tab"
+                onCloseOthers={closeOtherTabs}
+                onCloseAll={closeAllTabs}
+                onTabDuplicate={handleDuplicate}
             />
 
             <div className="flex-1 overflow-hidden relative">
@@ -232,6 +239,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
             >
                 {mainContent}
             </SidebarLayout>
+            {ConfirmDialogElement}
         </>
     );
 }

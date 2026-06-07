@@ -11,6 +11,7 @@ import { entityRelPath, calculateFolderStatus } from "@/lib/utils";
 import { Settings } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 
 const DRAFT_PREFIX = "rule-draft-";
@@ -31,6 +32,8 @@ export default function ProxyRulesPanel({
   const rules = config.proxyRules ?? [];
   const folders = config.ruleFolders ?? [];
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog();
+
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -38,7 +41,7 @@ export default function ProxyRulesPanel({
     openTabs, activeTab, setActiveTab,
     loadedEntities, setLoadedEntities,
     tabRefs, isDraft,
-    openTab, openNewTab, closeTab, replaceTab,
+    openTab, openNewTab, closeTab, replaceTab, closeOtherTabs, closeAllTabs,
   } = useEntityTabs<ProxyRule>({
     storageKey: "rules",
     draftPrefix: DRAFT_PREFIX,
@@ -88,10 +91,12 @@ export default function ProxyRulesPanel({
   }, [rules, loadedEntities, config.activeWorkspaceId, setLoadedEntities, reloadRules]);
 
   const handleDelete = useCallback(async (id: string) => {
+    const ok = await confirm("Delete this rule? This cannot be undone.");
+    if (!ok) return;
     await window.api.deleteRule(id);
     await reloadRules();
     closeTab(id);
-  }, [reloadRules, closeTab]);
+  }, [confirm, reloadRules, closeTab]);
 
   const handleDuplicate = useCallback(async (id: string) => {
     const full = loadedEntities[id] ?? await window.api.loadEntity(config.activeWorkspaceId, "rules", id)
@@ -211,6 +216,9 @@ export default function ProxyRulesPanel({
         onNewTab={openNewTab}
         newTabTitle={strings.proxyRules.newTab}
         closeTabTitle={strings.proxyRules.closeTab}
+        onCloseOthers={closeOtherTabs}
+        onCloseAll={closeAllTabs}
+        onTabDuplicate={handleDuplicate}
       />
       <div className="flex-1 overflow-hidden relative">
         {openTabs.length === 0 ? (
@@ -265,6 +273,7 @@ export default function ProxyRulesPanel({
       >
         {mainContent}
       </SidebarLayout>
+      {ConfirmDialogElement}
     </>
   );
 }

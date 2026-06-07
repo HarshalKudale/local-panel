@@ -199,8 +199,15 @@ export function replayRequest(
 // ── HTTP dispatch ─────────────────────────────────────────────────────────
 
 function activeEnv(cfg: AppConfig): Environment | null {
-  if (!cfg.activeEnvironmentId) return null;
-  return (cfg.environments ?? []).find((e) => e.id === cfg.activeEnvironmentId) ?? null;
+  const globalEnv = (cfg.environments ?? []).find((e) => e.id === "__global__") ?? null;
+  const selected = cfg.activeEnvironmentId
+    ? (cfg.environments ?? []).find((e) => e.id === cfg.activeEnvironmentId) ?? null
+    : null;
+  if (!globalEnv && !selected) return null;
+  const map = new Map<string, { id: string; key: string; value: string }>();
+  for (const v of globalEnv?.variables ?? []) map.set(v.key, v);
+  for (const v of selected?.variables ?? []) map.set(v.key, v);
+  return { id: "merged", name: "merged", variables: [...map.values()], createdAt: 0, workspaceId: "" };
 }
 
 function workspaceCfg(cfg: AppConfig): AppConfig {

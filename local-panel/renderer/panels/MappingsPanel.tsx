@@ -8,6 +8,7 @@ import { strings } from "@/lib/strings";
 import { flatEntityRelPath } from "@/lib/utils";
 import { ArrowLeftRight, History } from "@/lib/icons";
 import { Button, IconButton, Input, FormField, EmptyState, DataTable, ModalFooter, StatusDot } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import type { TableColumn } from "@/components/ui";
 
 
@@ -42,6 +43,8 @@ export default function MappingsPanel({
   onPublish,
   onRevert,
 }: Props) {
+  const { confirm, ConfirmDialogElement } = useConfirmDialog();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -124,6 +127,8 @@ export default function MappingsPanel({
   };
 
   const remove = async (id: string) => {
+    const ok = await confirm("Delete this mapping? This cannot be undone.");
+    if (!ok) return;
     await window.api.deleteMapping(id);
     const mappings = config.mappings.filter((m) => m.id !== id);
     const proxyRules = config.proxyRules.filter((r) => r.targetMappingId !== id);
@@ -235,6 +240,7 @@ export default function MappingsPanel({
 
   return (
     <>
+      {ConfirmDialogElement}
       <div className="flex flex-col flex-1 overflow-hidden">
         <PanelHeader
           title={strings.mappings.title}

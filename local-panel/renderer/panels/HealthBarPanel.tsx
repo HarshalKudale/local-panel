@@ -4,6 +4,7 @@ import Modal from "@/components/common/Modal";
 import Toggle from "@/components/common/Toggle"; import PanelHeader from "@/components/layout/PanelHeader";
 import { resolveVars } from "@/lib/resolveVars";
 import { Button, IconButton, Input, FormField, EmptyState, Badge, StatusDot, ModalFooter } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 import { Plus, RefreshCw, Activity, Trash2, Cloud, CheckCircle2, AlertCircle, X } from "@/lib/icons";
 
@@ -396,6 +397,8 @@ const mkHbId = () => `hb${Date.now().toString(36)}${(++_hbid).toString(36)}`;
 export default function HealthBarPanel({ config, entitySyncStatus, onPublish, onAfterSave }: Props) {
   const wsId = config.activeWorkspaceId;
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog();
+
   // Active environment for env var resolution
   const activeEnv: Environment | null =
     (config.environments ?? []).find((e) => e.id === config.activeEnvironmentId) ?? null;
@@ -543,6 +546,8 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
   // ── Delete ───────────────────────────────────────────────────────────────
 
   const handleDelete = useCallback(async (id: string) => {
+    const ok = await confirm("Delete this service? This cannot be undone.");
+    if (!ok) return;
     const updated = services.filter((s) => s.id !== id);
     setServices(updated);
     setCheckStates((prev) => {
@@ -551,7 +556,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
       return next;
     });
     await persistServices(updated);
-  }, [services, persistServices]);
+  }, [confirm, services, persistServices]);
 
   // ── Toggle auto-refresh ───────────────────────────────────────────────────
 
@@ -619,6 +624,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
 
   return (
     <>
+      {ConfirmDialogElement}
       <div className="flex flex-col flex-1 overflow-hidden">
         <PanelHeader
           title="Health Bar"

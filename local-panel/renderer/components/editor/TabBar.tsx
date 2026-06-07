@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import { Plus, ChevronLeft, ChevronRight, X } from "@/lib/icons";
+import { Plus, ChevronLeft, ChevronRight, X, Copy } from "@/lib/icons";
+import ContextMenu, { ContextMenuItem } from "@/components/ui/ContextMenu";
 
 export interface TabBarTab {
   id: string;
@@ -15,14 +16,18 @@ interface Props {
   onTabClick(id: string): void;
   onTabClose(id: string): void;
   onNewTab(): void;
+  onTabDuplicate?(id: string): void;
+  onCloseOthers?(id: string): void;
+  onCloseAll?(): void;
   newTabTitle?: string;
   closeTabTitle?: string;
 }
 
-export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewTab, newTabTitle = "New tab", closeTabTitle = "Close tab" }: Props) {
+export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewTab, onTabDuplicate, onCloseOthers, onCloseAll, newTabTitle = "New tab", closeTabTitle = "Close tab" }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canLeft,  setCanLeft]  = useState(false);
   const [canRight, setCanRight] = useState(false);
+  const [tabCtxMenu, setTabCtxMenu] = useState<{ x: number; y: number; tabId: string } | null>(null);
 
   const sync = useCallback(() => {
     const el = scrollRef.current;
@@ -81,15 +86,21 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
           const baseClass = `flex items-center gap-1 px-3 py-2 text-xs font-medium cursor-pointer border-r border-border whitespace-nowrap flex-shrink-0 transition-colors ${
             isActive ? "bg-bg0 text-text-bright border-b-2 border-b-accent -mb-px" : "text-text-dim hover:bg-bg2 hover:text-text-base"
           }`;
+          const handleCtxMenu = (e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onTabClick(tab.id);
+            setTabCtxMenu({ x: e.clientX, y: e.clientY, tabId: tab.id });
+          };
           if (tab.renderTab) {
             return (
-              <div key={tab.id} className={baseClass} onClick={() => onTabClick(tab.id)}>
+              <div key={tab.id} className={baseClass} onClick={() => onTabClick(tab.id)} onContextMenu={handleCtxMenu}>
                 {tab.renderTab(isActive)}
               </div>
             );
           }
           return (
-            <div key={tab.id} className={baseClass} onClick={() => onTabClick(tab.id)}>
+            <div key={tab.id} className={baseClass} onClick={() => onTabClick(tab.id)} onContextMenu={handleCtxMenu}>
               {tab.isDraft && <span className="text-[8px] text-yellow opacity-70 flex-shrink-0">●</span>}
               <span className="max-w-[160px] truncate">{tab.label}</span>
               <button
@@ -113,6 +124,19 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
           <ChevronRight size={12} />
         </button>
       )}
+
+      {tabCtxMenu && (() => {
+        const { tabId } = tabCtxMenu;
+        const tab = tabs.find((t) => t.id === tabId);
+        const isDraft = tab?.isDraft ?? false;
+        const items: ContextMenuItem[] = [
+          { label: "Close",  icon: <X size={11} />, action: () => { onTabClose(tabId); setTabCtxMenu(null); } },
+          ...(tabs.length > 1 && onCloseOthers ? [{ label: "Close Others", action: () => { onCloseOthers(tabId); setTabCtxMenu(null); } } as ContextMenuItem] : []),
+          ...(onCloseAll ? [{ label: "Close All", action: () => { onCloseAll(); setTabCtxMenu(null); } } as ContextMenuItem] : []),
+          ...(!isDraft && onTabDuplicate ? [{ sep: true, action: () => {} } as ContextMenuItem, { label: "Duplicate", icon: <Copy size={11} />, action: () => { onTabDuplicate(tabId); setTabCtxMenu(null); } } as ContextMenuItem] : []),
+        ];
+        return <ContextMenu x={tabCtxMenu.x} y={tabCtxMenu.y} items={items} onClose={() => setTabCtxMenu(null)} minWidth={160} />;
+      })()}
     </div>
   );
 }

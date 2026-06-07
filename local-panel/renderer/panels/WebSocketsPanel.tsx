@@ -20,6 +20,7 @@ import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "reac
 import { Plus, X, Folder, Zap, Play, Send } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -435,6 +436,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
   const connections = config.wsConnections ?? [];
   const folders = config.wsFolders ?? [];
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -536,10 +538,12 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
   }, [loadedEntities, connections, reloadConnections, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
+    const ok = await confirm("Delete this WebSocket connection? This cannot be undone.");
+    if (!ok) return;
     await window.api.deleteWsConnection(id);
     await reloadConnections();
     closeTab(id);
-  }, [reloadConnections, closeTab]);
+  }, [confirm, reloadConnections, closeTab]);
 
   const handleDuplicate = useCallback(async (id: string) => {
     let c = loadedEntities[id];
@@ -654,6 +658,12 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
         onNewTab={openNewTab}
         newTabTitle="New socket"
         closeTabTitle="Close"
+        onCloseOthers={(id) => {
+          openTabs.filter((t) => t !== id).forEach(closeTab);
+        }}
+        onCloseAll={() => {
+          [...openTabs].forEach(closeTab);
+        }}
       />
 
       <div className="flex-1 overflow-hidden relative">
@@ -705,6 +715,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
       >
         {mainContent}
       </SidebarLayout>
+      {ConfirmDialogElement}
     </>
   );
 }

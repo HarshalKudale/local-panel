@@ -24,6 +24,8 @@ interface EntityTabsResult<T> {
   openTab: (id: string) => void;
   openNewTab: () => void;
   closeTab: (tabId: string) => void;
+  closeOtherTabs: (keepId: string) => void;
+  closeAllTabs: () => void;
   /** Replace a draft tab id with the newly saved entity id. */
   replaceTab: (draftId: string, savedId: string) => void;
 }
@@ -99,6 +101,23 @@ export function useEntityTabs<T extends { id: string }>({
     });
   }, []);
 
+  const closeOtherTabs = useCallback((keepId: string) => {
+    setOpenTabs((prev) => {
+      const toClose = prev.filter((id) => id !== keepId);
+      toClose.forEach((id) => { if (isDraft(id)) clearDraft(id); delete tabRefs.current[id]; });
+      setActiveTab(keepId);
+      return [keepId];
+    });
+  }, [isDraft]);
+
+  const closeAllTabs = useCallback(() => {
+    setOpenTabs((prev) => {
+      prev.forEach((id) => { if (isDraft(id)) clearDraft(id); delete tabRefs.current[id]; });
+      setActiveTab(null);
+      return [];
+    });
+  }, [isDraft]);
+
   const replaceTab = useCallback((draftId: string, savedId: string) => {
     if (isDraft(draftId)) clearDraft(draftId);
     delete tabRefs.current[draftId];
@@ -117,6 +136,8 @@ export function useEntityTabs<T extends { id: string }>({
     openTab,
     openNewTab,
     closeTab,
+    closeOtherTabs,
+    closeAllTabs,
     replaceTab,
   };
 }

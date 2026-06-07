@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Folder as FolderType } from "@/types";
-import { ChevronDown, Folder, FolderOpen, Play } from "@/lib/icons";
+import { ChevronDown, Folder, FolderOpen, Play, ArrowUp, History, Copy, Trash2, Pencil, Plus, ChevronsUpDown, ToggleLeft, ToggleRight, ExternalLink } from "@/lib/icons";
 import { methodColor, methodBg } from "@/lib/utils";
+import ActiveDot from "@/components/ui/ActiveDot";
+import SyncIndicator from "@/components/ui/SyncIndicator";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ContextMenu, { ContextMenuItem } from "@/components/ui/ContextMenu";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -24,44 +28,8 @@ interface FolderNode {
   items: FolderTreeItem[];
 }
 
-// ── Context menu ───────────────────────────────────────────────────────────
-
-interface CtxMenuItem {
-  label: string;
-  danger?: boolean;
-  sep?: boolean;
-  action(): void;
-}
-
-function CtxMenu({ x, y, items, onClose }: { x: number; y: number; items: CtxMenuItem[]; onClose(): void }) {
-  const menuW = 210;
-  const totalH = items.reduce((s, i) => s + (i.sep ? 9 : 30), 0) + 8;
-  const ax = Math.min(x, window.innerWidth - menuW - 8);
-  const ay = Math.min(y, window.innerHeight - totalH - 8);
-
-  return (
-    <div
-      className="fixed z-50 bg-bg2 border border-border rounded-md shadow-2xl py-1 select-none animate-scale-in"
-      style={{ left: ax, top: ay, minWidth: menuW }}
-      onClick={(e) => e.stopPropagation()}
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      {items.map((item, i) =>
-        item.sep ? (
-          <div key={i} className="mx-2 my-1 border-t border-border/60" />
-        ) : (
-          <button
-            key={i}
-            onClick={item.action}
-            className={`w-full text-left px-3 py-1.5 text-xs font-medium cursor-pointer hover:bg-bg3 transition-colors ${item.danger ? "text-red" : "text-text-base"}`}
-          >
-            {item.label}
-          </button>
-        )
-      )}
-    </div>
-  );
-}
+// CtxMenuItem alias for backward compat within this file
+type CtxMenuItem = ContextMenuItem;
 
 // ── Inline rename input (used only for new folder creation) ───────────────────
 
@@ -194,43 +162,6 @@ function MoveDialog({ folders, onMove, onCancel }: {
   );
 }
 
-// ── Confirm dialog ─────────────────────────────────────────────────────────
-
-function ConfirmDialog({ message, onConfirm, onCancel }: {
-  message: string;
-  onConfirm(): void;
-  onCancel(): void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.45)" }}
-      onClick={onCancel}
-    >
-      <div
-        className="bg-bg2 border border-border rounded-lg shadow-2xl p-4 w-72"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <p className="text-xs text-text-base leading-relaxed mb-4">{message}</p>
-        <div className="flex justify-end gap-2">
-          <button
-            className="px-3 py-1.5 text-xs rounded border border-border hover:bg-bg3 text-text-dim cursor-pointer"
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-          <button
-            className="px-3 py-1.5 text-xs rounded font-semibold text-white cursor-pointer"
-            style={{ background: "var(--c-red)" }}
-            onClick={onConfirm}
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const INDENT = 14;
 const LINE_COLOR = "var(--c-border)";
@@ -292,7 +223,7 @@ export default function FolderTree({
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [selectedFolderIds, setSelectedFolderIds] = useState<Set<string>>(new Set());
   const [showMove, setShowMove] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<{ itemIds: string[]; folderIds: string[] } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ itemIds: string[]; folderIds: string[]; hasTracked?: boolean } | null>(null);
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
   const [deletedItemPopup, setDeletedItemPopup] = useState<FolderTreeItem | null>(null);
 
@@ -368,22 +299,16 @@ export default function FolderTree({
 
   const closeMenu = () => setCtxMenu(null);
 
-  const sep: CtxMenuItem = { label: "", sep: true, action: () => { } };
-  const expandAllItem: CtxMenuItem = { label: "Expand All", action: () => { expandAll(); closeMenu(); } };
-  const collapseAllItem: CtxMenuItem = { label: "Collapse All", action: () => { collapseAll(); closeMenu(); } };
+  const sep: CtxMenuItem = { sep: true, action: () => { } };
+  const expandAllItem: CtxMenuItem  = { label: "Expand All",   icon: <ChevronsUpDown size={11} />, action: () => { expandAll();   closeMenu(); } };
+  const collapseAllItem: CtxMenuItem = { label: "Collapse All", icon: <ChevronsUpDown size={11} />, action: () => { collapseAll(); closeMenu(); } };
 
   function openEmptySpaceMenu(x: number, y: number) {
     const menuItems: CtxMenuItem[] = [
-      {
-        label: "New Subfolder", action: () => {
-          setNewFolderParent(null);
-          setExpanded((p) => { const s = new Set(p); s.add("__root__"); return s; });
-          closeMenu();
-        }
-      },
+      { label: "New Subfolder", icon: <Plus size={11} />, action: () => { setNewFolderParent(null); setExpanded((p) => { const s = new Set(p); s.add("__root__"); return s; }); closeMenu(); } },
     ];
     if (onOpenNewTab) {
-      menuItems.push({ label: "New Tab", action: () => { onOpenNewTab(); closeMenu(); } });
+      menuItems.push({ label: "New Tab", icon: <Plus size={11} />, action: () => { onOpenNewTab(); closeMenu(); } });
     }
     menuItems.push(sep, expandAllItem, collapseAllItem);
     setCtxMenu({ x, y, items: menuItems });
@@ -391,31 +316,25 @@ export default function FolderTree({
 
   function openFolderMenu(x: number, y: number, folderId: string | null) {
     const menuItems: CtxMenuItem[] = [
-      {
-        label: "New Subfolder", action: () => {
-          setNewFolderParent(folderId);
-          setExpanded((p) => { const s = new Set(p); s.add(folderId === null ? "__root__" : folderId); return s; });
-          closeMenu();
-        }
-      },
+      { label: "New Subfolder", icon: <Plus size={11} />, action: () => { setNewFolderParent(folderId); setExpanded((p) => { const s = new Set(p); s.add(folderId === null ? "__root__" : folderId); return s; }); closeMenu(); } },
     ];
     if (folderId !== null && onPublishFolder) {
-      menuItems.push({ label: "Publish Folder", action: () => { onPublishFolder(folderId); closeMenu(); } });
+      menuItems.push({ label: "Commit & Push Folder", icon: <ArrowUp size={11} />, action: () => { onPublishFolder(folderId); closeMenu(); } });
     }
     if (folderId !== null && onToggleFolderItems) {
       menuItems.push(
-        { label: "Enable All in Folder", action: () => { onToggleFolderItems(folderId, true); closeMenu(); } },
-        { label: "Disable All in Folder", action: () => { onToggleFolderItems(folderId, false); closeMenu(); } },
+        { label: "Enable All in Folder",  icon: <ToggleRight size={11} />, action: () => { onToggleFolderItems(folderId, true);  closeMenu(); } },
+        { label: "Disable All in Folder", icon: <ToggleLeft  size={11} />, action: () => { onToggleFolderItems(folderId, false); closeMenu(); } },
       );
     }
     if (folderId !== null) {
       menuItems.push(
-        { label: "Rename Folder", action: () => { setRenaming(folderId); closeMenu(); } },
-        { label: "Delete Folder", danger: true, action: () => { handleDeleteFolder(folderId); clearSelection(); closeMenu(); } },
+        { label: "Rename Folder", icon: <Pencil size={11} />, action: () => { setRenaming(folderId); closeMenu(); } },
+        { label: "Delete Folder", icon: <Trash2 size={11} />, danger: true, action: () => { setPendingDelete({ itemIds: [], folderIds: [folderId] }); clearSelection(); closeMenu(); } },
       );
     }
     if (folderId !== null && onOpenRunner) {
-      menuItems.push({ label: "Run Collection", action: () => { onOpenRunner(folderId); closeMenu(); } });
+      menuItems.push({ label: "Run Collection", icon: <Play size={11} />, action: () => { onOpenRunner(folderId); closeMenu(); } });
     }
     menuItems.push(sep, expandAllItem, collapseAllItem);
     setCtxMenu({ x, y, items: menuItems });
@@ -426,27 +345,40 @@ export default function FolderTree({
     const syncSt = getItemStatus(item);
     const isDeleted = syncSt === "deleted";
     const isTracked = !syncSt || syncSt === "clean" || syncSt === "modified" || syncSt === "deleted";
+    const isNew = syncSt === "new";
     const menuItems: CtxMenuItem[] = isDeleted
       ? []
-      : [{ label: "Open in Tab", action: () => { onOpenItem(item.id); closeMenu(); } }];
+      : [{ label: "Open", icon: <ExternalLink size={11} />, action: () => { onOpenItem(item.id); closeMenu(); } }];
     if (onPublishItem && syncSt && syncSt !== "clean") {
-      menuItems.push({ label: isDeleted ? "Publish Deletion" : "Publish", action: () => { onPublishItem!(item.id); closeMenu(); } });
+      menuItems.push({
+        label: isDeleted ? "Commit Delete" : "Commit & Push",
+        icon: <ArrowUp size={11} />,
+        action: () => { onPublishItem!(item.id); closeMenu(); },
+      });
     }
     if (onRestoreItem && syncSt && syncSt !== "clean") {
-      menuItems.push({ label: "Restore", action: () => { onRestoreItem!(item.id); closeMenu(); } });
+      menuItems.push({
+        label: isDeleted ? "Restore" : "Discard Changes",
+        icon: <History size={11} />,
+        action: () => { onRestoreItem!(item.id); closeMenu(); },
+      });
     }
     if (!isDeleted && onToggleItem) {
-      menuItems.push({ label: isEnabled ? "Disable" : "Enable", action: () => { onToggleItem(item.id); closeMenu(); } });
+      menuItems.push({
+        label: isEnabled ? "Disable" : "Enable",
+        icon: isEnabled ? <ToggleLeft size={11} /> : <ToggleRight size={11} />,
+        action: () => { onToggleItem(item.id); closeMenu(); },
+      });
     }
     if (!isDeleted && onDuplicateItem) {
-      menuItems.push({ label: "Duplicate", action: () => { onDuplicateItem(item.id); closeMenu(); } });
+      menuItems.push({ label: "Duplicate", icon: <Copy size={11} />, action: () => { onDuplicateItem(item.id); closeMenu(); } });
     }
     if (!isDeleted && onHistoryItem && isTracked) {
-      menuItems.push({ label: "History", action: () => { onHistoryItem(item.id); closeMenu(); } });
+      menuItems.push({ label: "History", icon: <History size={11} />, action: () => { onHistoryItem(item.id); closeMenu(); } });
     }
     if (!isDeleted) {
       menuItems.push(
-        { label: "Delete", danger: true, action: () => { onDeleteItem(item.id); clearSelection(); closeMenu(); } },
+        { label: "Delete", icon: <Trash2 size={11} />, danger: true, action: () => { setPendingDelete({ itemIds: [item.id], folderIds: [], hasTracked: !isNew }); clearSelection(); closeMenu(); } },
         sep, expandAllItem, collapseAllItem,
       );
     } else {
@@ -474,32 +406,21 @@ export default function FolderTree({
       }) : [];
       if (dirtyItems.length > 0 && onPublishItem) {
         menuItems.push({
-          label: `Publish ${pl(dirtyItems.length, "item")}`, action: () => {
-            dirtyItems.forEach((id) => onPublishItem!(id));
-            clearSelection(); closeMenu();
-          }
+          label: `Commit & Push ${pl(dirtyItems.length, "item")}`,
+          icon: <ArrowUp size={11} />,
+          action: () => { dirtyItems.forEach((id) => onPublishItem!(id)); clearSelection(); closeMenu(); },
         });
       }
       if (onToggleItem) {
         menuItems.push(
-          {
-            label: `Enable ${pl(ni, "item")}`, action: () => {
-              itemIds.forEach(id => { const it = items.find(i => i.id === id); if (it && it.isEnabled === false) onToggleItem(id); });
-              clearSelection(); closeMenu();
-            }
-          },
-          {
-            label: `Disable ${pl(ni, "item")}`, action: () => {
-              itemIds.forEach(id => { const it = items.find(i => i.id === id); if (it && it.isEnabled !== false) onToggleItem(id); });
-              clearSelection(); closeMenu();
-            }
-          },
+          { label: `Enable ${pl(ni, "item")}`,  icon: <ToggleRight size={11} />, action: () => { itemIds.forEach(id => { const it = items.find(i => i.id === id); if (it && it.isEnabled === false) onToggleItem(id); }); clearSelection(); closeMenu(); } },
+          { label: `Disable ${pl(ni, "item")}`, icon: <ToggleLeft  size={11} />, action: () => { itemIds.forEach(id => { const it = items.find(i => i.id === id); if (it && it.isEnabled !== false) onToggleItem(id); }); clearSelection(); closeMenu(); } },
         );
       }
       if (onMoveItems) {
         menuItems.push({ label: `Move ${pl(ni, "item")}…`, action: () => { closeMenu(); setShowMove(true); } });
       }
-      menuItems.push({ label: `Delete ${pl(ni, "item")}`, danger: true, action: () => { closeMenu(); setPendingDelete({ itemIds, folderIds: [] }); } });
+      menuItems.push({ label: `Delete ${pl(ni, "item")}`, icon: <Trash2 size={11} />, danger: true, action: () => { closeMenu(); setPendingDelete({ itemIds, folderIds: [] }); } });
 
     } else if (hasFolders && !hasItems) {
       menuItems.push(
@@ -615,20 +536,16 @@ export default function FolderTree({
           <ChevronDown size={12} />
         </span>
         {/* Folder status dot (only for folders with enableable items) */}
-        {folderStatusMap && !isRoot && node.folder && folderStatusMap[node.folder.id] && (
-          <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 12 }}>
-            <span style={{
-              display: "inline-block",
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: folderStatusMap[node.folder.id] === "enabled" ? "var(--c-green)" :
-                folderStatusMap[node.folder.id] === "mixed" ? "var(--c-yellow)" :
-                  "var(--c-red)",
-              opacity: 1
-            }} />
-          </span>
-        )}
+        {folderStatusMap && !isRoot && node.folder && folderStatusMap[node.folder.id] && (() => {
+          const fs = folderStatusMap[node.folder.id];
+          return (
+            <ActiveDot
+              active={fs === "enabled"}
+              color={fs === "enabled" ? "green" : fs === "mixed" ? "yellow" : "red"}
+              size="sm"
+            />
+          );
+        })()}
         <span style={{ display: "flex", alignItems: "center", flexShrink: 0, color: "var(--c-text-dim)" }}>
           {isExpanded ? <FolderOpen size={13} /> : <Folder size={13} />}
         </span>
@@ -691,20 +608,6 @@ export default function FolderTree({
     const syncSt = getItemStatus(item);
     const isDeleted = syncSt === "deleted";
 
-    // Text color reflects git status only — not enabled/disabled state
-    const textColor = (() => {
-      switch (syncSt) {
-        case "new": return "var(--c-sync-new)";
-        case "modified": return "var(--c-sync-modified)";
-        case "deleted": return "var(--c-sync-modified)";
-        case "clean": return "var(--c-sync-clean)";
-        default: return "var(--c-text-bright)";
-      }
-    })();
-
-    // Dot reflects enabled/disabled only
-    const dotColor = isEnabled ? "var(--c-green)" : "var(--c-text-dim)";
-    const dotOpacity = isEnabled ? 1 : 0.45;
 
     return (
       <div
@@ -772,9 +675,10 @@ export default function FolderTree({
           </>
         ) : (
           <>
-            {/* Enabled/disabled dot — at start, always visible */}
-            <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 12 }}>
-              <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: dotColor, opacity: dotOpacity }} />
+            {/* Enabled/disabled dot with sync status indicator */}
+            <span style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 2 }}>
+              <ActiveDot active={isEnabled} color="green" size="sm" />
+              <SyncIndicator status={syncSt} />
             </span>
             {/* Method badge — shown when not hovered */}
             {item.method && hoveredItemId !== item.id && (
@@ -782,10 +686,10 @@ export default function FolderTree({
                 {item.method === "*" ? "ANY" : item.method}
               </span>
             )}
-            {/* Name — text color = git status, strikethrough = pending delete */}
+            {/* Name — theme color, strikethrough = pending delete, dim = disabled */}
             <span style={{
               fontSize: 13, lineHeight: 1, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis",
-              color: textColor,
+              color: "var(--c-text-bright)",
               textDecoration: isDeleted ? "line-through" : "none",
               opacity: !isEnabled ? 0.5 : 1,
             }}>
@@ -812,21 +716,25 @@ export default function FolderTree({
       <div style={{ flex: 1, minHeight: 24 }} onClick={clearSelection} />
 
       {ctxMenu && (
-        <CtxMenu x={ctxMenu.x} y={ctxMenu.y} items={ctxMenu.items} onClose={closeMenu} />
+        <ContextMenu x={ctxMenu.x} y={ctxMenu.y} items={ctxMenu.items} onClose={closeMenu} />
       )}
       {showMove && (
         <MoveDialog folders={folders} onMove={doMove} onCancel={() => setShowMove(false)} />
       )}
-      {pendingDelete && (
-        <ConfirmDialog
-          message={[
+      <ConfirmDialog
+        open={!!pendingDelete}
+        message={pendingDelete ? (() => {
+          const what = [
             pendingDelete.itemIds.length > 0 && `${pendingDelete.itemIds.length} item${pendingDelete.itemIds.length !== 1 ? "s" : ""}`,
             pendingDelete.folderIds.length > 0 && `${pendingDelete.folderIds.length} folder${pendingDelete.folderIds.length !== 1 ? "s" : ""}`,
-          ].filter(Boolean).join(" and ") + " will be permanently deleted. Are you sure?"}
-          onConfirm={doBulkDelete}
-          onCancel={() => setPendingDelete(null)}
-        />
-      )}
+          ].filter(Boolean).join(" and ");
+          return pendingDelete.hasTracked
+            ? `Delete ${what}? The item will be removed locally. You can still restore it or commit the deletion later from the context menu.`
+            : `Delete ${what}? This item has never been committed and will be permanently removed.`;
+        })() : ""}
+        onConfirm={doBulkDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
       {renaming && (() => {
         const folder = folders.find((f) => f.id === renaming);
         return folder ? (
@@ -847,12 +755,12 @@ export default function FolderTree({
             style={{ minWidth: 300, maxWidth: 380 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--c-red)" }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--c-sync-modified)" }}>
               Pending Deletion
             </div>
             <div style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.5 }}>
               <span style={{ color: "var(--c-text-bright)", fontWeight: 500 }}>{deletedItemPopup.name}</span>
-              {" "}has been deleted locally but not yet published. Publish to commit the deletion to git, or restore to undo.
+              {" "}has been deleted locally but not yet committed. You can restore it or commit the deletion to git.
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
@@ -874,7 +782,7 @@ export default function FolderTree({
                   className="px-3 py-1.5 text-xs rounded bg-red/80 hover:bg-red text-white cursor-pointer"
                   onClick={() => { onPublishItem(deletedItemPopup.id); setDeletedItemPopup(null); }}
                 >
-                  Publish Deletion
+                  Commit Delete
                 </button>
               )}
             </div>

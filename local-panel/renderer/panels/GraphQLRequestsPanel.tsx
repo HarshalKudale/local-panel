@@ -9,6 +9,7 @@ import { useEntityTabs } from "@/lib/useEntityTabs";
 import { Braces } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 
 // ── Draft tab prefix ───────────────────────────────────────────────────────
@@ -29,6 +30,7 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
     const requests = config.graphqlRequests ?? [];
     const folders = config.graphqlRequestFolders ?? [];
 
+    const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
     const [search, setSearch] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -37,7 +39,7 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
         openTabs, activeTab, setActiveTab,
         loadedEntities, setLoadedEntities,
         tabRefs, isDraft,
-        openTab, openNewTab, closeTab, replaceTab,
+        openTab, openNewTab, closeTab, replaceTab, closeOtherTabs, closeAllTabs,
     } = useEntityTabs<SavedGraphQLRequest>({
         storageKey: "graphqlRequests",
         draftPrefix: DRAFT_PREFIX,
@@ -72,10 +74,12 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
     }, [loadedEntities, requests, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
+        const ok = await confirm("Delete this request? This cannot be undone.");
+        if (!ok) return;
         await window.api.deleteGraphQLRequest(id);
         await reloadConfig();
         closeTab(id);
-    }, [reloadConfig, closeTab]);
+    }, [confirm, reloadConfig, closeTab]);
 
     const handleDuplicate = useCallback(async (id: string) => {
         let r = loadedEntities[id];
@@ -177,6 +181,9 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
                 onNewTab={openNewTab}
                 newTabTitle="New GraphQL request"
                 closeTabTitle="Close tab"
+                onCloseOthers={closeOtherTabs}
+                onCloseAll={closeAllTabs}
+                onTabDuplicate={handleDuplicate}
             />
 
             <div className="flex-1 overflow-hidden relative">
@@ -234,6 +241,7 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
             >
                 {mainContent}
             </SidebarLayout>
+            {ConfirmDialogElement}
         </>
     );
 }

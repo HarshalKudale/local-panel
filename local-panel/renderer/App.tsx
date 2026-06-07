@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { AppConfig, MockRule, SavedRequest, ServiceInfo, Folder, SyncStatus } from "@/types";
 import { entityRelPath, flatEntityRelPath } from "@/lib/utils";
+import { mergeEnvVars } from "@/lib/resolveVars";
 
 import { CaptureStats } from "@/panels/CapturePanel";
 
@@ -372,7 +373,9 @@ export default function App() {
     },
     [wsConfig, wsId, refreshEntitySyncStatus, refreshConfig]);
 
-  const activeEnv = (wsConfig.environments ?? []).find((e) => e.id === wsConfig.activeEnvironmentId) ?? null;
+  const globalEnv = (wsConfig.environments ?? []).find((e) => e.id === "__global__") ?? null;
+  const selectedActiveEnv = (wsConfig.environments ?? []).find((e) => e.id === wsConfig.activeEnvironmentId) ?? null;
+  const activeEnv = mergeEnvVars(globalEnv, selectedActiveEnv);
 
   const cnt = (n: number) => n > 0 ? n : undefined;
   const navBadges: Partial<Record<Panel, number | undefined>> = {
@@ -384,7 +387,7 @@ export default function App() {
     "mock-soap": cnt((wsConfig.soapMocks ?? []).length),
     sockets: cnt((wsConfig.wsConnections ?? []).length),
     webhooks: cnt((wsConfig.webhooks ?? []).length),
-    environments: cnt((wsConfig.environments ?? []).length),
+    environments: cnt((wsConfig.environments ?? []).filter((e) => e.id !== "__global__").length),
   };
 
   // Filter sidebar entries based on user visibility preferences

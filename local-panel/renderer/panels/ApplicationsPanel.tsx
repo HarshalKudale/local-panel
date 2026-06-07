@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { LucideProps } from "lucide-react";
 import {
     Play, Square, RefreshCw, Plus, Trash2, Pencil, Terminal, Bug, X,
@@ -1450,6 +1451,7 @@ interface Props {
 }
 
 export default function ApplicationsPanel({ config, onAddMapping }: Props) {
+    const { confirm, ConfirmDialogElement } = useConfirmDialog();
     const [apps, setApps] = useState<ApplicationConfig[]>([]);
     const [states, setStates] = useState<Map<string, AppProcessState>>(new Map());
     const [formMode, setFormMode] = useState<null | "add" | "edit">(null);
@@ -1541,10 +1543,12 @@ export default function ApplicationsPanel({ config, onAddMapping }: Props) {
     }, [wsId, loadApps]);
 
     const handleDelete = useCallback(async (workspaceId: string, id: string) => {
+        const ok = await confirm("Delete this application? This cannot be undone.");
+        if (!ok) return;
         await window.api.deleteApplication(workspaceId, id);
         if (selected === id) setSelected(null);
         loadApps();
-    }, [loadApps, selected]);
+    }, [confirm, loadApps, selected]);
 
     const handleStart = useCallback(async (app: ApplicationConfig) => {
         await window.api.startApplication(wsId, app.id, "run");
@@ -1653,6 +1657,7 @@ export default function ApplicationsPanel({ config, onAddMapping }: Props) {
                     />
                 </div>
             )}
+            {ConfirmDialogElement}
         </div>
     );
 }

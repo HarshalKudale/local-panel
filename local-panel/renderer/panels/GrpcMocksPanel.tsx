@@ -10,6 +10,7 @@ import { calculateFolderStatus } from "@/lib/utils";
 import { Network, Play, Square } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 import { GrpcMockDraft } from "@/components/grpc/grpcTabReducer";
 
@@ -32,6 +33,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
     const mocks = config.grpcMocks ?? [];
     const folders = config.grpcMockFolders ?? [];
 
+    const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
     const [search, setSearch] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -65,7 +67,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
     const {
         openTabs, activeTab, setActiveTab,
         loadedEntities, setLoadedEntities,
-        openTab, openNewTab, closeTab, replaceTab,
+        openTab, openNewTab, closeTab, replaceTab, closeOtherTabs, closeAllTabs,
     } = useEntityTabs<SavedGrpcMock>({
         storageKey: "grpcMocks",
         draftPrefix: DRAFT_PREFIX,
@@ -95,10 +97,12 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
     }, [loadedEntities, mocks, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
+        const ok = await confirm("Delete this mock? This cannot be undone.");
+        if (!ok) return;
         await window.api.deleteGrpcMock(id);
         await reloadConfig();
         closeTab(id);
-    }, [reloadConfig, closeTab]);
+    }, [confirm, reloadConfig, closeTab]);
 
     const handleDuplicate = useCallback(async (id: string) => {
         let m = loadedEntities[id];
@@ -230,6 +234,9 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                 onNewTab={openNewTab}
                 newTabTitle="New gRPC mock"
                 closeTabTitle="Close tab"
+                onCloseOthers={closeOtherTabs}
+                onCloseAll={closeAllTabs}
+                onTabDuplicate={handleDuplicate}
             />
 
             <div className="flex-1 overflow-hidden relative">
@@ -285,6 +292,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
             >
                 {mainContent}
             </SidebarLayout>
+            {ConfirmDialogElement}
         </>
     );
 }

@@ -10,6 +10,7 @@ import { calculateFolderStatus } from "@/lib/utils";
 import { Braces } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 
 // ── Draft tab prefix ───────────────────────────────────────────────────────
@@ -30,6 +31,7 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
     const mocks = config.graphqlMocks ?? [];
     const folders = config.graphqlMockFolders ?? [];
 
+    const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
     const [search, setSearch] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -38,7 +40,7 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
         openTabs, activeTab, setActiveTab,
         loadedEntities, setLoadedEntities,
         tabRefs, isDraft,
-        openTab, openNewTab, closeTab, replaceTab,
+        openTab, openNewTab, closeTab, replaceTab, closeOtherTabs, closeAllTabs,
     } = useEntityTabs<SavedGraphQLMock>({
         storageKey: "graphqlMocks",
         draftPrefix: DRAFT_PREFIX,
@@ -73,10 +75,12 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
     }, [loadedEntities, mocks, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
+        const ok = await confirm("Delete this mock? This cannot be undone.");
+        if (!ok) return;
         await window.api.deleteGraphQLMock(id);
         await reloadConfig();
         closeTab(id);
-    }, [reloadConfig, closeTab]);
+    }, [confirm, reloadConfig, closeTab]);
 
     const handleDuplicate = useCallback(async (id: string) => {
         let m = loadedEntities[id];
@@ -181,6 +185,9 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
                 onNewTab={openNewTab}
                 newTabTitle="New GraphQL mock"
                 closeTabTitle="Close tab"
+                onCloseOthers={closeOtherTabs}
+                onCloseAll={closeAllTabs}
+                onTabDuplicate={handleDuplicate}
             />
 
             <div className="flex-1 overflow-hidden relative">
@@ -238,6 +245,7 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
             >
                 {mainContent}
             </SidebarLayout>
+            {ConfirmDialogElement}
         </>
     );
 }

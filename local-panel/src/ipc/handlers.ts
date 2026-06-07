@@ -1339,6 +1339,7 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle("env:delete", async (_e, id: string) => {
+    if (id === "__global__") return { ok: false, error: "cannot_delete_global" };
     const cfg = loadConfig();
     const env = (cfg.environments ?? []).find((e) => e.id === id);
     cfg.environments = (cfg.environments ?? []).filter((e) => e.id !== id);
@@ -1352,6 +1353,7 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle("env:setActive", (_e, id: string | null) => {
+    if (id === "__global__") return { ok: false, error: "cannot_activate_global" };
     const cfg = loadConfig();
     cfg.activeEnvironmentId = id;
     const ws = (cfg.workspaces ?? []).find((w) => w.id === cfg.activeWorkspaceId);

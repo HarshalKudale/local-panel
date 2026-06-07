@@ -9,6 +9,7 @@ import { entityRelPath, calculateFolderStatus } from "@/lib/utils";
 import { Plus, X, Play, Square } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 import CodeEditor from "@/components/common/CodeEditor";
 import EditorTitleBar from "@/components/editor/EditorTitleBar";
@@ -277,6 +278,7 @@ export default function WebhooksPanel({
   const folders = config.webhookFolders ?? [];
   const webhookPort = config.webhookPort ?? 9101;
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -464,11 +466,13 @@ export default function WebhooksPanel({
   }, [loadedEntities, webhooks, activeTabs, reloadWebhooks, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
+    const ok = await confirm("Delete this webhook? This cannot be undone.");
+    if (!ok) return;
     deregisterWebhook(id);
     await window.api.deleteWebhook(id);
     await reloadWebhooks();
     closeTab(id);
-  }, [deregisterWebhook, reloadWebhooks, closeTab]);
+  }, [confirm, deregisterWebhook, reloadWebhooks, closeTab]);
 
   const handleDuplicate = useCallback(async (id: string) => {
     let h = loadedEntities[id];
@@ -655,6 +659,13 @@ export default function WebhooksPanel({
             onTabClose={closeTab}
             onNewTab={openNewTab}
             newTabTitle="New webhook"
+            onCloseOthers={(id) => {
+              openTabs.filter((t) => t !== id).forEach(closeTab);
+            }}
+            onCloseAll={() => {
+              [...openTabs].forEach(closeTab);
+            }}
+            onTabDuplicate={handleDuplicate}
           />
           <div className="flex-1 overflow-hidden">
             {openTabs.map((tabId) => {
@@ -704,6 +715,7 @@ export default function WebhooksPanel({
       >
         {mainContent}
       </SidebarLayout>
+      {ConfirmDialogElement}
     </>
   );
 }

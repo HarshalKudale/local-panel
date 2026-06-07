@@ -10,6 +10,7 @@ import { calculateFolderStatus } from "@/lib/utils";
 import { FileCode } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 
 // ── Draft tab prefix ───────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
     const mocks = config.soapMocks ?? [];
     const folders = config.soapMockFolders ?? [];
 
+    const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
     const [search, setSearch] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -39,7 +41,7 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
         openTabs, activeTab, setActiveTab,
         loadedEntities, setLoadedEntities,
         tabRefs, isDraft,
-        openTab, openNewTab, closeTab, replaceTab,
+        openTab, openNewTab, closeTab, replaceTab, closeOtherTabs, closeAllTabs,
     } = useEntityTabs<SavedSoapMock>({
         storageKey: "soapMocks",
         draftPrefix: DRAFT_PREFIX,
@@ -70,10 +72,12 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
     }, [loadedEntities, mocks, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
+        const ok = await confirm("Delete this mock? This cannot be undone.");
+        if (!ok) return;
         await window.api.deleteSoapMock(id);
         await reloadConfig();
         closeTab(id);
-    }, [reloadConfig, closeTab]);
+    }, [confirm, reloadConfig, closeTab]);
 
     const handleDuplicate = useCallback(async (id: string) => {
         let m = loadedEntities[id];
@@ -181,6 +185,9 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
                 onNewTab={openNewTab}
                 newTabTitle="New SOAP mock"
                 closeTabTitle="Close tab"
+                onCloseOthers={closeOtherTabs}
+                onCloseAll={closeAllTabs}
+                onTabDuplicate={handleDuplicate}
             />
 
             <div className="flex-1 overflow-hidden relative">
@@ -237,6 +244,7 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
             >
                 {mainContent}
             </SidebarLayout>
+            {ConfirmDialogElement}
         </>
     );
 }

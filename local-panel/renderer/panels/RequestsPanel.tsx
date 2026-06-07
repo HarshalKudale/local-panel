@@ -12,6 +12,7 @@ import { entityRelPath } from "@/lib/utils";
 import { Zap } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 
 // ── Draft tab prefix ───────────────────────────────────────────────────────
@@ -50,6 +51,8 @@ export default function RequestsPanel({
   const requests = config.requests ?? [];
   const folders = config.requestFolders ?? [];
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog();
+
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [runnerFolderIds, setRunnerFolderIds] = useState<Set<string>>(new Set());
@@ -68,7 +71,7 @@ export default function RequestsPanel({
     openTabs, activeTab, setActiveTab,
     loadedEntities, setLoadedEntities,
     tabRefs, isDraft,
-    openTab, openNewTab, closeTab, replaceTab,
+    openTab, openNewTab, closeTab, replaceTab, closeOtherTabs, closeAllTabs,
   } = useEntityTabs<SavedRequest>({
     storageKey: "requests",
     draftPrefix: DRAFT_PREFIX,
@@ -131,10 +134,12 @@ export default function RequestsPanel({
   }, [loadedEntities, requests, reloadRequests, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
+    const ok = await confirm("Delete this request? This cannot be undone.");
+    if (!ok) return;
     closeTab(id);
     await window.api.deleteRequest(id);
     await reloadRequests();
-  }, [reloadRequests, closeTab]);
+  }, [confirm, reloadRequests, closeTab]);
 
   // Close all open tabs for a folder's requests before the folder is deleted
   const handleBeforeDeleteFolder = useCallback((folderId: string) => {
@@ -309,6 +314,9 @@ export default function RequestsPanel({
         onNewTab={openNewTab}
         newTabTitle={strings.requests.newTab}
         closeTabTitle={strings.requests.closeTab}
+        onCloseOthers={closeOtherTabs}
+        onCloseAll={closeAllTabs}
+        onTabDuplicate={handleDuplicate}
       />
 
       <div className="flex-1 overflow-hidden relative">
@@ -390,6 +398,7 @@ export default function RequestsPanel({
       >
         {mainContent}
       </SidebarLayout>
+      {ConfirmDialogElement}
     </>
   );
 }

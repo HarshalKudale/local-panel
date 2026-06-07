@@ -73,7 +73,13 @@ export function loadConfig(): AppConfig {
   const mappings = readAllEntities<LocalMapping>(wsId, "mappings").map((m) => ({ ...m, enabled: mappingEnabledSet.has(m.id) }));
 
   // Environments are small and always needed for variable resolution
-  const environments = readAllEntities<Environment>(wsId, "environments");
+  let environments = readAllEntities<Environment>(wsId, "environments");
+  // Auto-create the global environment for this workspace if it doesn't exist yet
+  if (!environments.find((e) => e.id === "__global__")) {
+    const globalEnv: Environment = { id: "__global__", name: "Global", variables: [], createdAt: Date.now(), workspaceId: wsId };
+    writeFlatEntity(wsId, "environments", "__global__", globalEnv);
+    environments = [globalEnv, ...environments];
+  }
 
   // For requests/sockets/rules: load stubs (id + folderId) + names index for list display.
   // Full entity data is loaded on-demand when a tab is opened via entity:load IPC.

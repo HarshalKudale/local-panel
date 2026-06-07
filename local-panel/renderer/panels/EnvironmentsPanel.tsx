@@ -1,8 +1,12 @@
 import React, { useState, useCallback } from "react";
 import { AppConfig, Environment, EnvVariable } from "@/types";
-import { Globe, Plus, X, History, ChevronRight } from "@/lib/icons";
-import { Button, IconButton, EmptyState, PanelLayout } from "@/components/ui";
+import { Globe, Plus, X, History } from "@/lib/icons";
+import { Button, IconButton, EmptyState } from "@/components/ui";
+import SidebarLayout, { SidebarHeader } from "@/components/ui/SidebarLayout";
+import ActiveDot from "@/components/ui/ActiveDot";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
+const GLOBAL_ENV_ID = "__global__";
 
 let _vid = 0;
 const mkVid = () => `v${++_vid}`;
@@ -54,13 +58,12 @@ function VarRow({
   );
 }
 
-// ── Environment editor ─────────────────────────────────────────────────────
+// ── Variable editor (right panel content) ─────────────────────────────────
 
-function EnvEditor({
+function VariableEditor({
   env,
   isActive,
-  collapsed,
-  onToggle,
+  isGlobal,
   onSave,
   onDelete,
   onActivate,
@@ -68,8 +71,7 @@ function EnvEditor({
 }: {
   env: Environment;
   isActive: boolean;
-  collapsed: boolean;
-  onToggle: () => void;
+  isGlobal: boolean;
   onSave: (updated: Environment) => Promise<void>;
   onDelete: () => Promise<void>;
   onActivate: () => Promise<void>;
@@ -108,29 +110,31 @@ function EnvEditor({
   };
 
   return (
-    <div className={`rounded-lg border overflow-hidden ${isActive ? "border-accent/50 bg-accent/5" : "border-border bg-bg1"}`}>
+    <div className="flex flex-col flex-1 overflow-hidden">
       {/* Header */}
-      <div
-        className="flex items-center gap-2 px-4 py-3 border-b border-border cursor-pointer select-none hover:bg-bg2/20 transition-colors"
-        onClick={onToggle}
-      >
-        <ChevronRight
-          size={13}
-          className={`text-text-dim flex-shrink-0 transition-transform duration-150 ${collapsed ? "" : "rotate-90"}`}
-        />
-        <div
-          className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? "bg-accent" : "bg-text-dim/30"}`}
-          style={{ boxShadow: isActive ? "0 0 6px var(--c-accent)" : "none" }}
-        />
-        <input
-          className="flex-1 bg-transparent text-sm font-semibold text-text-bright outline-none placeholder:text-text-dim min-w-0 cursor-pointer"
-          value={name}
-          onChange={(e) => { setName(e.target.value); markDirty(); }}
-          placeholder="Environment name"
-          onClick={(e) => e.stopPropagation()}
-        />
-        <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-          {!isActive && (
+      <div className="flex items-center gap-3 px-5 py-3 border-b border-border flex-shrink-0">
+        {isGlobal ? (
+          <Globe size={15} className="text-accent flex-shrink-0" />
+        ) : (
+          <ActiveDot active={isActive} color="accent" size="sm" />
+        )}
+        {isGlobal ? (
+          <span className="flex-1 text-sm font-semibold text-text-bright">Global</span>
+        ) : (
+          <input
+            className="flex-1 bg-transparent text-sm font-semibold text-text-bright outline-none placeholder:text-text-dim min-w-0"
+            value={name}
+            onChange={(e) => { setName(e.target.value); markDirty(); }}
+            placeholder="Environment name"
+          />
+        )}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {isGlobal && (
+            <span className="px-2.5 py-1 rounded border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
+              Always Active
+            </span>
+          )}
+          {!isGlobal && !isActive && (
             <button
               onClick={onActivate}
               className="px-2.5 py-1 rounded border border-border bg-bg2 hover:border-accent/50 hover:bg-accent/10 hover:text-accent text-text-dim text-xs font-medium transition-all cursor-pointer"
@@ -138,7 +142,7 @@ function EnvEditor({
               Set Active
             </button>
           )}
-          {isActive && (
+          {!isGlobal && isActive && (
             <span className="px-2.5 py-1 rounded border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
               Active
             </span>
@@ -160,18 +164,20 @@ function EnvEditor({
               className="hover:text-accent"
             />
           )}
-          <button
-            onClick={onDelete}
-            className="px-2.5 py-1 rounded border border-border bg-bg2 hover:border-red/40 hover:bg-red/10 hover:text-red text-text-dim text-xs font-medium transition-all cursor-pointer"
-          >
-            Delete
-          </button>
+          {!isGlobal && (
+            <button
+              onClick={onDelete}
+              className="px-2.5 py-1 rounded border border-border bg-bg2 hover:border-red/40 hover:bg-red/10 hover:text-red text-text-dim text-xs font-medium transition-all cursor-pointer"
+            >
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Variables table — hidden when collapsed */}
-      {!collapsed && <div>
-        <div className="flex items-center border-b border-border/60 bg-bg0/20">
+      {/* Variables table */}
+      <div className="flex flex-col flex-1 overflow-y-auto">
+        <div className="flex items-center border-b border-border/60 bg-bg0/20 flex-shrink-0">
           <div className="flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim border-r border-border/40">
             Variable
           </div>
@@ -195,36 +201,62 @@ function EnvEditor({
         >
           <span className="text-accent font-semibold text-sm leading-none">+</span>Add Variable
         </button>
-      </div>}
+      </div>
     </div>
+  );
+}
+
+// ── Sidebar env item ───────────────────────────────────────────────────────
+
+function EnvItem({
+  env,
+  isActive,
+  isSelected,
+  isGlobal,
+  onClick,
+}: {
+  env: Environment;
+  isActive: boolean;
+  isSelected: boolean;
+  isGlobal: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors cursor-pointer ${
+        isSelected ? "bg-accent/15 text-text-bright" : "hover:bg-bg2/50 text-text-base"
+      }`}
+    >
+      {isGlobal ? (
+        <Globe size={13} className={isSelected ? "text-accent" : "text-text-dim"} />
+      ) : (
+        <ActiveDot active={isActive} color="accent" size="sm" />
+      )}
+      <span className="flex-1 text-xs truncate">{env.name}</span>
+      {isGlobal && (
+        <span className="text-[9px] font-semibold uppercase tracking-wide text-accent opacity-70 flex-shrink-0">
+          Always Active
+        </span>
+      )}
+    </button>
   );
 }
 
 // ── EnvironmentsPanel ──────────────────────────────────────────────────────
 
 export default function EnvironmentsPanel({ config, onConfigChange, onHistoryOpen, onAfterSave }: Props) {
-  const envs = config.environments ?? [];
+  const allEnvs = config.environments ?? [];
   const activeId = config.activeEnvironmentId ?? null;
 
+  const globalEnv = allEnvs.find((e) => e.id === GLOBAL_ENV_ID) ?? null;
+  const userEnvs = allEnvs.filter((e) => e.id !== GLOBAL_ENV_ID);
 
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    () => new Set(activeId ? [activeId] : [])
-  );
+  const [selectedEnvId, setSelectedEnvId] = useState<string>(GLOBAL_ENV_ID);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
-  const toggleExpanded = (id: string) =>
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-  // Active env first, then alphabetically
-  const sortedEnvs = [...envs].sort((a, b) => {
-    if (a.id === activeId) return -1;
-    if (b.id === activeId) return 1;
-    return 0;
-  });
+  const selectedEnv = allEnvs.find((e) => e.id === selectedEnvId) ?? globalEnv;
 
   const reloadConfig = useCallback(async () => {
     const fresh = await window.api.getConfig();
@@ -232,8 +264,9 @@ export default function EnvironmentsPanel({ config, onConfigChange, onHistoryOpe
   }, [onConfigChange]);
 
   const handleAdd = async () => {
-    await window.api.addEnvironment({ name: "New Environment", variables: [] });
+    const newEnv = await window.api.addEnvironment({ name: "New Environment", variables: [] });
     await reloadConfig();
+    if (newEnv?.id) setSelectedEnvId(newEnv.id);
   };
 
   const handleSave = useCallback(async (updated: Environment) => {
@@ -243,59 +276,99 @@ export default function EnvironmentsPanel({ config, onConfigChange, onHistoryOpe
   }, [reloadConfig, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
+    const ok = await confirm("Delete this environment? All variables will be lost.");
+    if (!ok) return;
     await window.api.deleteEnvironment(id);
+    setSelectedEnvId(GLOBAL_ENV_ID);
     await reloadConfig();
-  }, [reloadConfig]);
+  }, [reloadConfig, confirm]);
 
   const handleActivate = useCallback(async (id: string) => {
     await window.api.setActiveEnvironment(id);
     await reloadConfig();
   }, [reloadConfig]);
 
-  return (
-    <>
-      <PanelLayout
-        title="Environments"
-        subtitle={<>Define variable sets. Use <code className="font-mono bg-bg3 px-1 rounded text-text-bright text-[11px]">{"{{VARIABLE}}"}</code> in URLs, headers, and request/response bodies.</>}
-        actions={
+  const sidebar = (
+    <div className="flex flex-col flex-1 overflow-hidden">
+      <SidebarHeader onCollapse={() => setSidebarOpen(false)}>
+        <span className="text-xs font-semibold text-text-dim uppercase tracking-wider px-1">Environments</span>
+      </SidebarHeader>
+
+      <div className="flex flex-col flex-1 overflow-y-auto">
+        {/* Global always at top */}
+        {globalEnv && (
+          <EnvItem
+            env={globalEnv}
+            isActive={false}
+            isSelected={selectedEnvId === GLOBAL_ENV_ID}
+            isGlobal={true}
+            onClick={() => setSelectedEnvId(GLOBAL_ENV_ID)}
+          />
+        )}
+
+        {userEnvs.length > 0 && (
+          <div className="border-t border-border/40 my-1" />
+        )}
+
+        {userEnvs.map((env) => (
+          <EnvItem
+            key={env.id}
+            env={env}
+            isActive={env.id === activeId}
+            isSelected={selectedEnvId === env.id}
+            isGlobal={false}
+            onClick={() => setSelectedEnvId(env.id)}
+          />
+        ))}
+      </div>
+
+      {/* New env button at bottom */}
+      <div className="flex-shrink-0 border-t border-border/40 p-2">
+        <Button variant="secondary" icon={<Plus size={12} />} onClick={handleAdd} className="w-full justify-center">
+          New Environment
+        </Button>
+      </div>
+    </div>
+  );
+
+  const content = selectedEnv ? (
+    <VariableEditor
+      key={selectedEnv.id}
+      env={selectedEnv}
+      isActive={selectedEnv.id === activeId}
+      isGlobal={selectedEnv.id === GLOBAL_ENV_ID}
+      onSave={handleSave}
+      onDelete={() => handleDelete(selectedEnv.id)}
+      onActivate={() => handleActivate(selectedEnv.id)}
+      onHistory={onHistoryOpen ? () => onHistoryOpen(`environments/${selectedEnv.id}.json`) : undefined}
+    />
+  ) : (
+    <div className="flex flex-col flex-1 items-center justify-center">
+      <EmptyState
+        fill
+        icon={<Globe size={36} />}
+        title="No environments yet"
+        description={
           <>
-            <Button variant="secondary" icon={<Plus size={12} />} onClick={handleAdd}>New Environment</Button>
+            Create environments to manage variable sets for different stages.{" "}
+            Use <code className="font-mono bg-bg3 px-1 rounded">{"{{VAR}}"}</code> syntax anywhere in your requests and mocks.
           </>
         }
+      />
+    </div>
+  );
+
+  return (
+    <>
+      <SidebarLayout
+        sidebarOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(true)}
+        sidebar={sidebar}
+        storageKey="environments-panel-sidebar"
       >
-        <div className="flex flex-col gap-4">
-          {envs.length === 0 ? (
-            <EmptyState
-              fill
-              icon={<Globe size={36} />}
-              title="No environments yet"
-              description={
-                <>
-                  Create environments to manage variable sets for different stages (dev, staging, production).{" "}
-                  Use <code className="font-mono bg-bg3 px-1 rounded">{"{{VAR}}"}</code> syntax anywhere in your requests and mocks.
-                </>
-              }
-            />
-          ) : (
-            sortedEnvs.map((env) => (
-              <EnvEditor
-                key={env.id}
-                env={env}
-                isActive={env.id === activeId}
-                collapsed={!expandedIds.has(env.id)}
-                onToggle={() => toggleExpanded(env.id)}
-                onSave={handleSave}
-                onDelete={() => handleDelete(env.id)}
-                onActivate={async () => {
-                  await handleActivate(env.id);
-                  setExpandedIds((prev) => new Set([...prev, env.id]));
-                }}
-                onHistory={onHistoryOpen ? () => onHistoryOpen(`environments/${env.id}.json`) : undefined}
-              />
-            ))
-          )}
-        </div>
-      </PanelLayout>
+        {content}
+      </SidebarLayout>
+      {ConfirmDialogElement}
     </>
   );
 }

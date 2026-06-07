@@ -11,6 +11,7 @@ import { entityRelPath, calculateFolderStatus } from "@/lib/utils";
 import { Zap } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 
 // ── Draft tab prefix ───────────────────────────────────────────────────────
@@ -53,7 +54,7 @@ export default function MocksPanel({
     openTabs, activeTab, setActiveTab,
     loadedEntities, setLoadedEntities,
     tabRefs, isDraft,
-    openTab, openNewTab, closeTab, replaceTab,
+    openTab, openNewTab, closeTab, replaceTab, closeOtherTabs, closeAllTabs,
   } = useEntityTabs<MockRule>({
     storageKey: "mocks",
     draftPrefix: DRAFT_PREFIX,
@@ -62,6 +63,8 @@ export default function MocksPanel({
     entityKind: "mocks",
     entities: mocks,
   });
+
+  const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
   const [prefillData, setPrefillData] = useState<Record<string, Partial<MockRule>>>({})
 
@@ -123,10 +126,12 @@ export default function MocksPanel({
   }, [loadedEntities, mocks, reloadMocks, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
+    const ok = await confirm("Delete this mock? This cannot be undone.");
+    if (!ok) return;
     closeTab(id);
     await window.api.deleteMock(id);
     await reloadMocks();
-  }, [reloadMocks, closeTab]);
+  }, [confirm, reloadMocks, closeTab]);
 
   // Close all open tabs for a folder's mocks before the folder is deleted
   const handleBeforeDeleteFolder = useCallback((folderId: string) => {
@@ -279,6 +284,9 @@ export default function MocksPanel({
         onNewTab={openNewTab}
         newTabTitle={strings.mocks.newTab}
         closeTabTitle={strings.mocks.closeTab}
+        onCloseOthers={closeOtherTabs}
+        onCloseAll={closeAllTabs}
+        onTabDuplicate={handleDuplicate}
       />
 
       <div className="flex-1 overflow-hidden relative">
@@ -340,6 +348,7 @@ export default function MocksPanel({
       >
         {mainContent}
       </SidebarLayout>
+      {ConfirmDialogElement}
     </>
   );
 }
