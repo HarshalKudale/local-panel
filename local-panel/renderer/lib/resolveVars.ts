@@ -8,7 +8,7 @@ export function resolveVars(text: string, env: Environment | null): string {
   // Resolve env vars: {{KEY}}
   if (env) {
     result = result.replace(/\{\{(\w+)\}\}/g, (_match, key) => {
-      // Skip random.* tokens — handled separately below
+      // Skip random.* tokens - handled separately below
       if (key.startsWith("random.")) return _match;
       const v = env.variables.find((v) => v.key === key);
       return v !== undefined ? v.value : _match;

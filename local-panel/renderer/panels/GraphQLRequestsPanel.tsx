@@ -13,11 +13,11 @@ import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { strings } from "@/lib/strings";
 
 
-// ── Draft tab prefix ───────────────────────────────────────────────────────
+// -- Draft tab prefix -------------------------------------------------------
 
 const DRAFT_PREFIX = "gql-req-draft-";
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
     config: AppConfig;
@@ -25,7 +25,7 @@ interface Props {
     activeEnv?: Environment | null;
 }
 
-// ── GraphQLRequestsPanel ───────────────────────────────────────────────────
+// -- GraphQLRequestsPanel ---------------------------------------------------
 
 export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv = null }: Props) {
     const requests = config.graphqlRequests ?? [];
@@ -136,7 +136,7 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
         }));
     }, [filteredRequests, activeTab]);
 
-    // ── Sidebar ────────────────────────────────────────────────────────────
+    // -- Sidebar ------------------------------------------------------------
 
     const sidebarContent = (
         <>
@@ -170,7 +170,7 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
         </>
     );
 
-    // ── Main content ───────────────────────────────────────────────────────
+    // -- Main content -------------------------------------------------------
 
     const mainContent = (
         <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">

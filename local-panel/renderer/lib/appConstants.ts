@@ -1,6 +1,6 @@
 // Non-translatable example placeholders for the Applications panel.
 // File paths, port numbers, CLI commands, VM args, image names, env var
-// samples, etc. — grouped by run-config type, mirroring the panel structure.
+// samples, etc. - grouped by run-config type, mirroring the panel structure.
 
 export const appConstants = {
     common: {

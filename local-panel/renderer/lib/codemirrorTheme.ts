@@ -3,7 +3,7 @@ import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags as t } from "@lezer/highlight";
 import { Extension } from "@codemirror/state";
 
-// ── Editor chrome theme (uses CSS vars so it auto-follows dark/light) ────────
+// -- Editor chrome theme (uses CSS vars so it auto-follows dark/light) --------
 
 export const localPanelTheme = EditorView.theme({
   "&": {
@@ -72,7 +72,7 @@ export const localPanelTheme = EditorView.theme({
   },
 });
 
-// ── Syntax highlight styles ───────────────────────────────────────────────────
+// -- Syntax highlight styles ---------------------------------------------------
 // Two variants (dark/light) swapped via Compartment when html.light toggles.
 
 const darkHighlight = HighlightStyle.define([

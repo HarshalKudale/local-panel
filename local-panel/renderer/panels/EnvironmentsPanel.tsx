@@ -19,7 +19,7 @@ interface Props {
   onAfterSave?: () => void;
 }
 
-// ── Variable row editor ────────────────────────────────────────────────────
+// -- Variable row editor ----------------------------------------------------
 
 function VarRow({
   row,
@@ -59,7 +59,7 @@ function VarRow({
   );
 }
 
-// ── Variable editor (right panel content) ─────────────────────────────────
+// -- Variable editor (right panel content) ---------------------------------
 
 function VariableEditor({
   env,
@@ -207,7 +207,7 @@ function VariableEditor({
   );
 }
 
-// ── Sidebar env item ───────────────────────────────────────────────────────
+// -- Sidebar env item -------------------------------------------------------
 
 function EnvItem({
   env,
@@ -244,7 +244,7 @@ function EnvItem({
   );
 }
 
-// ── EnvironmentsPanel ──────────────────────────────────────────────────────
+// -- EnvironmentsPanel ------------------------------------------------------
 
 export default function EnvironmentsPanel({ config, onConfigChange, onHistoryOpen, onAfterSave }: Props) {
   const allEnvs = config.environments ?? [];

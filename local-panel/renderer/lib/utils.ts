@@ -83,7 +83,7 @@ const METHOD_BG: Record<string, string> = {
 export const methodColor = (m: string) => METHOD_HEX[m.toUpperCase()] ?? "var(--c-text-dim)";
 export const methodBg = (m: string) => METHOD_BG[m.toUpperCase()] ?? "rgba(113,115,109,0.13)";
 
-// ── Entity file path helpers (mirrors workspaceFs.ts logic, renderer-side) ─────
+// -- Entity file path helpers (mirrors workspaceFs.ts logic, renderer-side) -----
 
 function sanitizeDirName(name: string): string {
   return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, "").trim() || "unnamed";

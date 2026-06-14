@@ -3,7 +3,7 @@ import { SavedProtoFile } from "@/types";
 import { cn } from "@/components/ui/cn";
 import { strings } from "@/lib/strings";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// -- Types ------------------------------------------------------------------
 
 interface ProtoService {
     name: string;
@@ -24,7 +24,7 @@ interface ProtoExplorerProps {
     onProtoChange?: (protoId: string) => void;
 }
 
-// ── Helpers: Parse proto file to extract services ──────────────────────────
+// -- Helpers: Parse proto file to extract services --------------------------
 
 function parseProtoServices(content: string): ProtoService[] {
     const services: ProtoService[] = [];
@@ -110,7 +110,7 @@ const STREAMING_LABELS: Record<string, { label: string; color: string }> = {
     bidi: { label: strings.grpc.streamBidi, color: "text-green" },
 };
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component --------------------------------------------------------------
 
 export default function ProtoExplorer({ protoFileId, onSelectMethod, onProtoChange }: ProtoExplorerProps) {
     const [protos, setProtos] = useState<SavedProtoFile[]>([]);

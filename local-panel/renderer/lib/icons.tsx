@@ -1,4 +1,4 @@
-// Central icon re-exports from lucide-react — size defaults to 14px to match our UI density
+// Central icon re-exports from lucide-react - size defaults to 14px to match our UI density
 export {
   Zap,           // services / mocks empty state
   ArrowLeftRight,// mappings nav

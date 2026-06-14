@@ -77,7 +77,7 @@ export default function App() {
   // Global sync operation status (idle/pulling/pushing/cloning/error)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
 
-  // Capture panel stats — lifted so the global footer can display them
+  // Capture panel stats - lifted so the global footer can display them
   const [captureStats, setCaptureStats] = useState<CaptureStats | null>(null);
 
   // History sidebar state
@@ -222,7 +222,7 @@ export default function App() {
     refreshEntitySyncStatus(next.activeWorkspaceId);
   }, [refreshEntitySyncStatus]);
 
-  // Panels pass back wsConfig mutations — we need to merge them back into full config
+  // Panels pass back wsConfig mutations - we need to merge them back into full config
   const handleWsConfigChange = useCallback(async (next: AppConfig) => {
     const hasCrossWs = (
       (next.mappings ?? []).some((m) => m.workspaceId !== wsId) ||
@@ -271,7 +271,7 @@ export default function App() {
     setPanel("mock-rest");
   }, []);
 
-  // ── Publish helpers ────────────────────────────────────────────────────────
+  // -- Publish helpers --------------------------------------------------------
 
   const refreshConfig = useCallback(async () => {
     const cfg = await window.api.getConfig();
@@ -327,7 +327,7 @@ export default function App() {
     refreshEntitySyncStatus(wsId);
   }, [wsId, refreshEntitySyncStatus]);
 
-  // ── Global footer publish ──────────────────────────────────────────────────
+  // -- Global footer publish --------------------------------------------------
 
   // Map from panel name to the git folder kind used for a bulk publish
   const PANEL_PUBLISH_KIND: Partial<Record<Panel, string>> = {
@@ -399,7 +399,7 @@ export default function App() {
   // Active workspace object (used for syncConfig / branch in GlobalFooter)
   const currentWorkspace = (config.workspaces ?? []).find((w) => w.id === wsId) ?? null;
 
-  // Right-side stats for the global footer — panel-specific counts / info
+  // Right-side stats for the global footer - panel-specific counts / info
   const footerRightContent = useMemo(() => {
     const pl = (n: number, s: string) => `${n} ${s}${n !== 1 ? "s" : ""}`;
     switch (panel) {
@@ -427,7 +427,7 @@ export default function App() {
     }
   }, [panel, captureStats, wsConfig, services]);
 
-  // ── Panel render context — single bag for the panel factory ────────────────
+  // -- Panel render context - single bag for the panel factory ----------------
   const panelRenderCtx: PanelRenderContext = useMemo(() => ({
     wsConfig,
     config,
@@ -590,7 +590,7 @@ export default function App() {
           {renderPanel(panel, panelRenderCtx)}
         </main>
 
-        {/* Right History Sidebar — always mounted so close animates */}
+        {/* Right History Sidebar - always mounted so close animates */}
         <HistorySidebar
           filePath={openedEntityPath}
           workspaceId={wsId}
@@ -600,7 +600,7 @@ export default function App() {
         />
       </div>
 
-      {/* Global footer — always visible, shows git sync status for current panel */}
+      {/* Global footer - always visible, shows git sync status for current panel */}
       <GlobalFooter
         panel={panel}
         workspace={currentWorkspace}

@@ -3,7 +3,7 @@ import { SavedWsdl } from "@/types";
 import { cn } from "@/components/ui/cn";
 import { strings } from "@/lib/strings";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// -- Types ------------------------------------------------------------------
 
 interface WsdlOperation {
     name: string;
@@ -17,7 +17,7 @@ interface WsdlExplorerProps {
     onInsertEnvelope?: (body: string, soapAction: string) => void;
 }
 
-// ── Helpers: Parse WSDL XML to extract operations ──────────────────────────
+// -- Helpers: Parse WSDL XML to extract operations --------------------------
 
 function parseWsdlOperations(xml: string): WsdlOperation[] {
     const ops: WsdlOperation[] = [];
@@ -107,7 +107,7 @@ function extractTargetNamespace(xml: string): string {
     return match?.[1] || "http://tempuri.org/";
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component --------------------------------------------------------------
 
 export default function WsdlExplorer({ wsdlId, onInsertEnvelope }: WsdlExplorerProps) {
     const [wsdls, setWsdls] = useState<SavedWsdl[]>([]);

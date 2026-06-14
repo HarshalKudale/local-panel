@@ -19,13 +19,13 @@ import { strings } from "@/lib/strings";
 import { resolveVars, resolveHeaders } from "@/lib/resolveVars";
 import SchemaExplorer from "@/components/graphql/SchemaExplorer";
 
-// ── Public handle for imperative refresh ───────────────────────────────────
+// -- Public handle for imperative refresh -----------------------------------
 
 export interface GraphQLTabHandle {
     refresh(entity: SavedGraphQLRequest | SavedGraphQLMock): void;
 }
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 export interface GraphQLTabProps {
     tabType: GraphQLTabType;
@@ -40,7 +40,7 @@ export interface GraphQLTabProps {
     label?: string;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component --------------------------------------------------------------
 
 const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQLTab(
     { tabType, tabId, draftTabId, initial, folders = [], activeEnv = null, onSave, onClose, onDirtyChange, label },
@@ -76,7 +76,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
         },
     }), [tabType]);
 
-    // ── Request pane sub-tabs ──────────────────────────────────────────────
+    // -- Request pane sub-tabs ----------------------------------------------
 
     type ReqSubTab = "query" | "variables" | "headers" | "pre-script" | "post-script" | "schema";
     const [reqSubTab, setReqSubTab] = useState<ReqSubTab>("query");
@@ -94,7 +94,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
         dispatch({ type: "SET_FIELD", field: "responseHeaders", value: rowsToHeaders(rows) });
     }, []);
 
-    // ── Send request ───────────────────────────────────────────────────────
+    // -- Send request -------------------------------------------------------
 
     const handleSend = useCallback(async () => {
         if (!state.endpointUrl.trim()) return;
@@ -116,7 +116,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
         }
     }, [state.endpointUrl, state.headers, state.query, state.variables, state.operationName, activeEnv]);
 
-    // ── Save ───────────────────────────────────────────────────────────────
+    // -- Save ---------------------------------------------------------------
 
     const handleSave = useCallback(async () => {
         dispatch({ type: "SAVE_START" });
@@ -130,7 +130,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
         }
     }, [state, tabType, onSave, markSaved]);
 
-    // ── Render: Request mode ───────────────────────────────────────────────
+    // -- Render: Request mode -----------------------------------------------
 
     const reqTabs: { id: ReqSubTab; label: string }[] = [
         { id: "query", label: strings.graphql.tabQuery },
@@ -146,13 +146,13 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
         { id: "headers", label: strings.graphql.tabResponseHeaders },
     ];
 
-    // ── Format response body ───────────────────────────────────────────────
+    // -- Format response body -----------------------------------------------
 
     const formattedResBody = (() => {
         try { return JSON.stringify(JSON.parse(state.resBody), null, 2); } catch { return state.resBody; }
     })();
 
-    // ── Render ─────────────────────────────────────────────────────────────
+    // -- Render -------------------------------------------------------------
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
@@ -164,7 +164,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                 onClose={onClose}
             />
 
-            {/* URL bar — only for request mode */}
+            {/* URL bar - only for request mode */}
             {tabType === "request" && (
                 <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex items-center gap-2">
                     <div

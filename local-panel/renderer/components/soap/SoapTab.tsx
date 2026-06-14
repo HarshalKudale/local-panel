@@ -18,13 +18,13 @@ import { cn } from "@/components/ui/cn";
 import WsdlExplorer from "@/components/soap/WsdlExplorer";
 import { strings } from "@/lib/strings";
 
-// ── Public handle for imperative refresh ───────────────────────────────────
+// -- Public handle for imperative refresh -----------------------------------
 
 export interface SoapTabHandle {
     refresh(entity: SavedSoapRequest | SavedSoapMock): void;
 }
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 export interface SoapTabProps {
     tabType: SoapTabType;
@@ -38,7 +38,7 @@ export interface SoapTabProps {
     label?: string;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component --------------------------------------------------------------
 
 const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
     { tabType, tabId, draftTabId, initial, folders = [], activeEnv = null, onSave, onClose, label },
@@ -70,7 +70,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
         },
     }), [tabType]);
 
-    // ── Header rows helper ───────────────────────────────────────────────
+    // -- Header rows helper -----------------------------------------------
 
     const headerRows: KVRow[] = headersToRows(
         tabType === "request" ? state.headers : state.responseHeaders,
@@ -80,7 +80,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
         dispatch({ type: "SET_FIELD", field, value: rowsToHeaders(rows) });
     }, [tabType]);
 
-    // ── Send request ─────────────────────────────────────────────────────
+    // -- Send request -----------------------------------------------------
 
     const handleSend = useCallback(async () => {
         if (!state.endpointUrl) return;
@@ -108,7 +108,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
         }
     }, [state.endpointUrl, state.soapAction, state.headers, state.body, activeEnv]);
 
-    // ── Save ─────────────────────────────────────────────────────────────
+    // -- Save -------------------------------------------------------------
 
     const handleSave = useCallback(async () => {
         dispatch({ type: "SAVE_START" });
@@ -122,7 +122,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
         }
     }, [state, tabType, onSave, markSaved]);
 
-    // ── Request mode: left pane tabs ─────────────────────────────────────
+    // -- Request mode: left pane tabs -------------------------------------
 
     const reqTabs = tabType === "request"
         ? [
@@ -142,7 +142,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
         { id: "headers" as const, label: strings.soap.tabHeaders },
     ];
 
-    // ── Render ───────────────────────────────────────────────────────────
+    // -- Render -----------------------------------------------------------
 
     return (
         <div className="flex flex-col h-full overflow-hidden">

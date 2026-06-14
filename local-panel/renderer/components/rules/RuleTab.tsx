@@ -7,7 +7,7 @@ import { useDraftPersist, loadDraft } from "@/lib/useDraftPersist";
 import { strings } from "@/lib/strings";
 import { Input, Select, FormField } from "@/components/ui";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// -- Types ------------------------------------------------------------------
 
 export interface RuleTabHandle {
   refresh(rule: ProxyRule): void;
@@ -47,7 +47,7 @@ interface Props {
   onClose(): void;
 }
 
-// ── RuleDraft type for localStorage ───────────────────────────────────────
+// -- RuleDraft type for localStorage ---------------------------------------
 
 interface RuleDraft {
   name?: string;
@@ -93,7 +93,7 @@ function isDraftEmpty(s: RuleTabState): boolean {
   return !s.name && !s.pattern && !s.requestScript && !s.responseScript;
 }
 
-// ── RuleTab component ──────────────────────────────────────────────────────
+// -- RuleTab component ------------------------------------------------------
 
 export default forwardRef<RuleTabHandle, Props>(function RuleTab(
   { tabId, draftTabId, initial, folders, config, onSave, onClose },

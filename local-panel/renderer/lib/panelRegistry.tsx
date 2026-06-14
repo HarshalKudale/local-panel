@@ -18,7 +18,7 @@ import {
     Play,
 } from "@/lib/icons";
 
-// ── Panel ID union type ─────────────────────────────────────────────────────
+// -- Panel ID union type -----------------------------------------------------
 
 export type Panel =
     | "services"
@@ -42,7 +42,7 @@ export type Panel =
     | "webhooks"
     | "applications";
 
-// ── Panel entry definition ──────────────────────────────────────────────────
+// -- Panel entry definition --------------------------------------------------
 
 export interface PanelEntry {
     id: Panel;
@@ -59,12 +59,12 @@ export interface PanelEntry {
     helpText: string;
 }
 
-// ── Panel registry ──────────────────────────────────────────────────────────
+// -- Panel registry ----------------------------------------------------------
 // Toggle `enabled` to false to hide a panel from the sidebar and show a
 // placeholder when navigated to directly. Useful for in-progress panels.
 
 export const PANEL_REGISTRY: PanelEntry[] = [
-    // ─── Routing (flat) ───────────────────────────────────────────────────────
+    // --- Routing (flat) -------------------------------------------------------
     {
         id: "mappings",
         label: strings.nav.mappings,
@@ -93,7 +93,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         helpText: strings.capture.helpText,
     },
 
-    // ─── Mock (flat) ────────────────────────────────────────────────────────────
+    // --- Mock (flat) ------------------------------------------------------------
     {
         id: "mock-rest",
         label: strings.panels.sectionRest,
@@ -131,7 +131,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         helpText: strings.panels.grpcMockHelp,
     },
 
-    // ─── Request (flat) ───────────────────────────────────────────────────────
+    // --- Request (flat) -------------------------------------------------------
     {
         id: "req-rest",
         label: strings.panels.sectionRest,
@@ -187,7 +187,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         helpText: strings.panels.webhooksHelp,
     },
 
-    // ─── Tools (flat) ─────────────────────────────────────────────────────────
+    // --- Tools (flat) ---------------------------------------------------------
     {
         id: "environments",
         label: strings.nav.environments,
@@ -199,7 +199,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         helpText: strings.environments.helpText,
     },
 
-    // ─── Applications (flat) ──────────────────────────────────────────────────
+    // --- Applications (flat) --------------------------------------------------
     {
         id: "services",
         label: strings.nav.services,
@@ -228,7 +228,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         helpText: strings.panels.healthbarHelp,
     },
 
-    // ─── Config (flat) ────────────────────────────────────────────────────────
+    // --- Config (flat) --------------------------------------------------------
     {
         id: "workspace",
         label: strings.panels.sectionWorkspace,
@@ -261,7 +261,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
     },
 ];
 
-// ── Derived helpers ─────────────────────────────────────────────────────────
+// -- Derived helpers ---------------------------------------------------------
 
 /** Panel entries that are both enabled and visible in the sidebar nav.
  *  Panels with showInSidebar: false (workspace, audit) are still functional

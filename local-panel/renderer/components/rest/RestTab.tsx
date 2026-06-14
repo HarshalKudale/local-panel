@@ -20,13 +20,13 @@ import { runPreScript, runPostScript } from "@/lib/scriptRunner";
 import { runTestScript } from "@/lib/testRunner";
 import { ChevronDown } from "@/lib/icons";
 
-// ── Public handle for imperative refresh ───────────────────────────────────
+// -- Public handle for imperative refresh -----------------------------------
 
 export interface RestTabHandle {
   refresh(entity: SavedRequest | MockRule): void;
 }
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 export interface RestTabProps {
   tabType: TabType;
@@ -49,7 +49,7 @@ export interface RestTabProps {
   label?: string;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component --------------------------------------------------------------
 
 const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
   {
@@ -92,7 +92,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     },
   }), [tabType]);
 
-  // ── cURL parsing ──────────────────────────────────────────────────────
+  // -- cURL parsing ------------------------------------------------------
 
   const handleCurlChange = useCallback((v: string) => {
     dispatch({ type: "SET_FIELD", field: "curlInput", value: v });
@@ -105,7 +105,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     dispatch({ type: "APPLY_CURL", url: p.url ?? "", method: p.method ?? "", headers: filtered, body: p.body ?? "" });
   }, []);
 
-  // ── Regex toggle (mock only) ───────────────────────────────────────────
+  // -- Regex toggle (mock only) -------------------------------------------
 
   const handleRegexToggle = useCallback((checked: boolean) => {
     dispatch({ type: "SET_FIELD", field: "useRegex", value: checked });
@@ -123,7 +123,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     }
   }, [state.useRegex]);
 
-  // ── Send (request mode) ────────────────────────────────────────────────
+  // -- Send (request mode) ------------------------------------------------
 
   const handleSend = useCallback(async () => {
     if (!state.url.trim()) return;
@@ -184,7 +184,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     }
   }, [state.url, state.method, state.reqHeaders, state.reqBody, state.preScript, state.postScript, state.testScript, state.resMode, state.scriptErr, activeEnv]);
 
-  // ── Test (mock mode) ───────────────────────────────────────────────────
+  // -- Test (mock mode) ---------------------------------------------------
 
   const handleTest = useCallback(async () => {
     if (!state.url.trim()) return;
@@ -216,7 +216,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     }
   }, [state.url, state.method, state.reqHeaders, state.reqBody, state.resMode, state.resHeaders, activeEnv]);
 
-  // ── Save ───────────────────────────────────────────────────────────────
+  // -- Save ---------------------------------------------------------------
 
   const handleSave = useCallback(async () => {
     if (tabType === "request" && !state.url.trim()) return;
@@ -231,7 +231,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     }
   }, [state, tabType, onSave, markSaved]);
 
-  // ── Create mock from current request/response ─────────────────────────
+  // -- Create mock from current request/response -------------------------
 
   const handleCreateMock = useCallback(() => {
     if (!onCreateMock) return;
@@ -254,7 +254,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     });
   }, [state, onCreateMock]);
 
-  // ── Derived ────────────────────────────────────────────────────────────
+  // -- Derived ------------------------------------------------------------
 
   const resBodyText = state.result
     ? (state.resMode === "json" ? tryFormat(b64ToText(state.result.body)) : b64ToText(state.result.body))
@@ -280,7 +280,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
 
   const errorMsg = state.sendErr ?? state.saveErr ?? state.regexError ?? state.testError ?? null;
 
-  // ── Render ─────────────────────────────────────────────────────────────
+  // -- Render -------------------------------------------------------------
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-bg1">
@@ -293,7 +293,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         onClose={onClose}
       />
 
-      {/* cURL import — collapsible for request, always open for mock */}
+      {/* cURL import - collapsible for request, always open for mock */}
       {showCurlImport && (
         tabType === "request" ? (
           <div className="px-4 flex-shrink-0 border-b border-border bg-bg0/30">

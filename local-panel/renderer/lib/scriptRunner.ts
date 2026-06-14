@@ -1,9 +1,9 @@
 /**
  * Script execution sandbox for pre/post request scripts.
- * Scripts run in the main process via vm.createContext (sandboxed — no fs/net/require).
+ * Scripts run in the main process via vm.createContext (sandboxed - no fs/net/require).
  *
  * Pre-script context:
- *   lp.request.url, lp.request.headers, lp.request.body  (mutable — changes apply to this send only)
+ *   lp.request.url, lp.request.headers, lp.request.body  (mutable - changes apply to this send only)
  *   lp.environment.get/set/unset
  *
  * Post-script context:
@@ -38,14 +38,14 @@ export interface RunPostScriptResult {
 }
 
 export interface RunPreScriptResult {
-  /** Possibly-mutated request to use for the actual send (ephemeral — not saved) */
+  /** Possibly-mutated request to use for the actual send (ephemeral - not saved) */
   req: ScriptRequest;
   /** Updated environment variables (to be used for the rest of this send cycle) */
   envVars: Record<string, string>;
   error?: string;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// -- Helpers ------------------------------------------------------------------
 
 function envToMap(env: Environment | null): Record<string, string> {
   const map: Record<string, string> = {};
@@ -56,11 +56,11 @@ function envToMap(env: Environment | null): Record<string, string> {
 
 // Scripts run via IPC in the main-process vm sandbox (scriptExecutor.ts)
 
-// ── Public API ────────────────────────────────────────────────────────────────
+// -- Public API ----------------------------------------------------------------
 
 /**
  * Run the pre-script for a request via the main-process vm sandbox.
- * Returns a (possibly mutated) copy of the request — the original is never touched.
+ * Returns a (possibly mutated) copy of the request - the original is never touched.
  */
 export async function runPreScript(
   script: string,

@@ -118,7 +118,7 @@ export default function AppSidebar({
     return (
         <div className="w-48 flex flex-col h-full overflow-hidden">
 
-            {/* ── Search ──────────────────────────────────────────────────── */}
+            {/* -- Search ---------------------------------------------------- */}
             <div className="px-2 pt-2 pb-1 flex-shrink-0">
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-bg2 border border-border/60">
                     <Search size={11} className="flex-shrink-0 text-text-dim opacity-60" />
@@ -138,7 +138,7 @@ export default function AppSidebar({
                 </div>
             </div>
 
-            {/* ── Nav sections (scrollable) ─────────────────────────────── */}
+            {/* -- Nav sections (scrollable) ------------------------------- */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1">
                 {isSearching ? (
                     filteredEntries.length === 0 ? (
@@ -197,11 +197,11 @@ export default function AppSidebar({
                 )}
             </div>
 
-            {/* ── Sticky workspace footer ───────────────────────────────── */}
+            {/* -- Sticky workspace footer --------------------------------- */}
             <div className="flex-shrink-0 border-t border-border bg-bg1 relative">
                 <div className="flex items-center gap-1.5 px-2 py-2">
 
-                    {/* Avatar + name → opens workspace switcher */}
+                    {/* Avatar + name -> opens workspace switcher */}
                     <button
                         className="flex items-center gap-2 flex-1 min-w-0 rounded hover:bg-bg2 px-1 py-1 transition-colors cursor-pointer"
                         onClick={() => { setWsSwitcherOpen((v) => !v); setWsMenuOpen(false); }}
@@ -251,7 +251,7 @@ export default function AppSidebar({
                     </div>
                 </div>
 
-                {/* Workspace switcher dropdown — opens upward */}
+                {/* Workspace switcher dropdown - opens upward */}
                 {wsSwitcherOpen && (
                     <>
                         <div

@@ -1,6 +1,6 @@
 import { SavedGrpcRequest, SavedGrpcMock } from "@/types";
 
-// ── State ──────────────────────────────────────────────────────────────────
+// -- State ------------------------------------------------------------------
 
 export type GrpcTabType = "request" | "mock";
 
@@ -39,7 +39,7 @@ export interface GrpcTabState {
     folderId: string | null;
 }
 
-// ── Draft shapes ───────────────────────────────────────────────────────────
+// -- Draft shapes -----------------------------------------------------------
 
 export interface GrpcRequestDraft {
     name: string;
@@ -71,7 +71,7 @@ export interface GrpcMockDraft {
     folderId: string | null;
 }
 
-// ── Actions ────────────────────────────────────────────────────────────────
+// -- Actions ----------------------------------------------------------------
 
 export type GrpcAction =
     | { type: "SET_FIELD"; field: keyof GrpcTabState; value: unknown }
@@ -84,7 +84,7 @@ export type GrpcAction =
     | { type: "SAVE_DONE" }
     | { type: "LOAD"; state: Partial<GrpcTabState> };
 
-// ── Initial state factory ──────────────────────────────────────────────────
+// -- Initial state factory --------------------------------------------------
 
 export function initGrpcRequestState(req?: SavedGrpcRequest | null): GrpcTabState {
     return {
@@ -160,7 +160,7 @@ export function initGrpcMockState(mock?: SavedGrpcMock | null): GrpcTabState {
     };
 }
 
-// ── Reducer ────────────────────────────────────────────────────────────────
+// -- Reducer ----------------------------------------------------------------
 
 export function grpcTabReducer(state: GrpcTabState, action: GrpcAction): GrpcTabState {
     switch (action.type) {
@@ -187,7 +187,7 @@ export function grpcTabReducer(state: GrpcTabState, action: GrpcAction): GrpcTab
     }
 }
 
-// ── Serialization helpers ──────────────────────────────────────────────────
+// -- Serialization helpers --------------------------------------------------
 
 export function stateToRequestDraft(s: GrpcTabState): GrpcRequestDraft {
     return {

@@ -71,7 +71,7 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
         </button>
       )}
 
-      {/* Scrollable tabs — no scrollbar */}
+      {/* Scrollable tabs - no scrollbar */}
       <div
         ref={scrollRef}
         className="tab-bar-scroll flex items-end flex-1 overflow-x-auto min-w-0"

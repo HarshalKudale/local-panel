@@ -24,14 +24,14 @@ import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 
-// ── Constants ──────────────────────────────────────────────────────────────
+// -- Constants --------------------------------------------------------------
 
 const DRAFT_PREFIX = "ws-draft-";
 const isDraft = (id: string) => id.startsWith(DRAFT_PREFIX);
 
 const WS_METHODS = ["WS"];
 
-// ── Draft type ─────────────────────────────────────────────────────────────
+// -- Draft type -------------------------------------------------------------
 
 interface WsDraft {
   name: string;
@@ -40,7 +40,7 @@ interface WsDraft {
   headers: Record<string, string>;
 }
 
-// ── WebSocket editor ───────────────────────────────────────────────────────
+// -- WebSocket editor -------------------------------------------------------
 
 interface WsEditorProps {
   tabId: string;
@@ -155,7 +155,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
         onClose={onClose}
       />
 
-      {/* URL bar — Connect/Disconnect button inline */}
+      {/* URL bar - Connect/Disconnect button inline */}
       <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex items-center gap-2">
         <div
           className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden flex-1"
@@ -218,7 +218,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
       {/* Main 50/50 split: OutputStream (left) | InputStream (right) */}
       <PanelGroup orientation="horizontal" className="flex flex-1 min-h-0 overflow-hidden">
 
-        {/* ── OutputStream (left) ─────────────────────────────────────────── */}
+        {/* -- OutputStream (left) ------------------------------------------- */}
         <Panel defaultSize={50} minSize={20} className="flex flex-col overflow-hidden">
           <div className="flex flex-col h-full overflow-hidden">
             <TabStrip
@@ -322,7 +322,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
 
         <PanelResizeHandle className="w-1 bg-border hover:bg-accent/40 active:bg-accent/60 transition-colors cursor-col-resize flex-shrink-0" />
 
-        {/* ── InputStream (right) ─────────────────────────────────────────── */}
+        {/* -- InputStream (right) ------------------------------------------- */}
         <Panel defaultSize={50} minSize={20} className="flex flex-col overflow-hidden">
           <div className="flex flex-col h-full overflow-hidden">
             <TabStrip
@@ -384,7 +384,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
   );
 }
 
-// ── Message row ────────────────────────────────────────────────────────────
+// -- Message row ------------------------------------------------------------
 
 function looksLikeJson(s: string): boolean {
   const t = s.trimStart();
@@ -413,9 +413,9 @@ function MessageRow({ msg }: { msg: WsMessage }) {
   );
 }
 
-// ── Tree sidebar ───────────────────────────────────────────────────────────
+// -- Tree sidebar -----------------------------------------------------------
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
   config: AppConfig;
@@ -431,7 +431,7 @@ interface Props {
   onRestoreItem?: (id: string) => void;
 }
 
-// ── WebSocketsPanel ────────────────────────────────────────────────────────
+// -- WebSocketsPanel --------------------------------------------------------
 
 export default function WebSocketsPanel({ config, onConfigChange, activeEnv = null, onHistoryOpen, onEntityPathChange, historyOpen = false, onAfterSave, entitySyncStatus, onPublishItem, onPublishFolder, onRestoreItem }: Props) {
   const connections = config.wsConnections ?? [];
@@ -600,7 +600,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
     [connections, folders, search, activeTab],
   );
 
-  // ── Sidebar ──────────────────────────────────────────────────────────────
+  // -- Sidebar --------------------------------------------------------------
 
   const sidebarContent = (
     <>
@@ -634,7 +634,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
     </>
   );
 
-  // ── Main content ─────────────────────────────────────────────────────────
+  // -- Main content ---------------------------------------------------------
 
   const mainContent = (
     <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">
@@ -721,7 +721,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
   );
 }
 
-// ── WsTabHeader — green/red dot based on connection status ─────────────────
+// -- WsTabHeader - green/red dot based on connection status -----------------
 
 function WsTabHeader({ tabId, label, isDraft: draft, onClose }: {
   tabId: string; label: string; isDraft: boolean; isActive?: boolean;

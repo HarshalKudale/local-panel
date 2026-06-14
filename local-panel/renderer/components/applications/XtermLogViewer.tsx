@@ -29,7 +29,7 @@ export default function XtermLogViewer({ appId, height = 280 }: Props) {
     // Write a chunk to the terminal with stream-appropriate coloring
     const writeChunk = useCallback((term: XTerm, chunk: AppLogChunk) => {
         let data = chunk.data;
-        // Normalise bare \n → \r\n for proper xterm rendering
+        // Normalise bare \n -> \r\n for proper xterm rendering
         data = data.replace(/\r?\n/g, "\r\n");
 
         if (chunk.stream === "stderr") {
@@ -157,7 +157,7 @@ export default function XtermLogViewer({ appId, height = 280 }: Props) {
                     </Button>
                 </div>
             </div>
-            {/* Terminal container — must have explicit height for xterm */}
+            {/* Terminal container - must have explicit height for xterm */}
             <div
                 ref={containerRef}
                 className="rounded overflow-hidden border border-border/20"

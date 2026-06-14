@@ -260,7 +260,7 @@ export default function AuditLogPanel({ activeWorkspaceId }: Props) {
                   <div className="select-text">{rowContent}</div>
                 )}
 
-                {/* Expanded diff — update only */}
+                {/* Expanded diff - update only */}
                 {isExpanded && (
                   <div className="px-4 pb-4 pt-1 bg-bg1/50">
                     <div className="flex items-center gap-3 mb-2">
@@ -303,7 +303,7 @@ export default function AuditLogPanel({ activeWorkspaceId }: Props) {
   );
 }
 
-// ── Inline diff ────────────────────────────────────────────────────────────────
+// -- Inline diff ----------------------------------------------------------------
 
 interface DiffProps {
   before: unknown | null;

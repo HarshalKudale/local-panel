@@ -18,7 +18,7 @@ import {
 } from "@/components/grpc/grpcTabReducer";
 import ProtoExplorer from "@/components/grpc/ProtoExplorer";
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
     tabType: GrpcTabType;
@@ -31,7 +31,7 @@ interface Props {
     onClose: () => void;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// -- Helpers ----------------------------------------------------------------
 
 function metadataToRows(meta: Record<string, string>): KVRow[] {
     const entries = Object.entries(meta);
@@ -54,7 +54,7 @@ const STREAMING_BADGES: Record<string, string> = {
     bidi: strings.grpc.streamBidirectional,
 };
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component --------------------------------------------------------------
 
 export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, activeEnv = null, onSave, onClose }: Props) {
     const isNew = !!draftTabId;
@@ -164,7 +164,7 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
 
     const set = (field: keyof GrpcTabState) => (value: unknown) => dispatch({ type: "SET_FIELD", field, value });
 
-    // ── Render ─────────────────────────────────────────────────────────────
+    // -- Render -------------------------------------------------------------
 
     const reqSubTabs: { id: ReqSubTab; label: string }[] = tabType === "request"
         ? [{ id: "message", label: strings.grpc.tabMessage }, { id: "metadata", label: strings.grpc.tabMetadata }, { id: "pre-script", label: strings.grpc.tabPreScript }, { id: "post-script", label: strings.grpc.tabPostScript }, { id: "proto", label: strings.grpc.tabProto }]

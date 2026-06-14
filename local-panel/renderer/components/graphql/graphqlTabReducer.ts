@@ -1,6 +1,6 @@
 import { SavedGraphQLRequest, SavedGraphQLMock } from "@/types";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// -- Types ------------------------------------------------------------------
 
 export type GraphQLTabType = "request" | "mock";
 
@@ -39,7 +39,7 @@ export interface GraphQLTabState {
     dirty: boolean;
 }
 
-// ── Draft shapes ───────────────────────────────────────────────────────────
+// -- Draft shapes -----------------------------------------------------------
 
 export interface GraphQLRequestDraft {
     name: string;
@@ -66,7 +66,7 @@ export interface GraphQLMockDraft {
     folderId: string | null;
 }
 
-// ── Actions ────────────────────────────────────────────────────────────────
+// -- Actions ----------------------------------------------------------------
 
 export type GraphQLTabAction =
     | { type: "SET_FIELD"; field: keyof GraphQLTabState; value: any }
@@ -80,7 +80,7 @@ export type GraphQLTabAction =
     | { type: "SAVE_ERROR" }
     | { type: "REFRESH"; entity: SavedGraphQLRequest | SavedGraphQLMock; tabType: GraphQLTabType };
 
-// ── Initial state ──────────────────────────────────────────────────────────
+// -- Initial state ----------------------------------------------------------
 
 export function initGraphQLState(
     entity: SavedGraphQLRequest | SavedGraphQLMock | Partial<SavedGraphQLRequest> | Partial<SavedGraphQLMock> | null,
@@ -141,7 +141,7 @@ export function initGraphQLState(
     return base;
 }
 
-// ── Reducer ────────────────────────────────────────────────────────────────
+// -- Reducer ----------------------------------------------------------------
 
 export function graphqlTabReducer(state: GraphQLTabState, action: GraphQLTabAction): GraphQLTabState {
     switch (action.type) {
@@ -169,7 +169,7 @@ export function graphqlTabReducer(state: GraphQLTabState, action: GraphQLTabActi
     }
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// -- Helpers ----------------------------------------------------------------
 
 export function stateToRequestPayload(state: GraphQLTabState): Omit<SavedGraphQLRequest, "id" | "createdAt" | "workspaceId"> {
     return {

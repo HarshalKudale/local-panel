@@ -2,12 +2,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Environment } from "@/types";
 import { resolveVars, resolveHeaders } from "@/lib/resolveVars";
 
-// ── Connection registry (module-level, shared across all hook instances) ─────
+// -- Connection registry (module-level, shared across all hook instances) -----
 
 /** Max concurrent live WebSocket connections. */
 export const MAX_WS_CONNECTIONS = 5;
 
-/** Map of tabId → WebSocket for all currently open connections. */
+/** Map of tabId -> WebSocket for all currently open connections. */
 const activeConnections = new Map<string, WebSocket>();
 
 export function getActiveConnectionCount(): number {
@@ -31,7 +31,7 @@ function dispatchStatusColor(tabId: string, status: WsStatus): void {
   }));
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// -- Types ---------------------------------------------------------------------
 
 export type WsStatus = "disconnected" | "connecting" | "connected" | "error";
 
@@ -42,7 +42,7 @@ export interface WsMessage {
   data: string;
 }
 
-// ── Hook ──────────────────────────────────────────────────────────────────────
+// -- Hook ----------------------------------------------------------------------
 
 interface UseWebSocketOptions {
   tabId: string;

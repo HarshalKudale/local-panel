@@ -152,7 +152,7 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
     <PanelLayout title={strings.settings.title} subtitle={strings.settings.subtitle}>
       <div className="flex flex-col gap-6">
 
-        {/* ── Server section ─────────────────────────────────────────── */}
+        {/* -- Server section ------------------------------------------- */}
         <section>
           <SectionLabel>{strings.settings.sectionServer}</SectionLabel>
 
@@ -278,7 +278,7 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
           </SectionCard>
         </section>
 
-        {/* ── TLS Interception section ───────────────────────────────── */}
+        {/* -- TLS Interception section --------------------------------- */}
         <section>
           <SectionLabel>{strings.settings.sectionTls}</SectionLabel>
 
@@ -287,7 +287,7 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
           </div>
 
           <SectionCard>
-            {/* ── Generate ───────────────────────────────────────────── */}
+            {/* -- Generate --------------------------------------------- */}
             <SettingsRow
               title={strings.settings.tlsCaCert}
               desc={strings.settings.tlsCaCertDesc}
@@ -315,7 +315,7 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
               </div>
             </SettingsRow>
 
-            {/* ── Key import (only shown if using a custom/imported cert) ── */}
+            {/* -- Key import (only shown if using a custom/imported cert) -- */}
             <SettingsRow title={strings.settings.tlsCaKey} desc={strings.settings.tlsCaKeyDesc}>
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-mono ${hasKey ? "text-green" : "text-text-dim"}`}>
@@ -333,7 +333,7 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
               </div>
             </SettingsRow>
 
-            {/* ── Install / Export / Remove — only when cert+key are ready ── */}
+            {/* -- Install / Export / Remove - only when cert+key are ready -- */}
             {tlsReady && (
               <>
                 <SettingsRow
@@ -393,13 +393,13 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
           </SectionCard>
         </section>
 
-        {/* ── Appearance section ─────────────────────────────────────── */}
+        {/* -- Appearance section --------------------------------------- */}
         <AppearanceSection
           sidebarVisibility={sidebarVisibility}
           onSidebarVisibilityChange={onSidebarVisibilityChange}
         />
 
-        {/* ── About section ──────────────────────────────────────────── */}
+        {/* -- About section -------------------------------------------- */}
         <section>
           <SectionLabel>{strings.settings.sectionAbout}</SectionLabel>
 
@@ -463,7 +463,7 @@ function AboutRow({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
-// ── Appearance section (collapsible, grouped) ─────────────────────────────
+// -- Appearance section (collapsible, grouped) -----------------------------
 
 interface AppearanceSectionProps {
   sidebarVisibility: Record<string, boolean>;

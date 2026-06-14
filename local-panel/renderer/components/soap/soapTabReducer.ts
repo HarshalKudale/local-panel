@@ -1,6 +1,6 @@
 import { SavedSoapRequest, SavedSoapMock } from "@/types";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// -- Types ------------------------------------------------------------------
 
 export type SoapTabType = "request" | "mock";
 
@@ -40,7 +40,7 @@ export interface SoapTabState {
     resTab: "body" | "headers";
 }
 
-// ── Draft shapes ───────────────────────────────────────────────────────────
+// -- Draft shapes -----------------------------------------------------------
 
 export interface SoapRequestDraft {
     name: string;
@@ -65,7 +65,7 @@ export interface SoapMockDraft {
     folderId: string | null;
 }
 
-// ── Actions ────────────────────────────────────────────────────────────────
+// -- Actions ----------------------------------------------------------------
 
 export type SoapTabAction =
     | { type: "SET_FIELD"; field: string; value: unknown }
@@ -79,7 +79,7 @@ export type SoapTabAction =
     | { type: "SAVE_ERROR" }
     | { type: "REFRESH"; entity: SavedSoapRequest | SavedSoapMock; tabType: SoapTabType };
 
-// ── Init ───────────────────────────────────────────────────────────────────
+// -- Init -------------------------------------------------------------------
 
 const DEFAULT_SOAP_BODY = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -182,7 +182,7 @@ export function initSoapState(
     return base;
 }
 
-// ── Reducer ────────────────────────────────────────────────────────────────
+// -- Reducer ----------------------------------------------------------------
 
 export function soapTabReducer(state: SoapTabState, action: SoapTabAction): SoapTabState {
     switch (action.type) {
@@ -210,7 +210,7 @@ export function soapTabReducer(state: SoapTabState, action: SoapTabAction): Soap
     }
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// -- Helpers ----------------------------------------------------------------
 
 export function soapStateToSavePayload(
     state: SoapTabState,

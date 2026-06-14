@@ -16,7 +16,7 @@ function applyTheme(themeDef: ThemeDef) {
     html.style.setProperty(`--${key}`, value);
   }
 
-  // Sync Electron titlebar overlay — best-effort (no-op in browser/test env)
+  // Sync Electron titlebar overlay - best-effort (no-op in browser/test env)
   window.api?.setTitleBarOverlay?.(themeDef.overlay.color, themeDef.overlay.symbolColor);
 }
 

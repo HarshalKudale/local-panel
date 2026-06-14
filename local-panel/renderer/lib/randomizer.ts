@@ -6,7 +6,7 @@
  *   "Hello {{random.name}}, your ID is {{random.uuid}}"
  */
 
-// ── Token catalogue ─────────────────────────────────────────────────────────
+// -- Token catalogue ---------------------------------------------------------
 
 export interface RandomizerToken {
   key: string;          // e.g. "random.name"
@@ -56,7 +56,7 @@ export const RANDOMIZER_TOKENS: RandomizerToken[] = [
   { key: "random.locale",      description: "Locale string",   example: "en-US" },
 ];
 
-// ── Static data pools (no external dep required) ────────────────────────────
+// -- Static data pools (no external dep required) ----------------------------
 
 const FIRST_NAMES = ["Alice","Bob","Carol","David","Eve","Frank","Grace","Hank","Iris","Jack","Karen","Leo","Maria","Nate","Olivia","Paul","Quinn","Rachel","Sam","Tina","Uma","Victor","Wendy","Xander","Yara","Zoe"];
 const LAST_NAMES  = ["Adams","Baker","Clark","Davis","Evans","Foster","Garcia","Harris","Ingram","Jones","Klein","Lewis","Moore","Nelson","Owen","Parker","Quinn","Reed","Smith","Taylor","Turner","Underwood","Vance","Walker","Young","Zhang"];
@@ -95,7 +95,7 @@ function hexStr(len: number): string {
   return Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16)).join("");
 }
 
-// ── Core generator ──────────────────────────────────────────────────────────
+// -- Core generator ----------------------------------------------------------
 
 export function generateRandom(key: string): string {
   switch (key) {
@@ -178,7 +178,7 @@ export function generateRandom(key: string): string {
   }
 }
 
-// ── Resolver ─────────────────────────────────────────────────────────────────
+// -- Resolver -----------------------------------------------------------------
 
 /**
  * Replaces all {{random.xxx}} tokens in text with generated values.

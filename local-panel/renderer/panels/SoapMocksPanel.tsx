@@ -14,12 +14,12 @@ import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { strings } from "@/lib/strings";
 
 
-// ── Draft tab prefix ───────────────────────────────────────────────────────
+// -- Draft tab prefix -------------------------------------------------------
 
 const DRAFT_PREFIX = "soap-mock-draft-";
 const isDraftCheck = (id: string) => id.startsWith(DRAFT_PREFIX);
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
     config: AppConfig;
@@ -27,7 +27,7 @@ interface Props {
     activeEnv?: Environment | null;
 }
 
-// ── SoapMocksPanel ─────────────────────────────────────────────────────────
+// -- SoapMocksPanel ---------------------------------------------------------
 
 export default function SoapMocksPanel({ config, onConfigChange, activeEnv = null }: Props) {
     const mocks = config.soapMocks ?? [];
@@ -139,7 +139,7 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
 
     const folderStatusMap = useMemo(() => calculateFolderStatus(mocks, folders), [mocks, folders]);
 
-    // ── Sidebar ────────────────────────────────────────────────────────────
+    // -- Sidebar ------------------------------------------------------------
 
     const sidebarContent = (
         <>
@@ -174,7 +174,7 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
         </>
     );
 
-    // ── Main content ───────────────────────────────────────────────────────
+    // -- Main content -------------------------------------------------------
 
     const mainContent = (
         <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">

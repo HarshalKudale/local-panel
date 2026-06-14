@@ -34,7 +34,7 @@ interface Props {
   minHeight?: number;
   mode?: BodyMode;
   onModeChange?: (mode: BodyMode) => void;
-  /** Content-Type header value — used for binary/image display */
+  /** Content-Type header value - used for binary/image display */
   contentType?: string;
   /** When true, value is base64-encoded binary data */
   isBase64?: boolean;
@@ -138,7 +138,7 @@ export default forwardRef<BodyEditorHandle, Props>(function BodyEditor({
     if (newMode !== "form" && mode === "form") {
       onChange?.(serializeFormBody(formPairs));
     }
-    // Don't call onChange for none — the reducer stashes/restores body via SET_REQ_MODE
+    // Don't call onChange for none - the reducer stashes/restores body via SET_REQ_MODE
     onModeChange?.(newMode);
   };
 

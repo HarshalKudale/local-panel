@@ -73,7 +73,7 @@ export default forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEditor
     },
   }), []);
 
-  // ── Create editor on mount ────────────────────────────────────────────────
+  // -- Create editor on mount ------------------------------------------------
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -127,9 +127,9 @@ export default forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEditor
       viewRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally empty — we manage all updates imperatively
+  }, []); // intentionally empty - we manage all updates imperatively
 
-  // ── Sync external value changes ───────────────────────────────────────────
+  // -- Sync external value changes -------------------------------------------
 
   useEffect(() => {
     const view = viewRef.current;
@@ -143,7 +143,7 @@ export default forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEditor
     updatingRef.current = false;
   }, [value]);
 
-  // ── Sync language changes ─────────────────────────────────────────────────
+  // -- Sync language changes -------------------------------------------------
 
   useEffect(() => {
     viewRef.current?.dispatch({
@@ -151,7 +151,7 @@ export default forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEditor
     });
   }, [language]);
 
-  // ── Sync readOnly changes ─────────────────────────────────────────────────
+  // -- Sync readOnly changes -------------------------------------------------
 
   useEffect(() => {
     viewRef.current?.dispatch({

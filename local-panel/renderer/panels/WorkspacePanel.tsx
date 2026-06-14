@@ -71,7 +71,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
     }
   }, [nameInput, workspace?.name, wsId, onWorkspaceRename]);
 
-  // ── Connect logic ─────────────────────────────────────────────────────────
+  // -- Connect logic ---------------------------------------------------------
   const handleConnectClick = () => {
     setConnectError(null);
     const hasData = (
@@ -147,7 +147,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
     onConfigChange(fresh);
   };
 
-  // ── Delete ────────────────────────────────────────────────────────────────
+  // -- Delete ----------------------------------------------------------------
 
   const handleDeleteConfirm = async () => {
     setDeleteConfirm(false);
@@ -164,7 +164,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
       <PanelLayout title={strings.workspace.title} subtitle={strings.workspace.subtitle}>
         <div className="flex flex-col gap-6">
 
-          {/* ── Details ─────────────────────────────────────────────────── */}
+          {/* -- Details --------------------------------------------------- */}
           <section>
             <SectionLabel>{strings.workspace.sectionDetails}</SectionLabel>
             <SectionCard>
@@ -180,7 +180,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
             </SectionCard>
           </section>
 
-          {/* ── Remote Sync ─────────────────────────────────────────────── */}
+          {/* -- Remote Sync ----------------------------------------------- */}
           <section>
             <SectionLabel>{strings.workspace.sectionSync}</SectionLabel>
 
@@ -344,7 +344,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
             )}
           </section>
 
-          {/* ── Data ────────────────────────────────────────────────────── */}
+          {/* -- Data ------------------------------------------------------ */}
           <section>
             <SectionLabel>{strings.workspace.sectionData}</SectionLabel>
             <SectionCard>
@@ -357,7 +357,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
             </SectionCard>
           </section>
 
-          {/* ── Danger Zone ─────────────────────────────────────────────── */}
+          {/* -- Danger Zone ----------------------------------------------- */}
           <section>
             <SectionLabel>{strings.workspace.sectionDanger}</SectionLabel>
             <div className="bg-bg1 border border-red/20 rounded-lg overflow-hidden">
@@ -404,7 +404,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
   );
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// -- Helpers -------------------------------------------------------------------
 
 function SyncStatusBadge({ status, progressMessage }: { status: SyncStatus; progressMessage: string | null }) {
   const map: Record<SyncStatus, { label: string; color: string }> = {

@@ -207,7 +207,7 @@ export const strings = {
     emptyBody: "empty body",
     noHeaders: "No headers",
     closeDetail: "Close details",
-    // Context menu — single row
+    // Context menu - single row
     ctxMock: "Mock this request",
     ctxOpen: "Open in Requests",
     ctxSave: "Save to requests",
@@ -215,7 +215,7 @@ export const strings = {
     ctxUnblock: "Unblock request",
     ctxShare: "Share (as JSON file)",
     ctxDelete: "Delete",
-    // Context menu — multiple rows
+    // Context menu - multiple rows
     ctxMockMany: "Mock these requests",
     ctxSaveMany: "Save these to requests",
     ctxBlockMany: "Block these requests",

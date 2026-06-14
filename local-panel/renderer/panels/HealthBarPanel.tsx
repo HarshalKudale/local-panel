@@ -9,7 +9,7 @@ import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { Plus, RefreshCw, Activity, Trash2, Cloud, CheckCircle2, AlertCircle, X } from "@/lib/icons";
 import { strings } from "@/lib/strings";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// -- Types ------------------------------------------------------------------
 
 export interface HealthCheckResult {
   ok: boolean;
@@ -46,7 +46,7 @@ interface Props {
   onAfterSave?: () => void;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// -- Helpers ----------------------------------------------------------------
 
 function statusColor(s: CheckStatus, code: number | null): "green" | "red" | "yellow" | "dim" {
   if (s === "idle") return "dim";
@@ -99,7 +99,7 @@ function tryFormatJson(text: string | null): string {
   try { return JSON.stringify(JSON.parse(text), null, 2); } catch { return text; }
 }
 
-// ── Response Modal ─────────────────────────────────────────────────────────
+// -- Response Modal ---------------------------------------------------------
 
 function ResponseModal({
   open,
@@ -134,7 +134,7 @@ function ResponseModal({
     >
       <div className="bg-bg1 border border-border rounded-lg shadow-2xl flex flex-col w-full max-w-5xl h-[70%] overflow-hidden">
 
-        {/* ── Header ── */}
+        {/* -- Header -- */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-border flex-shrink-0">
           <StatusDot color={isSuccess ? "green" : isError ? "red" : "dim"} size="md" />
           <div className="flex-1 min-w-0">
@@ -160,17 +160,17 @@ function ResponseModal({
           </div>
         </div>
 
-        {/* ── Error banner ── */}
+        {/* -- Error banner -- */}
         {state.error && (
           <div className="px-6 py-3 bg-red/5 border-b border-red/20 text-xs text-red font-mono break-all flex-shrink-0">
             {state.error}
           </div>
         )}
 
-        {/* ── Split body ── */}
+        {/* -- Split body -- */}
         <div className="flex-1 flex overflow-hidden min-h-0">
 
-          {/* Left — Response Headers */}
+          {/* Left - Response Headers */}
           <div className="w-80 flex-shrink-0 border-r border-border flex flex-col overflow-hidden">
             <div className="px-4 py-2.5 border-b border-border/60 bg-bg0/30 flex-shrink-0">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">
@@ -191,7 +191,7 @@ function ResponseModal({
             </div>
           </div>
 
-          {/* Right — Response Body */}
+          {/* Right - Response Body */}
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="px-4 py-2.5 border-b border-border/60 bg-bg0/30 flex-shrink-0">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">
@@ -211,7 +211,7 @@ function ResponseModal({
 
         </div>
 
-        {/* ── Footer ── */}
+        {/* -- Footer -- */}
         <div className="flex justify-end px-6 py-3 border-t border-border flex-shrink-0">
           <Button variant="secondary" onClick={onClose}>{strings.common.close}</Button>
         </div>
@@ -221,7 +221,7 @@ function ResponseModal({
   );
 }
 
-// ── Service Card ───────────────────────────────────────────────────────────
+// -- Service Card -----------------------------------------------------------
 
 function ServiceCard({
   service,
@@ -311,7 +311,7 @@ function ServiceCard({
   );
 }
 
-// ── Add / Edit Modal ───────────────────────────────────────────────────────
+// -- Add / Edit Modal -------------------------------------------------------
 
 function AddServiceModal({
   open,
@@ -340,7 +340,7 @@ function AddServiceModal({
     if (!form.url.trim()) {
       errs.url = strings.healthBar.urlRequired;
     } else {
-      // Allow env var tokens {{VAR}} — validate after stripping them
+      // Allow env var tokens {{VAR}} - validate after stripping them
       const stripped = form.url.replace(/\{\{[^}]+\}\}/g, "placeholder");
       try { new URL(stripped); } catch {
         errs.url = strings.healthBar.urlInvalid;
@@ -390,7 +390,7 @@ function AddServiceModal({
   );
 }
 
-// ── HealthBarPanel ─────────────────────────────────────────────────────────
+// -- HealthBarPanel ---------------------------------------------------------
 
 let _hbid = 0;
 const mkHbId = () => `hb${Date.now().toString(36)}${(++_hbid).toString(36)}`;
@@ -422,7 +422,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
   const publishDisabled = syncStatus === "clean" || publishing;
   const publishTooltip = syncStatus === "clean" ? strings.healthBar.synced : undefined;
 
-  // ── Load services on mount / workspace change ────────────────────────────
+  // -- Load services on mount / workspace change ----------------------------
 
   const loadServices = useCallback(async () => {
     setLoading(true);
@@ -435,14 +435,14 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
     }
   }, [wsId]);
 
-  // ── Persist services ─────────────────────────────────────────────────────
+  // -- Persist services -----------------------------------------------------
 
   const persistServices = useCallback(async (svcs: HealthBarService[]) => {
     await window.api.healthbarSaveServices(wsId, svcs);
     onAfterSave?.();
   }, [wsId, onAfterSave]);
 
-  // ── Check a single service ───────────────────────────────────────────────
+  // -- Check a single service -----------------------------------------------
 
   const checkService = useCallback(async (svc: HealthBarService) => {
     if (inflightRef.current.has(svc.id)) return;
@@ -491,13 +491,13 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
     }
   }, [activeEnv]);
 
-  // ── Check all services ───────────────────────────────────────────────────
+  // -- Check all services ---------------------------------------------------
 
   const checkAll = useCallback((svcs: HealthBarService[]) => {
     for (const svc of svcs) checkService(svc);
   }, [checkService]);
 
-  // ── Mount effect ─────────────────────────────────────────────────────────
+  // -- Mount effect ---------------------------------------------------------
 
   useEffect(() => {
     loadServices().then((svcs) => {
@@ -507,7 +507,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wsId]);
 
-  // ── Add / Edit ───────────────────────────────────────────────────────────
+  // -- Add / Edit -----------------------------------------------------------
 
   const handleOpenAdd = () => {
     setEditingService(null);
@@ -544,7 +544,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
     }
   };
 
-  // ── Delete ───────────────────────────────────────────────────────────────
+  // -- Delete ---------------------------------------------------------------
 
   const handleDelete = useCallback(async (id: string) => {
     const ok = await confirm("Delete this service? This cannot be undone.");
@@ -559,7 +559,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
     await persistServices(updated);
   }, [confirm, services, persistServices]);
 
-  // ── Toggle auto-refresh ───────────────────────────────────────────────────
+  // -- Toggle auto-refresh ---------------------------------------------------
 
   const handleToggleAutoRefresh = useCallback(async (id: string, enabled: boolean) => {
     const updated = services.map((s) => s.id === id ? { ...s, autoRefreshEnabled: enabled } : s);
@@ -567,7 +567,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
     await persistServices(updated);
   }, [services, persistServices]);
 
-  // ── Publish ───────────────────────────────────────────────────────────────
+  // -- Publish ---------------------------------------------------------------
 
   const handlePublish = async () => {
     setPublishing(true);
@@ -578,7 +578,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
     }
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // -- Render ---------------------------------------------------------------
 
   const anyChecking = Object.values(checkStates).some((s) => s.status === "checking");
 

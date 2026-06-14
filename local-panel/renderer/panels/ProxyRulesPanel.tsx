@@ -122,7 +122,7 @@ export default function ProxyRulesPanel({
     await onConfigChange(fresh);
   }, [onConfigChange]);
 
-  // ── Label helpers ──────────────────────────────────────────────────────
+  // -- Label helpers ------------------------------------------------------
 
   interface RuleDraftSnapshot { name?: string; pattern?: string; }
 
@@ -138,7 +138,7 @@ export default function ProxyRulesPanel({
     return r.name || r.pattern.slice(0, 30) || strings.proxyRules.newRule;
   };
 
-  // ── Folder tree items ──────────────────────────────────────────────────
+  // -- Folder tree items --------------------------------------------------
 
   const folderViewItems: FolderTreeItem[] = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -159,7 +159,7 @@ export default function ProxyRulesPanel({
 
   const draftTabIds = openTabs.filter(isDraft);
 
-  // ── Sidebar ────────────────────────────────────────────────────────────
+  // -- Sidebar ------------------------------------------------------------
 
   const sidebarContent = (
     <>
@@ -204,7 +204,7 @@ export default function ProxyRulesPanel({
     </>
   );
 
-  // ── Main content ───────────────────────────────────────────────────────
+  // -- Main content -------------------------------------------------------
 
   const mainContent = (
     <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">

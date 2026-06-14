@@ -15,12 +15,12 @@ import { strings } from "@/lib/strings";
 
 import { GrpcMockDraft } from "@/components/grpc/grpcTabReducer";
 
-// ── Constants ──────────────────────────────────────────────────────────────
+// -- Constants --------------------------------------------------------------
 
 const DRAFT_PREFIX = "grpc-mock-draft-";
 const isDraft = (id: string) => id.startsWith(DRAFT_PREFIX);
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
     config: AppConfig;
@@ -28,7 +28,7 @@ interface Props {
     activeEnv?: Environment | null;
 }
 
-// ── GrpcMocksPanel ─────────────────────────────────────────────────────
+// -- GrpcMocksPanel -----------------------------------------------------
 
 export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = null }: Props) {
     const mocks = config.grpcMocks ?? [];
@@ -165,7 +165,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
 
     const draftTabIds = openTabs.filter(isDraft);
 
-    // ── Sidebar ────────────────────────────────────────────────────────────
+    // -- Sidebar ------------------------------------------------------------
 
     const sidebarContent = (
         <>
@@ -223,7 +223,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
         </>
     );
 
-    // ── Main content ───────────────────────────────────────────────────────
+    // -- Main content -------------------------------------------------------
 
     const mainContent = (
         <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">

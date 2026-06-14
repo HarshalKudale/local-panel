@@ -6,7 +6,7 @@ import {
 import { BodyMode, contentTypeToMode, modeToContentType } from "@/lib/bodyUtils";
 import { SKIP_CURL_HEADERS } from "@/lib/curlParser";
 
-// ── Helper for case-insensitive header lookup ─────────────────────────────
+// -- Helper for case-insensitive header lookup -----------------------------
 
 function getHeaderCaseInsensitive(headers: Record<string, string> | undefined, key: string): string | undefined {
   if (!headers) return undefined;
@@ -17,7 +17,7 @@ function getHeaderCaseInsensitive(headers: Record<string, string> | undefined, k
   return undefined;
 }
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// -- Types ------------------------------------------------------------------
 
 export type TabType = "request" | "mock";
 
@@ -36,11 +36,11 @@ export interface TabState {
 
   // Request (left) pane
   reqTab: "params" | "headers" | "body" | "pre-script";
-  reqParams: KVRow[];   // ephemeral — derived from url, never saved
+  reqParams: KVRow[];   // ephemeral - derived from url, never saved
   reqHeaders: KVRow[];
   reqBody: string;
   reqMode: BodyMode;
-  reqBodyStash: Partial<Record<BodyMode, string>>;  // ephemeral — per-mode body content
+  reqBodyStash: Partial<Record<BodyMode, string>>;  // ephemeral - per-mode body content
 
   // Response (right) pane
   resTab: "body" | "headers" | "post-script" | "tests";
@@ -85,7 +85,7 @@ export interface TabState {
   testError: string | null;
 }
 
-// ── Draft shapes ───────────────────────────────────────────────────────────
+// -- Draft shapes -----------------------------------------------------------
 
 export interface RequestDraft {
   name: string; method: string; url: string; folderId: string | null;
@@ -104,7 +104,7 @@ export interface MockDraft {
   streamingChunkSeparator: string;
 }
 
-// ── Actions ────────────────────────────────────────────────────────────────
+// -- Actions ----------------------------------------------------------------
 
 // Parse the query string from a URL into KVRows (preserves order, handles duplicates)
 export function urlToParams(url: string): KVRow[] {
@@ -163,7 +163,7 @@ export type TabAction =
   | { type: "SAVE_ERROR"; error: string }
   | { type: "RESET"; tabType: TabType };
 
-// ── Default state ──────────────────────────────────────────────────────────
+// -- Default state ----------------------------------------------------------
 
 function defaultState(): TabState {
   return {
@@ -189,7 +189,7 @@ function defaultState(): TabState {
   };
 }
 
-// ── Entity → state helpers ─────────────────────────────────────────────────
+// -- Entity -> state helpers -------------------------------------------------
 
 function entityFieldsFromRequest(req: Partial<SavedRequest>): Partial<TabState> {
   const url = req.url ?? "";
@@ -244,7 +244,7 @@ function entityFieldsFromMock(mock: Partial<MockRule>): Partial<TabState> {
   };
 }
 
-// ── Reducer ────────────────────────────────────────────────────────────────
+// -- Reducer ----------------------------------------------------------------
 
 export function tabReducer(state: TabState, action: TabAction): TabState {
   switch (action.type) {
@@ -252,11 +252,11 @@ export function tabReducer(state: TabState, action: TabAction): TabState {
     case "SET_FIELD":
       return { ...state, [action.field]: action.value };
 
-    // URL changed from the URL bar — re-derive params
+    // URL changed from the URL bar - re-derive params
     case "SET_URL":
       return { ...state, url: action.url, reqParams: urlToParams(action.url) };
 
-    // Param rows edited — rebuild URL query string
+    // Param rows edited - rebuild URL query string
     case "SET_PARAMS": {
       const newUrl = paramsToUrl(state.url, action.params);
       return { ...state, reqParams: action.params, url: newUrl };
@@ -273,7 +273,7 @@ export function tabReducer(state: TabState, action: TabAction): TabState {
       const reqHeaders = ct
         ? [{ id: mkRowId(), enabled: true, key: "content-type", value: ct }, ...withoutCT]
         : withoutCT;
-      // Save current body to stash (skip stashing if switching away from none — it was empty)
+      // Save current body to stash (skip stashing if switching away from none - it was empty)
       const stash = { ...state.reqBodyStash };
       if (state.reqMode !== "none") stash[state.reqMode] = state.reqBody;
       // Restore body for the incoming mode (none shows no body, so body = "")
@@ -412,7 +412,7 @@ export function tabReducer(state: TabState, action: TabAction): TabState {
   }
 }
 
-// ── initState ──────────────────────────────────────────────────────────────
+// -- initState --------------------------------------------------------------
 
 export function initState(
   entity: SavedRequest | MockRule | Partial<SavedRequest> | Partial<MockRule> | null | undefined,
@@ -434,7 +434,7 @@ export function initState(
   return base;
 }
 
-// ── stateToSavePayload ─────────────────────────────────────────────────────
+// -- stateToSavePayload -----------------------------------------------------
 
 export function stateToSavePayload(
   state: TabState,
@@ -474,7 +474,7 @@ export function stateToSavePayload(
   }
 }
 
-// ── stateToDraft ───────────────────────────────────────────────────────────
+// -- stateToDraft -----------------------------------------------------------
 
 export function stateToDraft(state: TabState, tabType: TabType): RequestDraft | MockDraft {
   if (tabType === "request") {
@@ -498,7 +498,7 @@ export function stateToDraft(state: TabState, tabType: TabType): RequestDraft | 
   }
 }
 
-// ── isDraftEmpty ───────────────────────────────────────────────────────────
+// -- isDraftEmpty -----------------------------------------------------------
 
 export function isDraftEmpty(state: TabState, tabType: TabType): boolean {
   if (tabType === "request") {

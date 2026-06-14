@@ -15,12 +15,12 @@ import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 
-// ── Draft tab prefix ───────────────────────────────────────────────────────
+// -- Draft tab prefix -------------------------------------------------------
 
 const DRAFT_PREFIX = "mock-draft-";
 const isDraft = (id: string) => id.startsWith(DRAFT_PREFIX) || id.startsWith("prefill-");
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
   config: AppConfig;
@@ -38,7 +38,7 @@ interface Props {
   onRestoreItem?: (id: string) => void;
 }
 
-// ── MocksPanel ─────────────────────────────────────────────────────────────
+// -- MocksPanel -------------------------------------------------------------
 
 export default function MocksPanel({
   config, onConfigChange, pendingMockInitial, onPendingConsumed,
@@ -248,7 +248,7 @@ export default function MocksPanel({
 
   const draftTabIds = openTabs.filter(isDraft);
 
-  // ── Sidebar ────────────────────────────────────────────────────────────
+  // -- Sidebar ------------------------------------------------------------
 
   const sidebarContent = (
     <>
@@ -297,7 +297,7 @@ export default function MocksPanel({
     </>
   );
 
-  // ── Main content ───────────────────────────────────────────────────────
+  // -- Main content -------------------------------------------------------
 
   const mainContent = (
     <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">

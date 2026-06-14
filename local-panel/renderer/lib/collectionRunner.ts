@@ -1,5 +1,5 @@
 /**
- * Collection Runner engine — executes all requests in a folder sequentially,
+ * Collection Runner engine - executes all requests in a folder sequentially,
  * running pre-script, the actual request, post-script, and test script for each.
  * Returns a structured report of all results.
  */

@@ -27,7 +27,7 @@ export interface RunConfigTypeInfo {
     osOnly?: "win32";
 }
 
-// ── Type registry ─────────────────────────────────────────────────────────────
+// -- Type registry -------------------------------------------------------------
 
 export const RUN_CONFIG_TYPE_INFOS: RunConfigTypeInfo[] = [
     // Scripts
@@ -52,7 +52,7 @@ export const RUN_CONFIG_TYPE_INFOS: RunConfigTypeInfo[] = [
     { type: "docker-compose", label: "Docker Compose", iconName: "Layers", iconColor: "text-blue-400", category: "containers" },
 ];
 
-// ── Derived maps (kept for backward compat) ───────────────────────────────────
+// -- Derived maps (kept for backward compat) -----------------------------------
 
 export const RUN_CONFIG_TYPE_LABELS: Record<RunConfigType, string> = Object.fromEntries(
     RUN_CONFIG_TYPE_INFOS.map(info => [info.type, info.label])
@@ -73,7 +73,7 @@ export const CATEGORY_LABELS: Record<RunConfigCategory, string> = {
     containers: "Containers",
 };
 
-// ── Status helpers ────────────────────────────────────────────────────────────
+// -- Status helpers ------------------------------------------------------------
 
 /** Returns a Tailwind text-color class for the given process status. */
 export function statusColor(status: AppProcessStatus): string {

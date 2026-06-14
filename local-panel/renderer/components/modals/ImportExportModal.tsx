@@ -8,7 +8,7 @@ import {
   ExportRequest, PreflightRequest, ImportRequest,
 } from "@/types";
 
-// ── Kind metadata ──────────────────────────────────────────────────────────
+// -- Kind metadata ----------------------------------------------------------
 
 const KIND_LABELS: Record<ImportExportEntityKind, string> = {
   workspace: strings.importExport.kindWorkspace,
@@ -37,7 +37,7 @@ const ALL_KINDS: ImportExportEntityKind[] = [
   "mappings", "proxyRules", "websockets", "webhooks",
 ];
 
-// ── State machine ──────────────────────────────────────────────────────────
+// -- State machine ----------------------------------------------------------
 
 type Step =
   | { name: "selectKind" }
@@ -95,7 +95,7 @@ const initialState: State = {
   collisionStrategy: "keep",
 };
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
   open: boolean;
@@ -105,7 +105,7 @@ interface Props {
   onImportDone?(): void;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component --------------------------------------------------------------
 
 export default function ImportExportModal({ open, mode, wsId, onClose, onImportDone }: Props) {
   const [state, dispatch] = useReducer(reducer, initialState);

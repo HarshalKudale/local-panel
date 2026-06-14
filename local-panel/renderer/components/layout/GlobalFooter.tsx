@@ -4,7 +4,7 @@ import { Button } from "@/components/ui";
 import { strings } from "@/lib/strings";
 import type { SyncStatus, Workspace } from "@/types";
 
-// ── Panel → git path prefix ────────────────────────────────────────────────
+// -- Panel -> git path prefix ------------------------------------------------
 
 const PANEL_PREFIX: Record<string, string> = {
     mocks: "mocks/",
@@ -26,7 +26,7 @@ const PANEL_ENTITY_LABEL: Record<string, string> = {
     healthbar: "health check",
 };
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
     /** Current active panel name */
@@ -43,7 +43,7 @@ interface Props {
     rightContent?: React.ReactNode;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component --------------------------------------------------------------
 
 export default function GlobalFooter({
     panel,
@@ -75,7 +75,7 @@ export default function GlobalFooter({
         ).length;
     }, [entitySyncStatus, prefix]);
 
-    // Publish is available whenever there are local changes — no remote required
+    // Publish is available whenever there are local changes - no remote required
     // (backend commits locally and only pushes if a remote is configured)
     const publishDisabled = outgoingCount === 0 || publishing || isSyncing;
 
@@ -90,7 +90,7 @@ export default function GlobalFooter({
 
     const pluralLabel = outgoingCount !== 1 ? `${entityLabel}s` : entityLabel;
 
-    // ── Left sync info ─────────────────────────────────────────────────────
+    // -- Left sync info -----------------------------------------------------
 
     const renderSyncInfo = () => {
         // Syncing (remote push/pull in flight)
@@ -122,7 +122,7 @@ export default function GlobalFooter({
                 : `${pluralLabel} ${strings.footer.changesNotYetCommitted}`;
             return (
                 <div className="flex items-center gap-1.5">
-                    {/* Publish button — shown for all panels with publishable entities */}
+                    {/* Publish button - shown for all panels with publishable entities */}
                     {prefix && (
                         <Button
                             variant="secondary"
@@ -159,7 +159,7 @@ export default function GlobalFooter({
         );
     };
 
-    // ── Render ─────────────────────────────────────────────────────────────
+    // -- Render -------------------------------------------------------------
 
     return (
         <div className="border-t border-border bg-bg0 flex items-center gap-3 px-4 py-1.5 flex-shrink-0 select-none z-20">

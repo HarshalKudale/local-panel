@@ -15,7 +15,7 @@ export interface ThemeDef {
     vars: Record<string, string>;
 }
 
-// ── Dark Themes ─────────────────────────────────────────────────────────────
+// -- Dark Themes -------------------------------------------------------------
 
 const midnightNavy: ThemeDef = {
     id: "midnight-navy",
@@ -292,7 +292,7 @@ const monokai: ThemeDef = {
     },
 };
 
-// ── Light Themes ────────────────────────────────────────────────────────────
+// -- Light Themes ------------------------------------------------------------
 
 const defaultLight: ThemeDef = {
     id: "default-light",
@@ -569,7 +569,7 @@ const catppuccinLatte: ThemeDef = {
     },
 };
 
-// ── Exports ─────────────────────────────────────────────────────────────────
+// -- Exports -----------------------------------------------------------------
 
 export const darkThemes: ThemeDef[] = [midnightNavy, draculaPurple, tokyoNight, nordDark, monokai];
 export const lightThemes: ThemeDef[] = [defaultLight, solarizedLight, githubLight, rosePine, catppuccinLatte];

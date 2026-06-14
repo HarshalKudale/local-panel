@@ -1,5 +1,5 @@
 /**
- * Runner report persistence — saves run reports as JSON + HTML inside the
+ * Runner report persistence - saves run reports as JSON + HTML inside the
  * collection folder's .runs/ directory with timestamped sub-folders.
  */
 

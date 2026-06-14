@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 const PREFIX = "lp:draft:";
 
-// Tab IDs explicitly discarded by closeTab — unmount must not re-save them.
+// Tab IDs explicitly discarded by closeTab - unmount must not re-save them.
 const discarded = new Set<string>();
 
 export function saveDraft(tabId: string, data: unknown): void {
@@ -36,7 +36,7 @@ export function getDraftIds(idPrefix: string): string[] {
 
 /**
  * Call inside an editor to auto-save `getData()` to localStorage.
- * Pass `tabId=null` for saved (non-draft) tabs — hook becomes a no-op.
+ * Pass `tabId=null` for saved (non-draft) tabs - hook becomes a no-op.
  * Pass `isEmpty` to suppress saving while all fields are blank.
  * Call `markSaved()` when the user officially saves; the draft is then
  * cleared on unmount instead of being flushed.
@@ -84,7 +84,7 @@ export function useDraftPersist(
       if (!tabId) return;
       if (timerRef.current) clearTimeout(timerRef.current);
       if (savedRef.current) {
-        // User saved it — clear the draft
+        // User saved it - clear the draft
         clearDraft(tabId);
       } else if (!discarded.has(tabId)) {
         // Always save on unmount, even if empty (preserves new tabs when switching panels)

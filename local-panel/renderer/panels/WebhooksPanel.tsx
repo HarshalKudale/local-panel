@@ -16,14 +16,14 @@ import CodeEditor from "@/components/common/CodeEditor";
 import EditorTitleBar from "@/components/editor/EditorTitleBar";
 import { BottomBar } from "@/components/editor/RequestTab";
 
-// ── Constants ──────────────────────────────────────────────────────────────
+// -- Constants --------------------------------------------------------------
 
 const DRAFT_PREFIX = "wh-draft-";
 const isDraftId = (id: string) => id.startsWith(DRAFT_PREFIX);
 const MAX_ACTIVE_WEBHOOKS = 5;
 const BASE_URL_SEGMENT = "/localpanel/webhooks/";
 
-// ── Draft type ─────────────────────────────────────────────────────────────
+// -- Draft type -------------------------------------------------------------
 
 interface WebhookDraft {
   name: string;
@@ -31,7 +31,7 @@ interface WebhookDraft {
   folderId: string | null;
 }
 
-// ── Webhook editor ─────────────────────────────────────────────────────────
+// -- Webhook editor ---------------------------------------------------------
 
 interface WebhookEditorProps {
   tabId: string;
@@ -129,7 +129,7 @@ function WebhookEditor({
       {/* URL bar */}
       <div className="px-4 py-3 border-b border-border flex-shrink-0">
         <div className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden" style={{ background: "var(--c-bg2)" }}>
-          {/* Fixed base — not editable */}
+          {/* Fixed base - not editable */}
           <span className="bg-bg3 border-r border-border text-xs font-mono px-3 flex items-center flex-shrink-0 text-text-dim whitespace-nowrap select-all">
             {`localhost:${webhookPort}${BASE_URL_SEGMENT}`}
           </span>
@@ -139,7 +139,7 @@ function WebhookEditor({
             placeholder="your-webhook-path"
             value={urlSuffix}
             onChange={(e) => {
-              // Strip leading slashes — base already ends with /
+              // Strip leading slashes - base already ends with /
               setUrlSuffix(e.target.value.replace(/^\/+/, ""));
             }}
           />
@@ -253,7 +253,7 @@ function WebhookEditor({
   );
 }
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
   config: AppConfig;
@@ -268,7 +268,7 @@ interface Props {
   onRestoreItem?: (id: string) => void;
 }
 
-// ── WebhooksPanel ──────────────────────────────────────────────────────────
+// -- WebhooksPanel ----------------------------------------------------------
 
 export default function WebhooksPanel({
   config, onConfigChange,
@@ -286,7 +286,7 @@ export default function WebhooksPanel({
   const [serverRunning, setServerRunning] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [serverLoading, setServerLoading] = useState(false);
-  // webhookId → payload list (runtime, in-memory)
+  // webhookId -> payload list (runtime, in-memory)
   const [payloadMap, setPayloadMap] = useState<Record<string, WebhookPayload[]>>({});
   // Set of webhookIds currently open in a tab (active)
   const [activeTabs, setActiveTabs] = useState<Set<string>>(new Set());
@@ -311,7 +311,7 @@ export default function WebhooksPanel({
   // Loaded full entities (stubs in config, full data on demand)
   const [loadedEntities, setLoadedEntities] = useState<Record<string, SavedWebhook>>({});
 
-  // ── Bootstrap server status ──────────────────────────────────────────────
+  // -- Bootstrap server status ----------------------------------------------
 
   useEffect(() => {
     window.api.webhookServerStatus().then((s) => {
@@ -320,7 +320,7 @@ export default function WebhooksPanel({
     }).catch(() => { });
   }, []);
 
-  // ── Listen for incoming webhook payloads ─────────────────────────────────
+  // -- Listen for incoming webhook payloads ---------------------------------
 
   useEffect(() => {
     const unsub = window.api.onWebhookPayload((payload) => {
@@ -334,7 +334,7 @@ export default function WebhooksPanel({
     return unsub;
   }, []);
 
-  // ── Active tab registration ───────────────────────────────────────────────
+  // -- Active tab registration -----------------------------------------------
 
   useEffect(() => {
     if (!activeTab || isDraftId(activeTab)) return;
@@ -363,7 +363,7 @@ export default function WebhooksPanel({
     }).catch(() => { });
   }, [activeTab, config.activeWorkspaceId, loadedEntities]);
 
-  // ── Deregister when tab closes ────────────────────────────────────────────
+  // -- Deregister when tab closes --------------------------------------------
 
   const deregisterWebhook = useCallback((tabId: string) => {
     if (isDraftId(tabId)) return;
@@ -373,7 +373,7 @@ export default function WebhooksPanel({
     }
   }, [activeTabs]);
 
-  // ── Server controls ───────────────────────────────────────────────────────
+  // -- Server controls -------------------------------------------------------
 
   const handleServerToggle = useCallback(async () => {
     setServerLoading(true);
@@ -393,7 +393,7 @@ export default function WebhooksPanel({
     }
   }, [serverRunning]);
 
-  // ── Data helpers ──────────────────────────────────────────────────────────
+  // -- Data helpers ----------------------------------------------------------
 
   const reloadWebhooks = useCallback(async () => {
     const fresh = await window.api.getConfig();
@@ -413,7 +413,7 @@ export default function WebhooksPanel({
     if (path) onEntityPathChange?.(path);
   }, [activeTab, historyOpen, getEntityFilePath, onEntityPathChange]);
 
-  // ── Tab management ────────────────────────────────────────────────────────
+  // -- Tab management --------------------------------------------------------
 
   const openTab = useCallback((id: string) => {
     setOpenTabs((prev) => (prev.includes(id) ? prev : [...prev, id]));
@@ -438,7 +438,7 @@ export default function WebhooksPanel({
     });
   }, [deregisterWebhook]);
 
-  // ── Save handlers ─────────────────────────────────────────────────────────
+  // -- Save handlers ---------------------------------------------------------
 
   const handleNewSave = useCallback(async (tabId: string, data: Omit<SavedWebhook, "id" | "createdAt" | "workspaceId">) => {
     const created = await window.api.addWebhook(data);
@@ -499,7 +499,7 @@ export default function WebhooksPanel({
     await reloadWebhooks();
   }, [loadedEntities, webhooks, config.activeWorkspaceId, reloadWebhooks]);
 
-  // ── Tab labels ────────────────────────────────────────────────────────────
+  // -- Tab labels ------------------------------------------------------------
 
   const tabLabel = (tabId: string) => {
     if (isDraftId(tabId)) {
@@ -511,7 +511,7 @@ export default function WebhooksPanel({
     return h.name || h.urlSuffix || strings.webhooks.webhook;
   };
 
-  // ── Folder view items ─────────────────────────────────────────────────────
+  // -- Folder view items -----------------------------------------------------
 
   const folderViewItems: FolderTreeItem[] = useMemo(() =>
     (search.trim()
@@ -537,7 +537,7 @@ export default function WebhooksPanel({
     return calculateFolderStatus(itemsWithEnabled, folders);
   }, [webhooks, folders, activeTabs]);
 
-  // ── Sidebar ───────────────────────────────────────────────────────────────
+  // -- Sidebar ---------------------------------------------------------------
 
   const sidebarContent = (
     <>
@@ -613,7 +613,7 @@ export default function WebhooksPanel({
     </>
   );
 
-  // ── Main content area ─────────────────────────────────────────────────────
+  // -- Main content area -----------------------------------------------------
 
   const mainContent = (
     <div className="flex flex-col flex-1 overflow-hidden">

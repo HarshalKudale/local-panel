@@ -198,7 +198,7 @@ export default function HistorySidebar({ filePath, workspaceId, onClose, reloadK
                 </span>
               </div>
 
-              {/* Chevron — update only */}
+              {/* Chevron - update only */}
               {canExpand && (
                 <span className="text-text-dim flex-shrink-0">
                   {isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
@@ -220,7 +220,7 @@ export default function HistorySidebar({ filePath, workspaceId, onClose, reloadK
                 <div className="select-text">{rowContent}</div>
               )}
 
-              {/* Expanded diff — update only */}
+              {/* Expanded diff - update only */}
               {isExpanded && (
                 <div className="px-3 pb-3 pt-1 bg-bg0/40">
                   <div className="text-[9px] font-mono text-text-dim/60 mb-1.5 select-all">{entry.commitHash}</div>
@@ -240,7 +240,7 @@ export default function HistorySidebar({ filePath, workspaceId, onClose, reloadK
   );
 }
 
-// ── Compact diff view ─────────────────────────────────────────────────────────
+// -- Compact diff view ---------------------------------------------------------
 
 interface CompactDiffProps {
   before: unknown | null;

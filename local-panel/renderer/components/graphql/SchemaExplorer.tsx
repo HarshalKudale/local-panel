@@ -4,7 +4,7 @@ import CodeEditor from "@/components/common/CodeEditor";
 import { cn } from "@/components/ui/cn";
 import { strings } from "@/lib/strings";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// -- Types ------------------------------------------------------------------
 
 interface ParsedOperation {
     name: string;
@@ -19,7 +19,7 @@ interface SchemaExplorerProps {
     onInsertVariables?: (variables: string) => void;
 }
 
-// ── Helpers: Parse introspection JSON into operation list ───────────────────
+// -- Helpers: Parse introspection JSON into operation list -------------------
 
 function parseIntrospectionToOperations(raw: string): ParsedOperation[] {
     try {
@@ -91,7 +91,7 @@ function getDefaultForType(type: string): any {
     return null;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component --------------------------------------------------------------
 
 export default function SchemaExplorer({ schemaId, onInsertQuery, onInsertVariables }: SchemaExplorerProps) {
     const [schemas, setSchemas] = useState<SavedGraphQLSchema[]>([]);

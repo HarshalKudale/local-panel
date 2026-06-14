@@ -1,7 +1,7 @@
 import { AppConfig, MockRule, Folder } from "@/types";
 
 // Application-managed blocks are 403 mocks living in a single root-level folder
-// named "Blocks". They are not user-editable — they exist only for visibility and
+// named "Blocks". They are not user-editable - they exist only for visibility and
 // can be toggled on/off from the Capture panel or the Mocks panel context menu.
 export const BLOCKS_FOLDER_NAME = "Blocks";
 

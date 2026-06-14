@@ -14,11 +14,11 @@ import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { strings } from "@/lib/strings";
 
 
-// ── Draft tab prefix ───────────────────────────────────────────────────────
+// -- Draft tab prefix -------------------------------------------------------
 
 const DRAFT_PREFIX = "gql-mock-draft-";
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
     config: AppConfig;
@@ -26,7 +26,7 @@ interface Props {
     activeEnv?: Environment | null;
 }
 
-// ── GraphQLMocksPanel ──────────────────────────────────────────────────────
+// -- GraphQLMocksPanel ------------------------------------------------------
 
 export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = null }: Props) {
     const mocks = config.graphqlMocks ?? [];
@@ -139,7 +139,7 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
 
     const folderStatusMap = useMemo(() => calculateFolderStatus(mocks, folders), [mocks, folders]);
 
-    // ── Sidebar ────────────────────────────────────────────────────────────
+    // -- Sidebar ------------------------------------------------------------
 
     const sidebarContent = (
         <>
@@ -174,7 +174,7 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
         </>
     );
 
-    // ── Main content ───────────────────────────────────────────────────────
+    // -- Main content -------------------------------------------------------
 
     const mainContent = (
         <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">

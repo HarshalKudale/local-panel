@@ -157,7 +157,7 @@ export default function CapturePanel({ activeWorkspaceId, wsConfig, onConfigChan
 
   const activeEntry = activeId ? entries.find((e) => e.id === activeId) ?? null : null;
 
-  // ── Selection handlers ──────────────────────────────────────────────────────
+  // -- Selection handlers ------------------------------------------------------
   const handleRowClick = useCallback((entry: RequestLogEntry, ev: React.MouseEvent) => {
     if (ev.shiftKey && anchorId) {
       const from = visible.findIndex((e) => e.id === anchorId);
@@ -198,7 +198,7 @@ export default function CapturePanel({ activeWorkspaceId, wsConfig, onConfigChan
     ));
   }, [visible]);
 
-  // ── Bulk actions (also used by toolbar Mock All / Save All) ──────────────────
+  // -- Bulk actions (also used by toolbar Mock All / Save All) ------------------
   const mockEntries = useCallback(async (list: RequestLogEntry[], inFolder: boolean) => {
     if (list.length === 0) return;
     let folderId: string | null = null;
@@ -276,7 +276,7 @@ export default function CapturePanel({ activeWorkspaceId, wsConfig, onConfigChan
     window.api.shareCaptureJson(list, name);
   }, []);
 
-  // ── Context menu ─────────────────────────────────────────────────────────────
+  // -- Context menu -------------------------------------------------------------
   const handleContextMenu = useCallback((entry: RequestLogEntry, ev: React.MouseEvent) => {
     ev.preventDefault();
     const multi = selectedIds.size > 1 && selectedIds.has(entry.id);

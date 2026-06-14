@@ -15,14 +15,14 @@ import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 
-// ── Draft tab prefix ───────────────────────────────────────────────────────
+// -- Draft tab prefix -------------------------------------------------------
 
 const DRAFT_PREFIX = "req-draft-";
 const RUNNER_PREFIX = "runner-";
 const isDraft = (id: string) => id.startsWith(DRAFT_PREFIX) || id.startsWith("pending-");
 const isRunner = (id: string) => id.startsWith(RUNNER_PREFIX);
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
   config: AppConfig;
@@ -41,7 +41,7 @@ interface Props {
   onRestoreItem?: (id: string) => void;
 }
 
-// ── RequestsPanel ──────────────────────────────────────────────────────────
+// -- RequestsPanel ----------------------------------------------------------
 
 export default function RequestsPanel({
   config, onConfigChange, pendingOpenRequest, onPendingConsumed, onOpenMockEditor,
@@ -57,7 +57,7 @@ export default function RequestsPanel({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [runnerFolderIds, setRunnerFolderIds] = useState<Set<string>>(new Set());
 
-  // Load which folders have saved runner configs — refresh when workspace changes
+  // Load which folders have saved runner configs - refresh when workspace changes
   const loadRunnerFolderIds = useCallback(async () => {
     try {
       const ids = await window.api.listRunnerFolderIds(config.activeWorkspaceId);
@@ -258,7 +258,7 @@ export default function RequestsPanel({
     return [...requestItems, ...runnerItems];
   }, [requests, folders, search, activeTab, runnerFolderIds]);
 
-  // ── Sidebar ────────────────────────────────────────────────────────────
+  // -- Sidebar ------------------------------------------------------------
 
   const sidebarContent = (
     <>
@@ -302,7 +302,7 @@ export default function RequestsPanel({
     </>
   );
 
-  // ── Main content ───────────────────────────────────────────────────────
+  // -- Main content -------------------------------------------------------
 
   const mainContent = (
     <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">

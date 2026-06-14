@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { LucideProps } from "lucide-react";
 import {
@@ -26,7 +26,7 @@ import {
 } from "@/lib/applicationUtils";
 import type { AppConfig, LocalMapping } from "@/types";
 
-// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Types ---------------------------------------------------------------------
 
 interface ApplicationConfig {
     id: string;
@@ -38,29 +38,29 @@ interface ApplicationConfig {
     preRunCommand?: string;
     createdAt: number;
     workspaceId: string;
-    // â”€â”€ Shell / Bat / PowerShell / VBScript â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Shell / Bat / PowerShell / VBScript -----------------------------------
     shellConfig?: {
         scriptPath: string;
         interpreter?: string;             // bash, sh, zsh (empty = system default)
     };
-    // â”€â”€ Node.js â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Node.js ---------------------------------------------------------------
     nodeConfig?: {
         scriptPath: string;
         nodeFlags: string;                // --experimental-vm-modules etc.
         inspectPort?: number;             // default 9229
     };
-    // â”€â”€ NPM / Yarn / PNPM / Bun â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- NPM / Yarn / PNPM / Bun ----------------------------------------------
     npmConfig?: {
         scriptName: string;
         packageManager: "npm" | "yarn" | "pnpm" | "bun";
     };
-    // â”€â”€ Python â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Python ----------------------------------------------------------------
     pythonConfig?: {
         mode: "script" | "module";
         scriptPath: string;
         moduleName: string;
     };
-    // â”€â”€ Java â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Java ------------------------------------------------------------------
     javaConfig?: {
         launchMode: "mainClass" | "jar";
         mainClass: string;
@@ -70,7 +70,7 @@ interface ApplicationConfig {
         systemProperties: string;         // -Dkey=value per line
         enableAssertions?: boolean;
     };
-    // â”€â”€ Spring Boot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Spring Boot -----------------------------------------------------------
     springBootConfig?: {
         buildTool: "maven" | "gradle";
         activeProfiles: string;           // dev,local
@@ -79,7 +79,7 @@ interface ApplicationConfig {
         mainClass?: string;
         beforeLaunchGoal: string;         // mvn compile / ./gradlew classes
     };
-    // â”€â”€ Maven â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Maven -----------------------------------------------------------------
     mavenConfig?: {
         executable: string;               // ./mvnw or mvn
         pomFile?: string;
@@ -90,7 +90,7 @@ interface ApplicationConfig {
         skipTests?: boolean;
         settingsFile?: string;
     };
-    // â”€â”€ Gradle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Gradle ----------------------------------------------------------------
     gradleConfig?: {
         executable: string;               // ./gradlew or gradle
         tasks: string;                    // bootRun
@@ -100,7 +100,7 @@ interface ApplicationConfig {
         skipTests?: boolean;
         extraArgs: string;
     };
-    // â”€â”€ .NET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- .NET ------------------------------------------------------------------
     dotnetConfig?: {
         projectFile: string;
         configuration: "Debug" | "Release";
@@ -108,13 +108,13 @@ interface ApplicationConfig {
         launchProfile?: string;
         noBuild?: boolean;
     };
-    // â”€â”€ Go â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Go --------------------------------------------------------------------
     goConfig?: {
         packagePath: string;              // ./cmd/server
         buildFlags: string;
         raceDetector?: boolean;
     };
-    // â”€â”€ Docker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Docker ----------------------------------------------------------------
     dockerConfig?: {
         runMode: "image" | "build";
         image: string;
@@ -127,7 +127,7 @@ interface ApplicationConfig {
         entrypoint?: string;
         extraArgs: string;
     };
-    // â”€â”€ Docker Compose â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Docker Compose --------------------------------------------------------
     dockerComposeConfig?: {
         composeFile: string;
         services?: string;                // space-separated service names
@@ -183,7 +183,7 @@ function openDetectedUrl(detectedUrl: string, mappings: LocalMapping[], serverPo
     }
 }
 
-// â”€â”€ Icon map (resolved React nodes inside components) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Icon map (resolved React nodes inside components) -------------------------
 
 type LucideIcon = React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>;
 
@@ -198,7 +198,7 @@ function TypeIcon({ info, size = 16 }: { info: { iconName: string; iconColor: st
     return <Icon size={size} className={info.iconColor} />;
 }
 
-// â”€â”€ Shared input helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Shared input helpers -------------------------------------------------------
 
 const inputCls = "w-full bg-bg1 border border-border/40 rounded px-3 py-1.5 text-sm text-text-bright outline-none focus:border-accent";
 const monoInputCls = inputCls + " font-mono";
@@ -288,7 +288,7 @@ function Checkbox({ label, checked, onChange }: { label: string; checked: boolea
     );
 }
 
-// â”€â”€ Type Selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Type Selector -------------------------------------------------------------
 
 function TypeSelector({
     value,
@@ -342,7 +342,7 @@ function TypeSelector({
     );
 }
 
-// â”€â”€ Per-type field sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Per-type field sections ---------------------------------------------------
 
 function ShellFields({ type, cfg, onChange }: {
     type: "shell" | "bat" | "powershell" | "vbs";
@@ -845,7 +845,7 @@ function DockerComposeFields({ cfg, onChange }: {
     );
 }
 
-// â”€â”€ Main config form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Main config form ----------------------------------------------------------
 
 interface FormState {
     name: string;
@@ -943,7 +943,7 @@ function AppConfigForm({
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-0 flex-1 overflow-hidden">
-            {/* â”€â”€ Form header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* -- Form header -------------------------------------------- */}
             <div className="flex items-center gap-3 px-6 py-4 border-b border-border/20 bg-bg2/20 flex-shrink-0">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${typeInfo ? "bg-bg1 border border-border/30" : "bg-bg2"}`}>
                     {typeInfo && <TypeIcon info={typeInfo} size={18} />}
@@ -968,7 +968,7 @@ function AppConfigForm({
                 </div>
             </div>
 
-            {/* â”€â”€ Scrollable body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* -- Scrollable body ----------------------------------------- */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
 
                 {/* Type Selector */}
@@ -1069,7 +1069,7 @@ function AppConfigForm({
     );
 }
 
-// ── Runtime / port helpers ──────────────────────────────────────────────────
+// -- Runtime / port helpers --------------------------------------------------
 
 function deriveRuntime(app: ApplicationConfig): string {
     const r = strings.applications;
@@ -1122,7 +1122,7 @@ function formatUptime(startedAt: number): string {
     return `${s}s`;
 }
 
-// ── Stats Bar ────────────────────────────────────────────────────────────────
+// -- Stats Bar ----------------------------------------------------------------
 
 function StatsBar({ apps, states }: { apps: ApplicationConfig[]; states: Map<string, AppProcessState> }) {
     const running = apps.filter(a => isActiveStatus(states.get(a.id)?.status ?? "idle")).length;
@@ -1164,7 +1164,7 @@ function StatsBar({ apps, states }: { apps: ApplicationConfig[]; states: Map<str
     );
 }
 
-// ── App Card ─────────────────────────────────────────────────────────────────
+// -- App Card -----------------------------------------------------------------
 
 function AppCard({
     app,
@@ -1241,7 +1241,7 @@ function AppCard({
                 }`}
             onClick={onSelect}
         >
-            {/* ── Card header ── */}
+            {/* -- Card header -- */}
             <div className="flex items-start gap-3 p-4 pb-3">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border
                     ${isActive ? "bg-bg1/70 border-border/25" : "bg-bg1/40 border-border/15"}`}>
@@ -1286,7 +1286,7 @@ function AppCard({
                 </div>
             </div>
 
-            {/* ── Info rows ── */}
+            {/* -- Info rows -- */}
             <div className="px-4 pb-3 space-y-2 flex-1">
                 <div className="flex items-center justify-between gap-2">
                     <span className="text-xs text-text-dim/60 flex-shrink-0">{strings.applications.infoRuntime}</span>
@@ -1348,7 +1348,7 @@ function AppCard({
                 )}
             </div>
 
-            {/* ── Action buttons ── */}
+            {/* -- Action buttons -- */}
             <div className="flex items-center gap-2 px-3 pb-3 pt-2">
                 {isActive ? (
                     <Button
@@ -1386,7 +1386,7 @@ function AppCard({
     );
 }
 
-// ── Log Panel ────────────────────────────────────────────────────────────────
+// -- Log Panel ----------------------------------------------------------------
 
 function LogPanel({
     appId,
@@ -1445,7 +1445,7 @@ function LogPanel({
     );
 }
 
-// ── Main Panel ───────────────────────────────────────────────────────────────
+// -- Main Panel ---------------------------------------------------------------
 
 interface Props {
     config: AppConfig;
@@ -1573,7 +1573,7 @@ export default function ApplicationsPanel({ config, onAddMapping }: Props) {
 
     const s = strings.applications;
 
-    // ── Form view ──────────────────────────────────────────────────────────────
+    // -- Form view --------------------------------------------------------------
     if (formMode) {
         return (
             <div className="flex flex-col flex-1 overflow-hidden">
@@ -1594,7 +1594,7 @@ export default function ApplicationsPanel({ config, onAddMapping }: Props) {
         : "idle";
     const selectedIsRunning = isActiveStatus(selectedStatus);
 
-    // ── List view ──────────────────────────────────────────────────────────────
+    // -- List view --------------------------------------------------------------
     return (
         <div className="flex flex-col h-full overflow-hidden">
             {/* Header */}
@@ -1611,7 +1611,7 @@ export default function ApplicationsPanel({ config, onAddMapping }: Props) {
             {/* Stats bar */}
             {apps.length > 0 && <StatsBar apps={apps} states={states} />}
 
-            {/* Cards grid — scrollable */}
+            {/* Cards grid - scrollable */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
                 {apps.length === 0 ? (
                     <EmptyState
@@ -1648,7 +1648,7 @@ export default function ApplicationsPanel({ config, onAddMapping }: Props) {
                 )}
             </div>
 
-            {/* Bottom log panel — shown when a card is selected */}
+            {/* Bottom log panel - shown when a card is selected */}
             {selected && selectedApp && (
                 <div className="flex-shrink-0" style={{ height: 260 }}>
                     <LogPanel

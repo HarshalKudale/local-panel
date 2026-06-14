@@ -27,7 +27,7 @@ import SoapRequestsPanel from "@/panels/SoapRequestsPanel";
 import SoapMocksPanel from "@/panels/SoapMocksPanel";
 import { AlertCircle } from "@/lib/icons";
 
-// ── Render context ──────────────────────────────────────────────────────────
+// -- Render context ----------------------------------------------------------
 // A single bag containing everything panels might need. App.tsx constructs this
 // once per render and passes it to `renderPanel`.
 
@@ -93,7 +93,7 @@ export interface PanelRenderContext {
     setSidebarPanelVisible: (id: string, visible: boolean) => void;
 }
 
-// ── Disabled panel placeholder ──────────────────────────────────────────────
+// -- Disabled panel placeholder ----------------------------------------------
 
 const DisabledPanel = () => (
     <PlaceholderPanel
@@ -103,7 +103,7 @@ const DisabledPanel = () => (
     />
 );
 
-// ── Panel renderer map ──────────────────────────────────────────────────────
+// -- Panel renderer map ------------------------------------------------------
 
 const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNode> = {
     services: (ctx) => (
@@ -302,7 +302,7 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
     ),
 };
 
-// ── Public API ──────────────────────────────────────────────────────────────
+// -- Public API --------------------------------------------------------------
 
 /**
  * Render the active panel. If the panel is disabled in the registry, renders a

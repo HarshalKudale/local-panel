@@ -8,7 +8,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import ContextMenu, { ContextMenuItem } from "@/components/ui/ContextMenu";
 import { strings } from "@/lib/strings";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// -- Types ------------------------------------------------------------------
 
 export interface FolderTreeItem {
   id: string;
@@ -17,7 +17,7 @@ export interface FolderTreeItem {
   folderId?: string | null;
   isActive?: boolean;
   isEnabled?: boolean;
-  /** Relative git path e.g. "mocks/FolderName/id.json" — used for path-keyed status lookup */
+  /** Relative git path e.g. "mocks/FolderName/id.json" - used for path-keyed status lookup */
   relPath?: string;
   /** True for special runner config nodes that open the collection runner when clicked */
   isRunner?: boolean;
@@ -34,7 +34,7 @@ interface FolderNode {
 // CtxMenuItem alias for backward compat within this file
 type CtxMenuItem = ContextMenuItem;
 
-// ── Inline rename input (used only for new folder creation) ───────────────────
+// -- Inline rename input (used only for new folder creation) -------------------
 
 function InlineInput({ value, onCommit, onCancel }: { value: string; onCommit(v: string): void; onCancel(): void }) {
   const [val, setVal] = useState(value);
@@ -56,7 +56,7 @@ function InlineInput({ value, onCommit, onCancel }: { value: string; onCommit(v:
   );
 }
 
-// ── Rename dialog modal ────────────────────────────────────────────────────
+// -- Rename dialog modal ----------------------------------------------------
 
 function RenameDialog({ currentName, onSave, onCancel }: {
   currentName: string;
@@ -115,7 +115,7 @@ function RenameDialog({ currentName, onSave, onCancel }: {
   );
 }
 
-// ── Move to folder dialog ──────────────────────────────────────────────────
+// -- Move to folder dialog --------------------------------------------------
 
 function MoveDialog({ folders, onMove, onCancel }: {
   folders: FolderType[];
@@ -170,7 +170,7 @@ const INDENT = 14;
 const LINE_COLOR = "var(--c-border)";
 const CONNECTOR_W = 12;
 
-// ── FolderTree ─────────────────────────────────────────────────────────────
+// -- FolderTree -------------------------------------------------------------
 
 export type EntitySyncStatus = "clean" | "modified" | "new" | "deleted";
 export type FolderStatus = "enabled" | "mixed" | "disabled";
@@ -190,11 +190,11 @@ interface Props {
   onOpenNewTab?: () => void;
   /** Called when the history icon is clicked for an item. Receives the entity id. */
   onHistoryItem?: (id: string) => void;
-  /** Map of relative git path → sync status for color-coded indicators (preferred) */
+  /** Map of relative git path -> sync status for color-coded indicators (preferred) */
   pathStatusMap?: Record<string, EntitySyncStatus>;
   /** @deprecated use pathStatusMap (entity-ID-keyed fallback, kept for flat entities like mappings) */
   entitySyncStatus?: Record<string, EntitySyncStatus>;
-  /** Map of folder ID → enable status (green=all enabled, orange=mixed, red=all disabled). Only for folders with enableable items. */
+  /** Map of folder ID -> enable status (green=all enabled, orange=mixed, red=all disabled). Only for folders with enableable items. */
   folderStatusMap?: Record<string, FolderStatus>;
   /** Called when user publishes a single entity via context menu */
   onPublishItem?: (id: string) => void;
@@ -209,7 +209,7 @@ interface Props {
   onBeforeCreateFolder?: () => boolean;
   /** Called when user clicks "Open in Runner" for a folder */
   onOpenRunner?: (folderId: string) => void;
-  /** Called synchronously before a folder is deleted — lets the parent close open tabs for items in that folder */
+  /** Called synchronously before a folder is deleted - lets the parent close open tabs for items in that folder */
   onBeforeDeleteFolder?: (folderId: string) => void;
   /** Id of the application-managed "Blocks" folder, if it exists. Used to protect it and render block items specially. */
   blocksFolderId?: string | null;
@@ -305,7 +305,7 @@ export default function FolderTree({
     onFoldersChange();
   };
 
-  // ── Menu builders ──────────────────────────────────────────────────────────
+  // -- Menu builders ----------------------------------------------------------
 
   const closeMenu = () => setCtxMenu(null);
 
@@ -356,7 +356,7 @@ export default function FolderTree({
   }
 
   function openItemMenu(x: number, y: number, item: FolderTreeItem) {
-    // Block items are application-managed and non-editable — only Unblock is offered.
+    // Block items are application-managed and non-editable - only Unblock is offered.
     if (item.isBlock) {
       const blockMenu: CtxMenuItem[] = [];
       if (onUnblockItem) {
@@ -498,7 +498,7 @@ export default function FolderTree({
     setCtxMenu({ x, y, items: menuItems });
   }
 
-  // ── Bulk actions ───────────────────────────────────────────────────────────
+  // -- Bulk actions -----------------------------------------------------------
 
   const doBulkDelete = () => {
     if (!pendingDelete) return;
@@ -514,7 +514,7 @@ export default function FolderTree({
     setShowMove(false);
   };
 
-  // ── Tree rendering ─────────────────────────────────────────────────────────
+  // -- Tree rendering ---------------------------------------------------------
 
   const tree = buildTree();
 
@@ -721,13 +721,13 @@ export default function FolderTree({
                 </>
               )}
             </span>
-            {/* Method badge — shown when not hovered */}
+            {/* Method badge - shown when not hovered */}
             {item.method && hoveredItemId !== item.id && (
               <span style={{ flexShrink: 0, fontSize: 10, fontFamily: "monospace", fontWeight: 700, padding: "2px 4px", borderRadius: 3, lineHeight: 1, color: methodColor(item.method), background: methodBg(item.method) }}>
                 {item.method === "*" ? "ANY" : item.method}
               </span>
             )}
-            {/* Name — theme color, strikethrough = pending delete or block, dim = disabled/block */}
+            {/* Name - theme color, strikethrough = pending delete or block, dim = disabled/block */}
             <span style={{
               fontSize: 13, lineHeight: 1, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis",
               color: "var(--c-text-bright)",

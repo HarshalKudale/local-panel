@@ -14,12 +14,12 @@ import { strings } from "@/lib/strings";
 
 import { GrpcRequestDraft } from "@/components/grpc/grpcTabReducer";
 
-// ── Constants ──────────────────────────────────────────────────────────────
+// -- Constants --------------------------------------------------------------
 
 const DRAFT_PREFIX = "grpc-req-draft-";
 const isDraft = (id: string) => id.startsWith(DRAFT_PREFIX);
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 interface Props {
     config: AppConfig;
@@ -27,7 +27,7 @@ interface Props {
     activeEnv?: Environment | null;
 }
 
-// ── GrpcRequestsPanel ──────────────────────────────────────────────────
+// -- GrpcRequestsPanel --------------------------------------------------
 
 export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = null }: Props) {
     const requests = config.grpcRequests ?? [];
@@ -136,7 +136,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
 
     const draftTabIds = openTabs.filter(isDraft);
 
-    // ── Sidebar ────────────────────────────────────────────────────────────
+    // -- Sidebar ------------------------------------------------------------
 
     const sidebarContent = (
         <>
@@ -170,7 +170,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
         </>
     );
 
-    // ── Main content ───────────────────────────────────────────────────────
+    // -- Main content -------------------------------------------------------
 
     const mainContent = (
         <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">

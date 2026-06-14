@@ -363,7 +363,7 @@ export interface WebhookPayload {
   body: string;
 }
 
-// ── Import/Export types (mirrored from src/ipc/importExport/types.ts) ────────
+// -- Import/Export types (mirrored from src/ipc/importExport/types.ts) --------
 
 export type ImportExportEntityKind =
   | "workspace" | "requests" | "mocks" | "environments"
@@ -514,7 +514,7 @@ declare global {
       startWebhookServer(): Promise<{ ok: boolean }>;
       stopWebhookServer(): Promise<{ ok: boolean }>;
       onWebhookPayload(cb: (payload: WebhookPayload) => void): () => void;
-      // ── SOAP ─────────────────────────────────────────────────────────────
+      // -- SOAP -------------------------------------------------------------
       addSoapRequest(req: Omit<SavedSoapRequest, "id" | "createdAt" | "workspaceId">): Promise<SavedSoapRequest>;
       updateSoapRequest(req: SavedSoapRequest): Promise<{ ok: boolean }>;
       deleteSoapRequest(id: string): Promise<{ ok: boolean }>;
@@ -526,7 +526,7 @@ declare global {
       listWsdls(): Promise<SavedWsdl[]>;
       soapFetchWsdl(url: string): Promise<{ ok: boolean; content?: string; error?: string }>;
       soapExecute(endpointUrl: string, soapAction: string, headers: Record<string, string>, body: string): Promise<{ status: number; headers: Record<string, string>; body: string; durationMs: number }>;
-      // ── GraphQL ────────────────────────────────────────────────────────────
+      // -- GraphQL ------------------------------------------------------------
       addGraphQLRequest(req: Omit<SavedGraphQLRequest, "id" | "createdAt" | "workspaceId">): Promise<SavedGraphQLRequest>;
       updateGraphQLRequest(req: SavedGraphQLRequest): Promise<{ ok: boolean }>;
       deleteGraphQLRequest(id: string): Promise<{ ok: boolean }>;
@@ -538,7 +538,7 @@ declare global {
       listGraphQLSchemas(): Promise<SavedGraphQLSchema[]>;
       graphqlIntrospect(endpointUrl: string, headers: Record<string, string>): Promise<{ ok: boolean; sdl?: string; error?: string }>;
       graphqlExecute(endpointUrl: string, headers: Record<string, string>, query: string, variables: string, operationName: string): Promise<{ status: number; headers: Record<string, string>; body: string; durationMs: number }>;
-      // ── gRPC ──────────────────────────────────────────────────────────────
+      // -- gRPC --------------------------------------------------------------
       addGrpcRequest(req: Omit<SavedGrpcRequest, "id" | "createdAt" | "workspaceId">): Promise<SavedGrpcRequest>;
       updateGrpcRequest(req: SavedGrpcRequest): Promise<{ ok: boolean }>;
       deleteGrpcRequest(id: string): Promise<{ ok: boolean }>;
@@ -567,29 +567,29 @@ declare global {
       platform: string;
       onLogChunk(cb: (chunk: LogChunk) => void): () => void;
       shareCaptureJson(entries: unknown[], suggestedName?: string): Promise<{ ok: boolean; filePath?: string; canceled?: boolean; error?: string }>;
-      // ── Auth ─────────────────────────────────────────────────────────────────
+      // -- Auth -----------------------------------------------------------------
       authConfigured(): Promise<boolean>;
       authGetUser(): Promise<AuthUser | null>;
       authSignInWithEmail(email: string, password: string): Promise<{ ok: boolean; user?: AuthUser; error?: string }>;
       authSignUpWithEmail(email: string, password: string): Promise<{ ok: boolean; needsConfirmation?: boolean; user?: AuthUser; error?: string }>;
       authSignOut(): Promise<{ ok: boolean; error?: string }>;
       onAuthChanged(cb: (data: { user: AuthUser | null }) => void): () => void;
-      // ── Subscription ─────────────────────────────────────────────────────────
+      // -- Subscription ---------------------------------------------------------
       getSubscription(): Promise<SubscriptionState>;
       refreshSubscription(): Promise<SubscriptionState>;
       resetSubscription(): Promise<SubscriptionState>;
       onSubscriptionChanged(cb: (state: SubscriptionState) => void): () => void;
-      // ── First-launch ─────────────────────────────────────────────────────────
+      // -- First-launch ---------------------------------------------------------
       isFirstLaunch(): Promise<boolean>;
       completeFirstLaunch(): Promise<{ ok: boolean }>;
-      // ── Collection Runner ────────────────────────────────────────────────────
+      // -- Collection Runner ----------------------------------------------------
       saveRunnerReport(wsId: string, report: unknown): Promise<{ ok: boolean; error?: string }>;
       getRunHistory(wsId: string, folderId: string): Promise<{ timestamp: number; summary: { total: number; passed: number; failed: number } }[]>;
       exportRunnerReport(report: unknown): Promise<{ ok: boolean; filePath?: string; error?: string }>;
       saveRunnerConfig(wsId: string, folderId: string, config: { requestOrder: string[]; delayMs: number }): Promise<{ ok: boolean }>;
       loadRunnerConfig(wsId: string, folderId: string): Promise<{ requestOrder: string[]; delayMs: number } | null>;
       listRunnerFolderIds(wsId: string): Promise<string[]>;
-      // ── Applications ────────────────────────────────────────────────────────
+      // -- Applications --------------------------------------------------------
       listApplications(wsId: string): Promise<any[]>;
       saveApplication(app: unknown): Promise<any>;
       deleteApplication(wsId: string, id: string): Promise<{ ok: boolean }>;

@@ -6,7 +6,7 @@ import { Environment, Folder } from "@/types";
 import { methodColor } from "@/lib/utils";
 import { strings } from "@/lib/strings";
 
-// ── UrlBar ─────────────────────────────────────────────────────────────────
+// -- UrlBar -----------------------------------------------------------------
 // Method dropdown + URL input + EnvVarHint + action button in one row.
 
 export interface UrlBarProps {
@@ -26,7 +26,7 @@ export interface UrlBarProps {
   /** Called on Enter key in the URL field */
   onEnter?(): void;
   activeEnv?: Environment | null;
-  /** Show the {{random.*}} hint button (default true — set false for mock URLs which use pattern matching) */
+  /** Show the {{random.*}} hint button (default true - set false for mock URLs which use pattern matching) */
   showRandomizer?: boolean;
   /** Extra node(s) rendered inside the input box after the URL input (e.g. regex toggle) */
   inputSuffix?: React.ReactNode;
@@ -105,7 +105,7 @@ export function UrlBar({
   );
 }
 
-// ── TabStrip ───────────────────────────────────────────────────────────────
+// -- TabStrip ---------------------------------------------------------------
 // Labelled tab row used inside both panels.
 
 export interface TabStripProps<T extends string> {
@@ -138,7 +138,7 @@ export function TabStrip<T extends string>({ tabs, active, onChange, prefix, suf
   );
 }
 
-// ── BottomBar ──────────────────────────────────────────────────────────────
+// -- BottomBar --------------------------------------------------------------
 // Shared footer: folder picker on the left, cancel + save on the right.
 
 export interface BottomBarProps {

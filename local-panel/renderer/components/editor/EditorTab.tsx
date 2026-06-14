@@ -1,5 +1,5 @@
 /**
- * EditorTab — unified tab body used by both RequestEditor and MockEditorModal.
+ * EditorTab - unified tab body used by both RequestEditor and MockEditorModal.
  *
  * mode="request"  Left: editable request  | Right: live response (read-only, populated after Send)
  * mode="mock"     Left: captured request (read-only) | Right: editable mock response
@@ -22,7 +22,7 @@ import { BodyMode, isBinaryContentType } from "@/lib/bodyUtils";
 import { strings } from "@/lib/strings";
 import { Environment } from "@/types";
 
-// ── Status dropdown options (mock only) ────────────────────────────────────
+// -- Status dropdown options (mock only) ------------------------------------
 
 const STATUS_OPTIONS = [
   { v: 200, label: strings.editor.status200 },
@@ -44,7 +44,7 @@ const STATUS_OPTIONS = [
   { v: 503, label: strings.editor.status503 },
 ];
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// -- Props ------------------------------------------------------------------
 
 export type EditorMode = "request" | "mock";
 
@@ -66,7 +66,7 @@ export interface RequestPaneProps {
   onPreScriptChange?(v: string): void;
 }
 
-/** Props relevant to the response (right) pane — varies by mode */
+/** Props relevant to the response (right) pane - varies by mode */
 export interface ResponsePaneProps {
   resTab: "body" | "headers" | "post-script" | "tests";
   onResTabChange(t: "body" | "headers" | "post-script" | "tests"): void;
@@ -116,7 +116,7 @@ export interface EditorTabProps extends RequestPaneProps, ResponsePaneProps {
   activeEnv?: Environment | null;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component --------------------------------------------------------------
 
 export default function EditorTab({
   mode,
@@ -150,11 +150,11 @@ export default function EditorTab({
   const reqHeaderCount = reqHeaders.filter((r) => r.enabled && r.key.trim()).length;
   const resHeaderCount = (resHeaders ?? []).filter((r) => r.enabled && r.key.trim()).length;
 
-  // Refs for body editors – used to insert tokens at cursor
+  // Refs for body editors - used to insert tokens at cursor
   const reqBodyRef = useRef<BodyEditorHandle>(null);
   const resBodyRef = useRef<BodyEditorHandle>(null);
 
-  // ── Left pane (Request) ──────────────────────────────────────────────────
+  // -- Left pane (Request) --------------------------------------------------
 
   const preScriptDot = preScript?.trim() ? " ●" : "";
 
@@ -238,7 +238,7 @@ export default function EditorTab({
     </div>
   );
 
-  // ── Right pane (Response) ────────────────────────────────────────────────
+  // -- Right pane (Response) ------------------------------------------------
 
   let rightPane: React.ReactNode;
 
@@ -460,7 +460,7 @@ export default function EditorTab({
     );
   }
 
-  // ── Layout ───────────────────────────────────────────────────────────────
+  // -- Layout ---------------------------------------------------------------
   // Mock mode: response pane only (no captured-request left pane needed)
   // Request mode: resizable 50/50 split
 
@@ -485,7 +485,7 @@ export default function EditorTab({
   );
 }
 
-// ── ScriptEditor ─────────────────────────────────────────────────────────────
+// -- ScriptEditor -------------------------------------------------------------
 
 function ScriptEditor({ value, onChange, placeholder, error }: {
   value: string;
@@ -511,7 +511,7 @@ function ScriptEditor({ value, onChange, placeholder, error }: {
   );
 }
 
-// ── TokenToolbar ──────────────────────────────────────────────────────────────
+// -- TokenToolbar --------------------------------------------------------------
 
 /**
  * A slim toolbar row that renders EnvVarHint + RandomizerHint buttons.
@@ -527,7 +527,7 @@ function TokenToolbar({ env, onInsert }: { env: Environment | null; onInsert(tok
   );
 }
 
-// ── appendTokenToFocusedRow ───────────────────────────────────────────────────
+// -- appendTokenToFocusedRow ---------------------------------------------------
 
 /**
  * Appends a token to the last enabled row's value in the header table.
@@ -543,11 +543,11 @@ function appendTokenToFocusedRow(rows: KVRow[], token: string): KVRow[] {
       return rows.map((r, idx) => idx === i ? { ...r, value: r.value + token } : r);
     }
   }
-  // All disabled — append to last
+  // All disabled - append to last
   return rows.map((r, idx) => idx === rows.length - 1 ? { ...r, value: r.value + token } : r);
 }
 
-// ── insertAtActiveInput ───────────────────────────────────────────────────────
+// -- insertAtActiveInput -------------------------------------------------------
 
 /**
  * Inserts a token at the cursor position of the currently focused input element.
@@ -571,7 +571,7 @@ function insertAtActiveInput(token: string): boolean {
   return true;
 }
 
-// ── TestsPanel ────────────────────────────────────────────────────────────────
+// -- TestsPanel ----------------------------------------------------------------
 
 function TestsPanel({ testScript, onTestScriptChange, testResults, testLogs, testRunning }: {
   testScript: string;
