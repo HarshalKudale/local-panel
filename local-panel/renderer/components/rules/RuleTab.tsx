@@ -45,6 +45,8 @@ interface Props {
   config: AppConfig;
   onSave(data: RuleSavePayload): Promise<void>;
   onClose(): void;
+  enabled?: boolean;
+  onToggleEnabled?: () => void;
 }
 
 // -- RuleDraft type for localStorage ---------------------------------------
@@ -96,7 +98,7 @@ function isDraftEmpty(s: RuleTabState): boolean {
 // -- RuleTab component ------------------------------------------------------
 
 export default forwardRef<RuleTabHandle, Props>(function RuleTab(
-  { tabId, draftTabId, initial, folders, config, onSave, onClose },
+  { tabId, draftTabId, initial, folders, config, onSave, onClose, enabled, onToggleEnabled },
   ref,
 ) {
   const isDraft = draftTabId !== null;
@@ -186,6 +188,8 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
         onNameChange={(v) => set("name", v)}
         onClose={onClose}
         autoFocus={isDraft}
+        enabled={enabled}
+        onToggleEnabled={onToggleEnabled}
       />
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 min-h-0">

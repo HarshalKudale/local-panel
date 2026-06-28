@@ -1226,10 +1226,10 @@ function AppCard({
     }, [menuOpen]);
 
     const borderCls = isActive
-        ? "border-green-500/25 bg-green-500/[0.03]"
+        ? "border-green/40 bg-green/[0.05]"
         : status === "error"
-            ? "border-red-500/25 bg-red-500/[0.03]"
-            : "border-border/20 bg-bg2/30";
+            ? "border-red/40 bg-red/[0.05]"
+            : "border-border/40 bg-bg2/30";
 
     return (
         <div
@@ -1237,14 +1237,14 @@ function AppCard({
                 ${borderCls}
                 ${selected
                     ? "ring-2 ring-accent/40 ring-offset-1 ring-offset-bg1"
-                    : "hover:border-border/40 hover:bg-bg2/50"
+                    : "hover:border-border/60 hover:bg-bg2/50"
                 }`}
             onClick={onSelect}
         >
             {/* -- Card header -- */}
             <div className="flex items-start gap-3 p-4 pb-3">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border
-                    ${isActive ? "bg-bg1/70 border-border/25" : "bg-bg1/40 border-border/15"}`}>
+                    ${isActive ? "bg-bg1/70 border-border/40" : "bg-bg1/40 border-border/30"}`}>
                     {typeInfo
                         ? <TypeIcon info={typeInfo} size={16} />
                         : <Terminal size={16} className="text-text-dim" />

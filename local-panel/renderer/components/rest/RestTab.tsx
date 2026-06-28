@@ -47,6 +47,10 @@ export interface RestTabProps {
   showCurlImport?: boolean;
   /** Label shown in the title bar */
   label?: string;
+  /** Enabled state for saved mock tabs */
+  enabled?: boolean;
+  /** Called when the enabled toggle is clicked */
+  onToggleEnabled?: () => void;
 }
 
 // -- Component --------------------------------------------------------------
@@ -55,6 +59,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
   {
     tabType, tabId, draftTabId, initial, folders = [], activeEnv = null,
     onSave, onClose, onCreateMock, onDirtyChange, showCurlImport = false, label,
+    enabled, onToggleEnabled,
   },
   ref,
 ) {
@@ -291,6 +296,8 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         name={state.name}
         onNameChange={(v) => dispatch({ type: "SET_FIELD", field: "name", value: v })}
         onClose={onClose}
+        enabled={enabled}
+        onToggleEnabled={onToggleEnabled}
       />
 
       {/* cURL import - collapsible for request, always open for mock */}

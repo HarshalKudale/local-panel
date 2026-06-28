@@ -348,6 +348,8 @@ export default function MocksPanel({
                   }
                   onClose={() => closeTab(tabId)}
                   showCurlImport={isUnsaved}
+                  enabled={isUnsaved ? undefined : mocks.find((m) => m.id === tabId)?.enabled}
+                  onToggleEnabled={isUnsaved ? undefined : () => { const m = mocks.find((x) => x.id === tabId); if (m) handleToggle(m); }}
                 />
               </div>
             );

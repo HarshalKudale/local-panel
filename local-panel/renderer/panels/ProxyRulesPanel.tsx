@@ -248,6 +248,8 @@ export default function ProxyRulesPanel({
                     : handleTabSave(tabId, data)
                   }
                   onClose={() => closeTab(tabId)}
+                  enabled={isUnsaved ? undefined : rules.find((r) => r.id === tabId)?.enabled}
+                  onToggleEnabled={isUnsaved ? undefined : () => { const r = rules.find((x) => x.id === tabId); if (r) handleToggle(r); }}
                 />
               </div>
             );
