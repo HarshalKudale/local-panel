@@ -189,6 +189,8 @@ contextBridge.exposeInMainWorld("api", {
   getApplicationState: (appId: string) => ipcRenderer.invoke("applications:getState", appId),
   getAllApplicationStates: () => ipcRenderer.invoke("applications:getAllStates"),
   getApplicationLogs: (appId: string) => ipcRenderer.invoke("applications:getLogs", appId),
+  checkApplicationPort: (port: number) => ipcRenderer.invoke("applications:checkPort", port),
+  killApplicationPort: (port: number) => ipcRenderer.invoke("applications:killPort", port),
   onAppLog: (cb: (chunk: unknown) => void) => {
     const handler = (_: unknown, chunk: unknown) => cb(chunk);
     ipcRenderer.on("app:log", handler);

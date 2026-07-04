@@ -819,6 +819,12 @@ export const strings = {
     closeLogPanel: "Close log panel",
     startToSeeOutput: "Start the application to see log output",
     confirmDelete: "Delete this application? This cannot be undone.",
+    portInUseTitle: "Port Already In Use",
+    portInUseKillLabel: "Kill & Start",
+    portInUseMessage: (port: number, pid?: number) =>
+      pid
+        ? `Port ${port} is already occupied by another process (PID ${pid}). Kill it and start your application?`
+        : `Port ${port} is already occupied by another process. Kill it and start your application?`,
   },
 
   // Import/export

@@ -598,6 +598,8 @@ declare global {
       getApplicationState(appId: string): Promise<any>;
       getAllApplicationStates(): Promise<any[]>;
       getApplicationLogs(appId: string): Promise<any[]>;
+      checkApplicationPort(port: number): Promise<{ inUse: boolean; pid?: number }>;
+      killApplicationPort(port: number): Promise<{ ok: boolean }>;
       onAppLog(cb: (chunk: unknown) => void): () => void;
       onAppStatusChange(cb: (data: unknown) => void): () => void;
     };

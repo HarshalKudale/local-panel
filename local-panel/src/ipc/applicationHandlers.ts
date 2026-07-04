@@ -11,6 +11,7 @@ import {
 } from "@/store/workspaceFs";
 import { processSpawner } from "@/applications/processSpawner";
 import { generateResolvedCommand } from "@/applications/commandGenerator";
+import { checkPortInUse, killProcessOnPort } from "@/applications/portUtils";
 import type { ApplicationConfig } from "@/applications/types";
 
 function generateId(): string {
@@ -72,5 +73,13 @@ export function registerApplicationHandlers(): void {
 
     ipcMain.handle("applications:getLogs", (_e, appId: string) => {
         return processSpawner.getLogs(appId);
+    });
+
+    ipcMain.handle("applications:checkPort", (_e, port: number) => {
+        return checkPortInUse(port);
+    });
+
+    ipcMain.handle("applications:killPort", (_e, port: number) => {
+        return killProcessOnPort(port);
     });
 }

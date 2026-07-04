@@ -1552,15 +1552,39 @@ export default function ApplicationsPanel({ config, onAddMapping }: Props) {
         loadApps();
     }, [confirm, loadApps, selected]);
 
-    const handleStart = useCallback(async (app: ApplicationConfig) => {
-        await window.api.startApplication(wsId, app.id, "run");
-        loadStates();
-    }, [wsId, loadStates]);
+    const checkPortAndStart = useCallback(async (app: ApplicationConfig, mode: "run" | "debug") => {
+        const portStr = derivePort(app);
+        const port = portStr ? parseInt(portStr, 10) : null;
 
-    const handleDebug = useCallback(async (app: ApplicationConfig) => {
-        await window.api.startApplication(wsId, app.id, "debug");
+        if (port) {
+            const info = await window.api.checkApplicationPort(port);
+            if (info.inUse) {
+                const ok = await confirm(
+                    strings.applications.portInUseMessage(port, info.pid),
+                    {
+                        title: strings.applications.portInUseTitle,
+                        confirmLabel: strings.applications.portInUseKillLabel,
+                        confirmVariant: "danger",
+                    },
+                );
+                if (!ok) return;
+                await window.api.killApplicationPort(port);
+                // Brief pause to let the OS release the port before spawning
+                await new Promise((res) => setTimeout(res, 400));
+            }
+        }
+
+        await window.api.startApplication(wsId, app.id, mode);
         loadStates();
-    }, [wsId, loadStates]);
+    }, [wsId, loadStates, confirm]);
+
+    const handleStart = useCallback((app: ApplicationConfig) => {
+        return checkPortAndStart(app, "run");
+    }, [checkPortAndStart]);
+
+    const handleDebug = useCallback((app: ApplicationConfig) => {
+        return checkPortAndStart(app, "debug");
+    }, [checkPortAndStart]);
 
     const handleStop = useCallback(async (appId: string) => {
         await window.api.stopApplication(appId);
