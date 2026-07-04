@@ -10,6 +10,8 @@ import BinaryViewer from "@/components/common/BinaryViewer";
 export interface BodyEditorHandle {
   /** Insert text at the current cursor/selection in the code editor. */
   insertAtCursor(text: string): void;
+  /** Open the find/replace panel in the code editor. */
+  openFind(): void;
 }
 
 const MODE_LABELS: Record<BodyMode, string> = {
@@ -56,6 +58,9 @@ export default forwardRef<BodyEditorHandle, Props>(function BodyEditor({
   useImperativeHandle(ref, () => ({
     insertAtCursor(text: string) {
       codeEditorRef.current?.insertAtCursor(text);
+    },
+    openFind() {
+      codeEditorRef.current?.openFind();
     },
   }), []);
 
@@ -267,7 +272,7 @@ export default forwardRef<BodyEditorHandle, Props>(function BodyEditor({
         </div>
       ) : (
         <CodeEditor
-          ref={readOnly ? undefined : codeEditorRef}
+          ref={codeEditorRef}
           value={value}
           onChange={readOnly ? undefined : handleTextChange}
           language={

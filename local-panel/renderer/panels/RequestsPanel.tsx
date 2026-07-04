@@ -13,6 +13,7 @@ import { Zap } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 
 
 // -- Draft tab prefix -------------------------------------------------------
@@ -55,6 +56,7 @@ export default function RequestsPanel({
 
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [runnerFolderIds, setRunnerFolderIds] = useState<Set<string>>(new Set());
 
   // Load which folders have saved runner configs - refresh when workspace changes
@@ -82,6 +84,16 @@ export default function RequestsPanel({
   });
 
   const [pendingData, setPendingData] = useState<Record<string, Omit<SavedRequest, "id" | "createdAt" | "workspaceId">>>({});
+  const [newTabInitials, setNewTabInitials] = useState<Record<string, Partial<SavedRequest>>>({});
+
+  const openNewTabInFolder = useCallback(() => {
+    if (!selectedFolderId) { openNewTab(); return; }
+    const tabId = `${DRAFT_PREFIX}${Date.now()}`;
+    setNewTabInitials((prev) => ({ ...prev, [tabId]: { folderId: selectedFolderId } }));
+    openTab(tabId);
+  }, [openNewTab, openTab, selectedFolderId]);
+
+  useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab: openNewTabInFolder });
 
   // Open a pending request in a new draft tab
   useEffect(() => {
@@ -115,11 +127,17 @@ export default function RequestsPanel({
     await onConfigChange(fresh);
   }, [onConfigChange]);
 
+  const handleMoveFolder = useCallback(async (folderId: string, targetParentId: string | null) => {
+    await window.api.moveFolder("request", folderId, targetParentId);
+    await handleFoldersChange();
+  }, [handleFoldersChange]);
+
   const handleNewSave = useCallback(async (tabId: string, data: Omit<SavedRequest, "id" | "createdAt" | "workspaceId">) => {
     const created = await window.api.addRequest(data);
     await reloadRequests();
     replaceTab(tabId, created.id);
     setPendingData((prev) => { const next = { ...prev }; delete next[tabId]; return next; });
+    setNewTabInitials((prev) => { const next = { ...prev }; delete next[tabId]; return next; });
     onAfterSave?.();
   }, [reloadRequests, replaceTab, onAfterSave]);
 
@@ -285,7 +303,9 @@ export default function RequestsPanel({
           onFoldersChange={handleFoldersChange}
           onDuplicateItem={handleDuplicate}
           onMoveItems={handleMoveItems}
-          onOpenNewTab={openNewTab}
+          onMoveFolder={handleMoveFolder}
+          onOpenNewTab={openNewTabInFolder}
+          onSelectedFolderChange={setSelectedFolderId}
           onBeforeCreateFolder={() => true}
           onHistoryItem={onHistoryOpen ? (id) => {
             const path = getEntityFilePath(id);
@@ -311,7 +331,7 @@ export default function RequestsPanel({
         activeTab={activeTab}
         onTabClick={setActiveTab}
         onTabClose={closeTab}
-        onNewTab={openNewTab}
+        onNewTab={openNewTabInFolder}
         newTabTitle={strings.requests.newTab}
         closeTabTitle={strings.requests.closeTab}
         onCloseOthers={closeOtherTabs}
@@ -354,7 +374,7 @@ export default function RequestsPanel({
 
             const isUnsaved = isDraft(tabId);
             const req = isUnsaved ? null : (loadedEntities[tabId] ?? requests.find((r) => r.id === tabId) ?? null);
-            const initialData = isUnsaved ? (pendingData[tabId] ?? null) : req;
+            const initialData = isUnsaved ? (pendingData[tabId] ?? newTabInitials[tabId] ?? null) : req;
             if (!isUnsaved && !req) return null;
             return (
               <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>

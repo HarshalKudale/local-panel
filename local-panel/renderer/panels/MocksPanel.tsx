@@ -13,6 +13,7 @@ import { Zap } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 
 
 // -- Draft tab prefix -------------------------------------------------------
@@ -50,6 +51,7 @@ export default function MocksPanel({
 
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
   const {
     openTabs, activeTab, setActiveTab,
@@ -66,6 +68,17 @@ export default function MocksPanel({
   });
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog();
+
+  const [newTabInitials, setNewTabInitials] = useState<Record<string, Partial<MockRule>>>({});
+
+  const openNewTabInFolder = useCallback(() => {
+    if (!selectedFolderId) { openNewTab(); return; }
+    const tabId = `${DRAFT_PREFIX}${Date.now()}`;
+    setNewTabInitials((prev) => ({ ...prev, [tabId]: { folderId: selectedFolderId } }));
+    openTab(tabId);
+  }, [openNewTab, openTab, selectedFolderId]);
+
+  useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab: openNewTabInFolder });
 
   const [prefillData, setPrefillData] = useState<Record<string, Partial<MockRule>>>({})
 
@@ -113,6 +126,7 @@ export default function MocksPanel({
     await reloadMocks();
     replaceTab(tabId, created.id);
     setPrefillData((prev) => { const next = { ...prev }; delete next[tabId]; return next; });
+    setNewTabInitials((prev) => { const next = { ...prev }; delete next[tabId]; return next; });
     onAfterSave?.();
   }, [mocks.length, reloadMocks, replaceTab, onAfterSave]);
 
@@ -169,6 +183,11 @@ export default function MocksPanel({
     const fresh = await window.api.getConfig();
     await onConfigChange(fresh);
   }, [onConfigChange]);
+
+  const handleMoveFolder = useCallback(async (folderId: string, targetParentId: string | null) => {
+    await window.api.moveFolder("mock", folderId, targetParentId);
+    await handleFoldersChange();
+  }, [handleFoldersChange]);
 
   const blocksFolder = useMemo(() => findBlocksFolder(folders), [folders]);
 
@@ -277,7 +296,9 @@ export default function MocksPanel({
           onFoldersChange={handleFoldersChange}
           onDuplicateItem={handleDuplicate}
           onMoveItems={handleMoveItems}
-          onOpenNewTab={openNewTab}
+          onMoveFolder={handleMoveFolder}
+          onOpenNewTab={openNewTabInFolder}
+          onSelectedFolderChange={setSelectedFolderId}
           onBeforeCreateFolder={() => true}
           onHistoryItem={onHistoryOpen ? (id) => {
             const path = getEntityFilePath(id);
@@ -306,7 +327,7 @@ export default function MocksPanel({
         activeTab={activeTab}
         onTabClick={setActiveTab}
         onTabClose={closeTab}
-        onNewTab={openNewTab}
+        onNewTab={openNewTabInFolder}
         newTabTitle={strings.mocks.newTab}
         closeTabTitle={strings.mocks.closeTab}
         onCloseOthers={closeOtherTabs}
@@ -331,7 +352,7 @@ export default function MocksPanel({
             if (!isUnsaved && !mock) return null;
             const initialForTab: Partial<MockRule> | null = isPrefill
               ? (prefillData[tabId] ?? null)
-              : isUnsaved ? null : mock;
+              : isUnsaved ? (newTabInitials[tabId] ?? null) : mock;
             return (
               <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
                 <RestTab

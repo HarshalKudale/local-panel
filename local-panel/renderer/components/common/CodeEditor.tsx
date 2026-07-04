@@ -4,6 +4,7 @@ import { EditorState, Compartment, Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { indentOnInput, bracketMatching, foldGutter } from "@codemirror/language";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
+import { search, openSearchPanel, searchKeymap } from "@codemirror/search";
 import { json } from "@codemirror/lang-json";
 import { html } from "@codemirror/lang-html";
 import { xml } from "@codemirror/lang-xml";
@@ -15,6 +16,8 @@ export type EditorLanguage = "json" | "html" | "xml" | "javascript" | "text";
 export interface CodeEditorHandle {
   /** Insert text at the current cursor/selection, replacing any selection. */
   insertAtCursor(text: string): void;
+  /** Open the find/replace panel in the editor. */
+  openFind(): void;
 }
 
 export interface CodeEditorProps {
@@ -71,6 +74,12 @@ export default forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEditor
       });
       view.focus();
     },
+    openFind() {
+      const view = viewRef.current;
+      if (!view) return;
+      openSearchPanel(view);
+      view.focus();
+    },
   }), []);
 
   // -- Create editor on mount ------------------------------------------------
@@ -82,10 +91,11 @@ export default forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEditor
 
     const editingExtensions: Extension = readOnly ? [] : [
       history(),
-      keymap.of([...defaultKeymap, ...historyKeymap, ...closeBracketsKeymap, indentWithTab]),
+      keymap.of([...defaultKeymap, ...historyKeymap, ...closeBracketsKeymap, ...searchKeymap, indentWithTab]),
       closeBrackets(),
       bracketMatching(),
       indentOnInput(),
+      search({ top: true }),
     ];
 
     const extensions: Extension[] = [

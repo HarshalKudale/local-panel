@@ -187,6 +187,8 @@ interface Props {
   onFoldersChange(): void;
   onDuplicateItem?: (id: string) => void;
   onMoveItems?: (ids: string[], folderId: string | null) => void;
+  /** Called when a folder is dragged into another folder. targetFolderId=null means root. */
+  onMoveFolder?: (folderId: string, targetParentId: string | null) => void;
   onOpenNewTab?: () => void;
   /** Called when the history icon is clicked for an item. Receives the entity id. */
   onHistoryItem?: (id: string) => void;
@@ -217,14 +219,16 @@ interface Props {
   onBlockItem?: (id: string) => void;
   /** Remove a block (delete the block mock). */
   onUnblockItem?: (id: string) => void;
+  /** Called whenever the selected folder changes (null = root selected). */
+  onSelectedFolderChange?: (folderId: string | null) => void;
 }
 
 export default function FolderTree({
   kind, folders, items, onOpenItem, onDeleteItem, onToggleItem, onToggleFolderItems, onFoldersChange,
-  onDuplicateItem, onMoveItems, onOpenNewTab, onHistoryItem,
+  onDuplicateItem, onMoveItems, onMoveFolder, onOpenNewTab, onHistoryItem,
   pathStatusMap, entitySyncStatus, folderStatusMap, onPublishItem, onPublishFolder, onRestoreItem,
   onBeforeCreateFolder, onOpenRunner, onBeforeDeleteFolder,
-  blocksFolderId, onBlockItem, onUnblockItem,
+  blocksFolderId, onBlockItem, onUnblockItem, onSelectedFolderChange,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["__root__"]));
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: CtxMenuItem[] } | null>(null);
@@ -236,6 +240,8 @@ export default function FolderTree({
   const [pendingDelete, setPendingDelete] = useState<{ itemIds: string[]; folderIds: string[]; hasTracked?: boolean } | null>(null);
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
   const [deletedItemPopup, setDeletedItemPopup] = useState<FolderTreeItem | null>(null);
+  // Drag state: what is being dragged and what folder it's hovering over
+  const [dragOver, setDragOver] = useState<string | null>(null); // folder id or "__root__" or null
 
   useEffect(() => {
     if (!ctxMenu) return;
@@ -524,17 +530,23 @@ export default function FolderTree({
     const isExpanded = expanded.has(nodeKey);
     const isSel = !isRoot && selectedFolderIds.has(nodeKey);
 
+    const isDragOverThis = dragOver === nodeKey;
     const folderRow = (
       <div
         key={`folder-row-${nodeKey}`}
+        draggable={!isRoot && !!onMoveFolder}
         style={{
           position: "relative",
           display: "flex", alignItems: "center",
           height: 32, paddingRight: 8, paddingLeft: depth > 0 ? 0 : 4,
           gap: 4, borderRadius: 4, marginLeft: 2, marginRight: 4,
           cursor: "pointer", userSelect: "none", whiteSpace: "nowrap",
-          background: isSel ? "rgba(var(--color-accent-rgb) / 0.1)" : undefined,
-          outline: isSel ? "1px solid rgba(var(--color-accent-rgb) / 0.25)" : undefined,
+          background: isDragOverThis
+            ? "rgba(var(--color-accent-rgb) / 0.15)"
+            : isSel ? "rgba(var(--color-accent-rgb) / 0.1)" : undefined,
+          outline: isDragOverThis
+            ? "1px solid rgba(var(--color-accent-rgb) / 0.5)"
+            : isSel ? "1px solid rgba(var(--color-accent-rgb) / 0.25)" : undefined,
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -543,6 +555,7 @@ export default function FolderTree({
           } else {
             clearSelection();
             toggle(nodeKey);
+            onSelectedFolderChange?.(isRoot ? null : node.folder!.id);
           }
         }}
         onContextMenu={(e) => {
@@ -556,8 +569,39 @@ export default function FolderTree({
             openFolderMenu(e.clientX, e.clientY, isRoot ? null : node.folder!.id);
           }
         }}
-        onMouseEnter={(e) => { if (!isSel) (e.currentTarget as HTMLDivElement).style.background = "var(--c-bg2)"; }}
-        onMouseLeave={(e) => { if (!isSel) (e.currentTarget as HTMLDivElement).style.background = ""; }}
+        onMouseEnter={(e) => { if (!isSel && !isDragOverThis) (e.currentTarget as HTMLDivElement).style.background = "var(--c-bg2)"; }}
+        onMouseLeave={(e) => { if (!isSel && !isDragOverThis) (e.currentTarget as HTMLDivElement).style.background = ""; }}
+        onDragStart={!isRoot ? (e) => {
+          e.dataTransfer.setData("text/x-folder-id", node.folder!.id);
+          e.dataTransfer.effectAllowed = "move";
+        } : undefined}
+        onDragOver={(e) => {
+          const draggedFolderId = e.dataTransfer.types.includes("text/x-folder-id");
+          const draggedItemId = e.dataTransfer.types.includes("text/x-item-id");
+          if (!draggedFolderId && !draggedItemId) return;
+          // Don't allow dropping a folder onto itself or its own descendants
+          if (draggedFolderId && !isRoot) {
+            // We can't check exact id here without storing it, so allow and let handler validate
+          }
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          setDragOver(nodeKey);
+        }}
+        onDragLeave={() => setDragOver(null)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(null);
+          const targetFolderId = isRoot ? null : node.folder!.id;
+          const itemId = e.dataTransfer.getData("text/x-item-id");
+          if (itemId && onMoveItems) {
+            onMoveItems([itemId], targetFolderId);
+            return;
+          }
+          const folderId = e.dataTransfer.getData("text/x-folder-id");
+          if (folderId && onMoveFolder && folderId !== targetFolderId) {
+            onMoveFolder(folderId, targetFolderId);
+          }
+        }}
       >
         {depth > 0 && (
           <div style={{ position: "absolute", left: -CONNECTOR_W, top: "50%", width: CONNECTOR_W - 2, height: 1, background: LINE_COLOR, transform: "translateY(-50%)", pointerEvents: "none" }} />
@@ -643,6 +687,7 @@ export default function FolderTree({
       <div
         key={`item-${item.id}`}
         title={item.name}
+        draggable={!item.isRunner && !item.isBlock && !!onMoveItems}
         style={{
           position: "relative", display: "flex", alignItems: "center",
           height: 32, paddingLeft: 4, paddingRight: 8, gap: 5, borderRadius: 4, marginLeft: 2, marginRight: 4,
@@ -651,6 +696,10 @@ export default function FolderTree({
           outline: isSel && !isActive ? "1px solid rgba(202,238,122,0.25)" : undefined,
           transition: "background 0.1s ease",
         }}
+        onDragStart={!item.isRunner && !item.isBlock ? (e) => {
+          e.dataTransfer.setData("text/x-item-id", item.id);
+          e.dataTransfer.effectAllowed = "move";
+        } : undefined}
         onClick={(e) => {
           e.stopPropagation();
           if (item.isRunner) {

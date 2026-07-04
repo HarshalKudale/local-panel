@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld("api", {
   deleteWsConnection: (id: string) => ipcRenderer.invoke("ws:delete", id),
   addFolder: (kind: string, folder: unknown) => ipcRenderer.invoke("folder:add", kind, folder),
   renameFolder: (kind: string, id: string, name: string) => ipcRenderer.invoke("folder:rename", kind, id, name),
+  moveFolder: (kind: string, id: string, parentId: string | null) => ipcRenderer.invoke("folder:move", kind, id, parentId),
   deleteFolder: (kind: string, id: string) => ipcRenderer.invoke("folder:delete", kind, id),
   addEnvironment: (env: unknown) => ipcRenderer.invoke("env:add", env),
   updateEnvironment: (env: unknown) => ipcRenderer.invoke("env:update", env),

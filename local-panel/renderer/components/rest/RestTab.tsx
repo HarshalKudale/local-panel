@@ -1,5 +1,5 @@
 import React, {
-  forwardRef, useImperativeHandle, useReducer, useCallback, useEffect, useState,
+  forwardRef, useImperativeHandle, useReducer, useCallback, useEffect, useState, useRef,
 } from "react";
 import { SavedRequest, MockRule, Folder, Environment, ReplayResult } from "@/types";
 import EditorTitleBar from "@/components/editor/EditorTitleBar";
@@ -24,6 +24,7 @@ import { ChevronDown } from "@/lib/icons";
 
 export interface RestTabHandle {
   refresh(entity: SavedRequest | MockRule): void;
+  save(): void;
 }
 
 // -- Props ------------------------------------------------------------------
@@ -90,12 +91,8 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     () => isDraftEmpty(state, tabType),
   );
 
-  // Expose imperative refresh for sync updates
-  useImperativeHandle(ref, () => ({
-    refresh(entity: SavedRequest | MockRule) {
-      dispatch({ type: "REFRESH", entity, tabType });
-    },
-  }), [tabType]);
+  // handleSave defined below - use a ref so the imperative handle below captures it without ordering issues
+  const handleSaveRef = useRef<() => void>(() => {});
 
   // -- cURL parsing ------------------------------------------------------
 
@@ -235,6 +232,18 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
       dispatch({ type: "SAVE_ERROR", error: e instanceof Error ? e.message : strings.editor.saveFailed });
     }
   }, [state, tabType, onSave, markSaved]);
+
+  handleSaveRef.current = handleSave;
+
+  // Expose imperative handle for save + refresh
+  useImperativeHandle(ref, () => ({
+    refresh(entity: SavedRequest | MockRule) {
+      dispatch({ type: "REFRESH", entity, tabType });
+    },
+    save() {
+      handleSaveRef.current();
+    },
+  }), [tabType]);
 
   // -- Create mock from current request/response -------------------------
 

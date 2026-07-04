@@ -1247,6 +1247,43 @@ export function registerIpcHandlers(): void {
     return { ok: true };
   });
 
+  ipcMain.handle("folder:move", (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock", id: string, parentId: string | null) => {
+    const cfg = loadConfig();
+    const arr: Folder[] = kind === "mock" ? (cfg.mockFolders ?? [])
+      : kind === "ws" ? (cfg.wsFolders ?? [])
+        : kind === "webhook" ? (cfg.webhookFolders ?? [])
+          : kind === "rule" ? (cfg.ruleFolders ?? [])
+            : kind === "graphqlRequest" ? ((cfg as any).graphqlRequestFolders ?? [])
+              : kind === "graphqlMock" ? ((cfg as any).graphqlMockFolders ?? [])
+                : kind === "grpcRequest" ? ((cfg as any).grpcRequestFolders ?? [])
+                  : kind === "grpcMock" ? ((cfg as any).grpcMockFolders ?? [])
+                    : kind === "soapRequest" ? ((cfg as any).soapRequestFolders ?? [])
+                      : kind === "soapMock" ? ((cfg as any).soapMockFolders ?? [])
+                        : (cfg.requestFolders ?? []);
+    const f = arr.find((x: Folder) => x.id === id);
+    if (f) f.parentId = parentId;
+    if (kind === "mock") cfg.mockFolders = arr;
+    else if (kind === "ws") cfg.wsFolders = arr;
+    else if (kind === "webhook") cfg.webhookFolders = arr;
+    else if (kind === "rule") cfg.ruleFolders = arr;
+    else if (kind === "graphqlRequest") (cfg as any).graphqlRequestFolders = arr;
+    else if (kind === "graphqlMock") (cfg as any).graphqlMockFolders = arr;
+    else if (kind === "grpcRequest") (cfg as any).grpcRequestFolders = arr;
+    else if (kind === "grpcMock") (cfg as any).grpcMockFolders = arr;
+    else if (kind === "soapRequest") (cfg as any).soapRequestFolders = arr;
+    else if (kind === "soapMock") (cfg as any).soapMockFolders = arr;
+    else cfg.requestFolders = arr;
+    if (f) {
+      const kindMap = { mock: "mocks", request: "requests", ws: "sockets", webhook: "webhooks", rule: "rules", graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks", grpcRequest: "grpcRequests", grpcMock: "grpcMocks", soapRequest: "soapRequests", soapMock: "soapMocks" } as const;
+      const idx = readIndex(f.workspaceId, kindMap[kind]);
+      const fi = idx.folders.find((x: Folder) => x.id === id);
+      if (fi) fi.parentId = parentId;
+      writeIndex(f.workspaceId, kindMap[kind], idx);
+    }
+    saveConfig(cfg);
+    return { ok: true };
+  });
+
   ipcMain.handle("folder:delete", async (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock", id: string) => {
     const cfg = loadConfig();
     let folder: Folder | undefined;
