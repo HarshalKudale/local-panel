@@ -12,7 +12,6 @@ import { findBlocksFolder, ensureBlocksFolderId, buildBlockMock } from "@/lib/bl
 import { Zap } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 
 
@@ -67,9 +66,8 @@ export default function MocksPanel({
     entities: mocks,
   });
 
-  const { confirm, ConfirmDialogElement } = useConfirmDialog();
-
   const [newTabInitials, setNewTabInitials] = useState<Record<string, Partial<MockRule>>>({});
+  const [dirtyTabs, setDirtyTabs] = useState<Record<string, boolean>>({});
 
   const openNewTabInFolder = useCallback(() => {
     if (!selectedFolderId) { openNewTab(); return; }
@@ -141,12 +139,24 @@ export default function MocksPanel({
   }, [loadedEntities, mocks, reloadMocks, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
-    const ok = await confirm("Delete this mock? This cannot be undone.");
-    if (!ok) return;
     closeTab(id);
     await window.api.deleteMock(id);
     await reloadMocks();
-  }, [confirm, reloadMocks, closeTab]);
+  }, [reloadMocks, closeTab]);
+
+  // Grouped bulk delete: tracked items deleted together, untracked items together.
+  // Single reload per group so there's no race condition from concurrent reloads.
+  const handleDeleteItems = useCallback(async (trackedIds: string[], untrackedIds: string[]) => {
+    [...trackedIds, ...untrackedIds].forEach(id => closeTab(id));
+    if (trackedIds.length > 0) {
+      await Promise.all(trackedIds.map(id => window.api.deleteMock(id)));
+      await reloadMocks();
+    }
+    if (untrackedIds.length > 0) {
+      await Promise.all(untrackedIds.map(id => window.api.deleteMock(id)));
+      await reloadMocks();
+    }
+  }, [reloadMocks, closeTab]);
 
   // Close all open tabs for a folder's mocks before the folder is deleted
   const handleBeforeDeleteFolder = useCallback((folderId: string) => {
@@ -291,6 +301,7 @@ export default function MocksPanel({
           items={folderViewItems}
           onOpenItem={openTab}
           onDeleteItem={handleDelete}
+          onDeleteItems={handleDeleteItems}
           onToggleItem={(id) => { const m = mocks.find((x) => x.id === id); if (m) handleToggle(m); }}
           onToggleFolderItems={handleToggleFolderItems}
           onFoldersChange={handleFoldersChange}
@@ -323,7 +334,7 @@ export default function MocksPanel({
   const mainContent = (
     <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">
       <TabBar
-        tabs={openTabs.map((id) => ({ id, label: tabLabel(id), isDraft: isDraft(id) }))}
+        tabs={openTabs.map((id) => ({ id, label: tabLabel(id), isDraft: isDraft(id), isModified: dirtyTabs[id] }))}
         activeTab={activeTab}
         onTabClick={setActiveTab}
         onTabClose={closeTab}
@@ -368,6 +379,7 @@ export default function MocksPanel({
                     : handleTabSave(tabId, data as Omit<MockRule, "id" | "createdAt" | "workspaceId">)
                   }
                   onClose={() => closeTab(tabId)}
+                  onDirtyChange={(dirty) => setDirtyTabs((prev) => ({ ...prev, [tabId]: dirty }))}
                   showCurlImport={isUnsaved}
                   enabled={isUnsaved ? undefined : mocks.find((m) => m.id === tabId)?.enabled}
                   onToggleEnabled={isUnsaved ? undefined : () => { const m = mocks.find((x) => x.id === tabId); if (m) handleToggle(m); }}
@@ -396,7 +408,6 @@ export default function MocksPanel({
       >
         {mainContent}
       </SidebarLayout>
-      {ConfirmDialogElement}
     </>
   );
 }

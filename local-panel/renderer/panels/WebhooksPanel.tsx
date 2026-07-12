@@ -10,8 +10,6 @@ import { Plus, X, Play, Square, Webhook } from "@/lib/icons";
 import { strings } from "@/lib/strings";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
-
 import CodeEditor from "@/components/common/CodeEditor";
 import EditorTitleBar from "@/components/editor/EditorTitleBar";
 import { BottomBar } from "@/components/editor/RequestTab";
@@ -279,8 +277,6 @@ export default function WebhooksPanel({
   const folders = config.webhookFolders ?? [];
   const webhookPort = config.webhookPort ?? 9101;
 
-  const { confirm, ConfirmDialogElement } = useConfirmDialog();
-
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [serverRunning, setServerRunning] = useState(false);
@@ -467,13 +463,11 @@ export default function WebhooksPanel({
   }, [loadedEntities, webhooks, activeTabs, reloadWebhooks, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
-    const ok = await confirm("Delete this webhook? This cannot be undone.");
-    if (!ok) return;
     deregisterWebhook(id);
     await window.api.deleteWebhook(id);
     await reloadWebhooks();
     closeTab(id);
-  }, [confirm, deregisterWebhook, reloadWebhooks, closeTab]);
+  }, [deregisterWebhook, reloadWebhooks, closeTab]);
 
   const handleDuplicate = useCallback(async (id: string) => {
     let h = loadedEntities[id];
@@ -716,7 +710,6 @@ export default function WebhooksPanel({
       >
         {mainContent}
       </SidebarLayout>
-      {ConfirmDialogElement}
     </>
   );
 }

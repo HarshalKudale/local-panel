@@ -12,7 +12,6 @@ import { entityRelPath } from "@/lib/utils";
 import { Zap } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 
 
@@ -52,8 +51,6 @@ export default function RequestsPanel({
   const requests = config.requests ?? [];
   const folders = config.requestFolders ?? [];
 
-  const { confirm, ConfirmDialogElement } = useConfirmDialog();
-
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -85,6 +82,7 @@ export default function RequestsPanel({
 
   const [pendingData, setPendingData] = useState<Record<string, Omit<SavedRequest, "id" | "createdAt" | "workspaceId">>>({});
   const [newTabInitials, setNewTabInitials] = useState<Record<string, Partial<SavedRequest>>>({});
+  const [dirtyTabs, setDirtyTabs] = useState<Record<string, boolean>>({});
 
   const openNewTabInFolder = useCallback(() => {
     if (!selectedFolderId) { openNewTab(); return; }
@@ -152,12 +150,22 @@ export default function RequestsPanel({
   }, [loadedEntities, requests, reloadRequests, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
-    const ok = await confirm("Delete this request? This cannot be undone.");
-    if (!ok) return;
     closeTab(id);
     await window.api.deleteRequest(id);
     await reloadRequests();
-  }, [confirm, reloadRequests, closeTab]);
+  }, [reloadRequests, closeTab]);
+
+  const handleDeleteItems = useCallback(async (trackedIds: string[], untrackedIds: string[]) => {
+    [...trackedIds, ...untrackedIds].forEach(id => closeTab(id));
+    if (trackedIds.length > 0) {
+      await Promise.all(trackedIds.map(id => window.api.deleteRequest(id)));
+      await reloadRequests();
+    }
+    if (untrackedIds.length > 0) {
+      await Promise.all(untrackedIds.map(id => window.api.deleteRequest(id)));
+      await reloadRequests();
+    }
+  }, [reloadRequests, closeTab]);
 
   // Close all open tabs for a folder's requests before the folder is deleted
   const handleBeforeDeleteFolder = useCallback((folderId: string) => {
@@ -300,6 +308,7 @@ export default function RequestsPanel({
           items={folderViewItems}
           onOpenItem={openTab}
           onDeleteItem={handleDelete}
+          onDeleteItems={handleDeleteItems}
           onFoldersChange={handleFoldersChange}
           onDuplicateItem={handleDuplicate}
           onMoveItems={handleMoveItems}
@@ -327,7 +336,7 @@ export default function RequestsPanel({
   const mainContent = (
     <div className="flex flex-col flex-1 overflow-hidden min-w-0 h-full">
       <TabBar
-        tabs={openTabs.map((id) => ({ id, label: tabLabel(id), isDraft: isDraft(id) }))}
+        tabs={openTabs.map((id) => ({ id, label: tabLabel(id), isDraft: isDraft(id), isModified: dirtyTabs[id] }))}
         activeTab={activeTab}
         onTabClick={setActiveTab}
         onTabClose={closeTab}
@@ -392,6 +401,7 @@ export default function RequestsPanel({
                   }
                   onCreateMock={(initial) => onOpenMockEditor?.(initial)}
                   onClose={() => closeTab(tabId)}
+                  onDirtyChange={(dirty) => setDirtyTabs((prev) => ({ ...prev, [tabId]: dirty }))}
                   showCurlImport={isUnsaved}
                 />
               </div>
@@ -418,7 +428,6 @@ export default function RequestsPanel({
       >
         {mainContent}
       </SidebarLayout>
-      {ConfirmDialogElement}
     </>
   );
 }

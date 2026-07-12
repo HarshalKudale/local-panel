@@ -11,8 +11,6 @@ import { entityRelPath, calculateFolderStatus } from "@/lib/utils";
 import { Settings } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
-
 
 const DRAFT_PREFIX = "rule-draft-";
 
@@ -31,8 +29,6 @@ export default function ProxyRulesPanel({
 }: Props) {
   const rules = config.proxyRules ?? [];
   const folders = config.ruleFolders ?? [];
-
-  const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -91,12 +87,10 @@ export default function ProxyRulesPanel({
   }, [rules, loadedEntities, config.activeWorkspaceId, setLoadedEntities, reloadRules]);
 
   const handleDelete = useCallback(async (id: string) => {
-    const ok = await confirm(strings.proxyRules.deleteConfirm);
-    if (!ok) return;
     await window.api.deleteRule(id);
     await reloadRules();
     closeTab(id);
-  }, [confirm, reloadRules, closeTab]);
+  }, [reloadRules, closeTab]);
 
   const handleDuplicate = useCallback(async (id: string) => {
     const full = loadedEntities[id] ?? await window.api.loadEntity(config.activeWorkspaceId, "rules", id)
@@ -275,7 +269,6 @@ export default function ProxyRulesPanel({
       >
         {mainContent}
       </SidebarLayout>
-      {ConfirmDialogElement}
     </>
   );
 }

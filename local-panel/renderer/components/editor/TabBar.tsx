@@ -7,6 +7,7 @@ export interface TabBarTab {
   id: string;
   label: string;
   isDraft?: boolean;
+  isModified?: boolean;
   /** Optional custom renderer for the tab pill content. Receives active state. */
   renderTab?: (isActive: boolean) => React.ReactNode;
 }
@@ -49,6 +50,13 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
 
   // Re-check whenever tab list changes
   useEffect(sync, [tabs, sync]);
+
+  // Scroll active tab into view when it changes
+  useEffect(() => {
+    if (!activeTab || !scrollRef.current) return;
+    const el = scrollRef.current.querySelector<HTMLElement>(`[data-tab-id="${activeTab}"]`);
+    el?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [activeTab]);
 
   return (
     <div className="flex items-stretch border-b border-border bg-bg1 flex-shrink-0 min-h-[34px]">
@@ -95,15 +103,15 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
           };
           if (tab.renderTab) {
             return (
-              <div key={tab.id} className={baseClass} onClick={() => onTabClick(tab.id)} onContextMenu={handleCtxMenu}>
+              <div key={tab.id} data-tab-id={tab.id} className={baseClass} onClick={() => onTabClick(tab.id)} onContextMenu={handleCtxMenu}>
                 {tab.renderTab(isActive)}
               </div>
             );
           }
           return (
-            <div key={tab.id} className={baseClass} onClick={() => onTabClick(tab.id)} onContextMenu={handleCtxMenu}>
+            <div key={tab.id} data-tab-id={tab.id} className={baseClass} onClick={() => onTabClick(tab.id)} onContextMenu={handleCtxMenu}>
               {tab.isDraft && <span className="text-[8px] text-yellow opacity-70 flex-shrink-0">●</span>}
-              <span className="max-w-[160px] truncate">{tab.label}</span>
+              <span className="max-w-[160px] truncate">{tab.label}{tab.isModified ? " *" : ""}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); onTabClose(tab.id); }}
                 className="w-4 h-4 flex items-center justify-center rounded hover:bg-bg3 text-text-dim hover:text-text-base transition-colors ml-0.5 flex-shrink-0 cursor-pointer"

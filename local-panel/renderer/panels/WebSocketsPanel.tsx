@@ -21,8 +21,6 @@ import { Plus, X, Folder, Zap, Play, Send, Radio } from "@/lib/icons";
 import { strings } from "@/lib/strings";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
-
 
 // -- Constants --------------------------------------------------------------
 
@@ -437,8 +435,6 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
   const connections = config.wsConnections ?? [];
   const folders = config.wsFolders ?? [];
 
-  const { confirm, ConfirmDialogElement } = useConfirmDialog();
-
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -539,12 +535,10 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
   }, [loadedEntities, connections, reloadConnections, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
-    const ok = await confirm("Delete this WebSocket connection? This cannot be undone.");
-    if (!ok) return;
     await window.api.deleteWsConnection(id);
     await reloadConnections();
     closeTab(id);
-  }, [confirm, reloadConnections, closeTab]);
+  }, [reloadConnections, closeTab]);
 
   const handleDuplicate = useCallback(async (id: string) => {
     let c = loadedEntities[id];
@@ -716,7 +710,6 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
       >
         {mainContent}
       </SidebarLayout>
-      {ConfirmDialogElement}
     </>
   );
 }

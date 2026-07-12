@@ -10,7 +10,6 @@ import { calculateFolderStatus } from "@/lib/utils";
 import { FileCode } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { strings } from "@/lib/strings";
 
 
@@ -32,8 +31,6 @@ interface Props {
 export default function SoapMocksPanel({ config, onConfigChange, activeEnv = null }: Props) {
     const mocks = config.soapMocks ?? [];
     const folders = config.soapMockFolders ?? [];
-
-    const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
     const [search, setSearch] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -73,12 +70,10 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
     }, [loadedEntities, mocks, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
-        const ok = await confirm(strings.soap.deleteMockConfirm);
-        if (!ok) return;
         await window.api.deleteSoapMock(id);
         await reloadConfig();
         closeTab(id);
-    }, [confirm, reloadConfig, closeTab]);
+    }, [reloadConfig, closeTab]);
 
     const handleDuplicate = useCallback(async (id: string) => {
         let m = loadedEntities[id];
@@ -245,7 +240,6 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
             >
                 {mainContent}
             </SidebarLayout>
-            {ConfirmDialogElement}
         </>
     );
 }

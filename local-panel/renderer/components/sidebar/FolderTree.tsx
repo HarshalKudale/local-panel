@@ -221,6 +221,12 @@ interface Props {
   onUnblockItem?: (id: string) => void;
   /** Called whenever the selected folder changes (null = root selected). */
   onSelectedFolderChange?: (folderId: string | null) => void;
+  /**
+   * Grouped bulk delete. Receives all selected item IDs grouped by tracked status.
+   * If provided, used instead of calling onDeleteItem per-item.
+   * trackedIds = relPath exists in git (clean/modified/deleted); untrackedIds = new or absent.
+   */
+  onDeleteItems?: (trackedIds: string[], untrackedIds: string[]) => Promise<void>;
 }
 
 export default function FolderTree({
@@ -228,7 +234,7 @@ export default function FolderTree({
   onDuplicateItem, onMoveItems, onMoveFolder, onOpenNewTab, onHistoryItem,
   pathStatusMap, entitySyncStatus, folderStatusMap, onPublishItem, onPublishFolder, onRestoreItem,
   onBeforeCreateFolder, onOpenRunner, onBeforeDeleteFolder,
-  blocksFolderId, onBlockItem, onUnblockItem, onSelectedFolderChange,
+  blocksFolderId, onBlockItem, onUnblockItem, onSelectedFolderChange, onDeleteItems,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["__root__"]));
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: CtxMenuItem[] } | null>(null);
@@ -242,6 +248,8 @@ export default function FolderTree({
   const [deletedItemPopup, setDeletedItemPopup] = useState<FolderTreeItem | null>(null);
   // Drag state: what is being dragged and what folder it's hovering over
   const [dragOver, setDragOver] = useState<string | null>(null); // folder id or "__root__" or null
+  // Anchor for shift+click range selection. Each entry: { id, kind: "folder"|"item" }
+  const lastClickedRef = useRef<{ id: string; kind: "folder" | "item" } | null>(null);
 
   useEffect(() => {
     if (!ctxMenu) return;
@@ -253,6 +261,7 @@ export default function FolderTree({
   const clearSelection = useCallback(() => {
     setSelectedItemIds(new Set());
     setSelectedFolderIds(new Set());
+    lastClickedRef.current = null;
   }, []);
 
   const getItemStatus = (item: FolderTreeItem): EntitySyncStatus | undefined => {
@@ -286,6 +295,26 @@ export default function FolderTree({
       target.items.push(item);
     }
     return nodeMap.get(null)!;
+  }
+
+  // Returns all visible nodes in render order, for shift+click range selection.
+  function getVisibleOrder(root: FolderNode): { id: string; kind: "folder" | "item" }[] {
+    const result: { id: string; kind: "folder" | "item" }[] = [];
+    function walk(node: FolderNode) {
+      const nodeKey = node.folder === null ? "__root__" : node.folder!.id;
+      if (node.folder !== null) result.push({ id: node.folder!.id, kind: "folder" });
+      if (expanded.has(nodeKey)) {
+        node.children.forEach(walk);
+        const sorted = [...node.items].sort((a, b) => {
+          const aDeleted = getItemStatus(a) === "deleted" ? 1 : 0;
+          const bDeleted = getItemStatus(b) === "deleted" ? 1 : 0;
+          return aDeleted - bDeleted;
+        });
+        sorted.forEach((item) => result.push({ id: item.id, kind: "item" }));
+      }
+    }
+    walk(root);
+    return result;
   }
 
   const handleNewFolder = async (name: string, parentId: string | null) => {
@@ -506,12 +535,28 @@ export default function FolderTree({
 
   // -- Bulk actions -----------------------------------------------------------
 
-  const doBulkDelete = () => {
+  const doBulkDelete = async () => {
     if (!pendingDelete) return;
-    pendingDelete.itemIds.forEach(id => onDeleteItem(id));
-    pendingDelete.folderIds.forEach(id => handleDeleteFolder(id));
+    const { itemIds, folderIds } = pendingDelete;
     clearSelection();
     setPendingDelete(null);
+    if (itemIds.length > 0) {
+      if (onDeleteItems) {
+        // Caller groups by tracked/untracked and handles the reload
+        const tracked = itemIds.filter(id => {
+          const it = items.find(i => i.id === id);
+          return it?.relPath && pathStatusMap?.[it.relPath] && pathStatusMap[it.relPath] !== "new";
+        });
+        const untracked = itemIds.filter(id => {
+          const it = items.find(i => i.id === id);
+          return !it?.relPath || !pathStatusMap?.[it.relPath] || pathStatusMap[it.relPath] === "new";
+        });
+        await onDeleteItems(tracked, untracked);
+      } else {
+        for (const id of itemIds) await onDeleteItem(id);
+      }
+    }
+    for (const id of folderIds) handleDeleteFolder(id);
   };
 
   const doMove = (folderId: string | null) => {
@@ -550,12 +595,25 @@ export default function FolderTree({
         }}
         onClick={(e) => {
           e.stopPropagation();
-          if ((e.ctrlKey || e.metaKey) && !isRoot) {
+          if (isRoot) { clearSelection(); toggle(nodeKey); onSelectedFolderChange?.(null); return; }
+          if (e.shiftKey && lastClickedRef.current) {
+            const order = getVisibleOrder(buildTree());
+            const anchorIdx = order.findIndex((n) => n.id === lastClickedRef.current!.id);
+            const targetIdx = order.findIndex((n) => n.id === node.folder!.id);
+            if (anchorIdx !== -1 && targetIdx !== -1) {
+              const [lo, hi] = anchorIdx < targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
+              const range = order.slice(lo, hi + 1);
+              setSelectedFolderIds((p) => { const s = new Set(p); range.filter(n => n.kind === "folder").forEach(n => s.add(n.id)); return s; });
+              setSelectedItemIds((p) => { const s = new Set(p); range.filter(n => n.kind === "item").forEach(n => s.add(n.id)); return s; });
+            }
+          } else if (e.ctrlKey || e.metaKey) {
             setSelectedFolderIds((p) => { const s = new Set(p); s.has(nodeKey) ? s.delete(nodeKey) : s.add(nodeKey); return s; });
+            lastClickedRef.current = { id: node.folder!.id, kind: "folder" };
           } else {
             clearSelection();
             toggle(nodeKey);
-            onSelectedFolderChange?.(isRoot ? null : node.folder!.id);
+            onSelectedFolderChange?.(node.folder!.id);
+            lastClickedRef.current = { id: node.folder!.id, kind: "folder" };
           }
         }}
         onContextMenu={(e) => {
@@ -713,14 +771,27 @@ export default function FolderTree({
             clearSelection();
             return;
           }
-          if (e.ctrlKey || e.metaKey) {
+          if (e.shiftKey && lastClickedRef.current) {
+            const order = getVisibleOrder(buildTree());
+            const anchorIdx = order.findIndex((n) => n.id === lastClickedRef.current!.id);
+            const targetIdx = order.findIndex((n) => n.id === item.id);
+            if (anchorIdx !== -1 && targetIdx !== -1) {
+              const [lo, hi] = anchorIdx < targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
+              const range = order.slice(lo, hi + 1);
+              setSelectedFolderIds((p) => { const s = new Set(p); range.filter(n => n.kind === "folder").forEach(n => s.add(n.id)); return s; });
+              setSelectedItemIds((p) => { const s = new Set(p); range.filter(n => n.kind === "item").forEach(n => s.add(n.id)); return s; });
+            }
+          } else if (e.ctrlKey || e.metaKey) {
             setSelectedItemIds((p) => { const s = new Set(p); s.has(item.id) ? s.delete(item.id) : s.add(item.id); return s; });
+            lastClickedRef.current = { id: item.id, kind: "item" };
           } else if (isDeleted) {
             clearSelection();
             setDeletedItemPopup(item);
+            lastClickedRef.current = { id: item.id, kind: "item" };
           } else {
             clearSelection();
             onOpenItem(item.id);
+            lastClickedRef.current = { id: item.id, kind: "item" };
           }
         }}
         onContextMenu={(e) => {

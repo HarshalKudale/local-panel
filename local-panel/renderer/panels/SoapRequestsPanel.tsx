@@ -9,7 +9,6 @@ import { useEntityTabs } from "@/lib/useEntityTabs";
 import { FileCode } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
-import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { strings } from "@/lib/strings";
 
 
@@ -31,8 +30,6 @@ interface Props {
 export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = null }: Props) {
     const requests = config.soapRequests ?? [];
     const folders = config.soapRequestFolders ?? [];
-
-    const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
     const [search, setSearch] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -72,12 +69,10 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
     }, [loadedEntities, requests, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
-        const ok = await confirm(strings.soap.deleteRequestConfirm);
-        if (!ok) return;
         await window.api.deleteSoapRequest(id);
         await reloadConfig();
         closeTab(id);
-    }, [confirm, reloadConfig, closeTab]);
+    }, [reloadConfig, closeTab]);
 
     const handleDuplicate = useCallback(async (id: string) => {
         let r = loadedEntities[id];
@@ -247,7 +242,6 @@ export default function SoapRequestsPanel({ config, onConfigChange, activeEnv = 
             >
                 {mainContent}
             </SidebarLayout>
-            {ConfirmDialogElement}
         </>
     );
 }

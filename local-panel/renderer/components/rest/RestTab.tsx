@@ -77,12 +77,10 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     () => initState(initial ?? null, draft, tabType),
   );
 
-  // Track dirty state for the parent
-  const [initialSnapshot] = useState(() => JSON.stringify(stateToDraft(initState(initial ?? null, draft, tabType), tabType)));
-  useEffect(() => {
-    const current = JSON.stringify(stateToDraft(state, tabType));
-    onDirtyChange?.(current !== initialSnapshot);
-  }, [state, tabType, initialSnapshot, onDirtyChange]);
+  // Track dirty state (ref so it doesn't cause re-renders, updated after save)
+  const savedSnapshot = useRef(JSON.stringify(stateToDraft(initState(initial ?? null, draft, tabType), tabType)));
+  const isDirty = JSON.stringify(stateToDraft(state, tabType)) !== savedSnapshot.current;
+  useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
 
   // Draft auto-save (no-op for saved tabs where draftTabId is null/undefined)
   const { markSaved } = useDraftPersist(
@@ -227,6 +225,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     try {
       await onSave(stateToSavePayload(state, tabType));
       markSaved();
+      savedSnapshot.current = JSON.stringify(stateToDraft(state, tabType));
       dispatch({ type: "SAVE_SUCCESS" });
     } catch (e) {
       dispatch({ type: "SAVE_ERROR", error: e instanceof Error ? e.message : strings.editor.saveFailed });
@@ -239,6 +238,8 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
   useImperativeHandle(ref, () => ({
     refresh(entity: SavedRequest | MockRule) {
       dispatch({ type: "REFRESH", entity, tabType });
+      // Update snapshot so the refreshed entity is the new "clean" baseline
+      savedSnapshot.current = JSON.stringify(stateToDraft(initState(entity, null, tabType), tabType));
     },
     save() {
       handleSaveRef.current();
@@ -274,9 +275,11 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     ? (state.resMode === "json" ? tryFormat(b64ToText(state.result.body)) : b64ToText(state.result.body))
     : "";
 
-  const canSave = tabType === "request"
+  const canSaveBase = tabType === "request"
     ? !!state.url.trim()
     : !!(state.url.trim() && !(state.useRegex && state.regexError) && (state.resMode === "none" || state.resBody.trim()));
+  // For saved (non-draft) tabs, also require actual changes before enabling save
+  const canSave = canSaveBase && (!!draftTabId || isDirty);
 
   const actionLabel = tabType === "request" ? strings.server.send : strings.server.test;
   const actionLoading = tabType === "request" ? state.loading : state.testLoading;
