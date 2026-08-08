@@ -110,8 +110,9 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
           }
           return (
             <div key={tab.id} data-tab-id={tab.id} className={baseClass} onClick={() => onTabClick(tab.id)} onContextMenu={handleCtxMenu}>
+              {tab.isModified && <span className="text-[10px] text-accent opacity-80 flex-shrink-0 leading-none">*</span>}
               {tab.isDraft && <span className="text-[8px] text-yellow opacity-70 flex-shrink-0">●</span>}
-              <span className="max-w-[160px] truncate">{tab.label}{tab.isModified ? " *" : ""}</span>
+              <span className="max-w-[160px] truncate">{tab.label}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); onTabClose(tab.id); }}
                 className="w-4 h-4 flex items-center justify-center rounded hover:bg-bg3 text-text-dim hover:text-text-base transition-colors ml-0.5 flex-shrink-0 cursor-pointer"

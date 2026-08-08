@@ -216,7 +216,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         section: strings.panels.sectionApplications,
         sectionType: "flat",
         enabled: true,
-        helpText: strings.applications.helpText,
+        helpText: strings.runner.helpText,
     },
     {
         id: "healthbar",

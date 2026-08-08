@@ -58,12 +58,19 @@ export default function ProxyRulesPanel({
   }, [rules, isDraft, config.activeWorkspaceId, reloadRules]);
 
   const handleToggleFolderItems = useCallback(async (folderId: string | null, enable: boolean) => {
-    const inFolder = rules.filter((r) => (r.folderId ?? null) === folderId && !isDraft(r.id));
-    for (const stub of inFolder) {
+    const descendantFolderIds = new Set<string | null>([folderId]);
+    const queue = folders.filter((f) => (f.parentId ?? null) === folderId);
+    while (queue.length) {
+      const f = queue.shift()!;
+      descendantFolderIds.add(f.id);
+      folders.filter((c) => (c.parentId ?? null) === f.id).forEach((c) => queue.push(c));
+    }
+    const affected = rules.filter((r) => descendantFolderIds.has(r.folderId ?? null) && !isDraft(r.id));
+    for (const stub of affected) {
       if (stub.enabled !== enable) await window.api.setEntityEnabled(config.activeWorkspaceId, "rules", stub.id, enable);
     }
     await reloadRules();
-  }, [rules, isDraft, config.activeWorkspaceId, reloadRules]);
+  }, [rules, folders, isDraft, config.activeWorkspaceId, reloadRules]);
 
   const handleNewRuleSave = useCallback(async (tabId: string, data: RuleSavePayload) => {
     const created = await window.api.addRule({

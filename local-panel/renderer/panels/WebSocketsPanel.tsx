@@ -48,9 +48,10 @@ interface WsEditorProps {
   onClose(): void;
   folders?: FolderType[];
   activeEnv?: Environment | null;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], activeEnv = null }: WsEditorProps) {
+function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], activeEnv = null, onDirtyChange }: WsEditorProps) {
   const draft = isDraft(tabId) ? loadDraft<WsDraft>(tabId) : null;
   const src = draft ?? initial;
 
@@ -92,6 +93,16 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
     () => ({ name, url, folderId, headers: rowsToHeaders(headers) } satisfies WsDraft),
     isEmptyDraft,
   );
+
+  // Dirty detection: compare current values to the initial saved values
+  const savedName = (initial as SavedWsConnection | null)?.name ?? "";
+  const savedUrl = (initial as SavedWsConnection | null)?.url ?? "";
+  const savedFolderId = (initial as SavedWsConnection | null)?.folderId ?? null;
+  const savedHeaders = JSON.stringify((initial as SavedWsConnection | null)?.headers ?? {});
+  const isDirtyWs = isNew
+    ? (name.trim() !== "" || url.trim() !== "")
+    : (name !== savedName || url !== savedUrl || folderId !== savedFolderId || JSON.stringify(rowsToHeaders(headers)) !== savedHeaders);
+  useEffect(() => { onDirtyChange?.(isDirtyWs); }, [isDirtyWs, onDirtyChange]);
 
   const handleConnect = useCallback(() => {
     setSendErr(null);
@@ -374,7 +385,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
         onCancel={onClose}
         onSave={handleSave}
         saveLabel={isNew ? strings.sockets.saveSocket : strings.sockets.updateSocket}
-        saveDisabled={!url.trim()}
+        saveDisabled={!url.trim() || (!isNew && !isDirtyWs)}
         saving={saving}
         savingLabel={strings.server.saving}
       />
@@ -437,6 +448,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
 
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [dirtyTabs, setDirtyTabs] = useState<Record<string, boolean>>({});
 
   const [openTabs, setOpenTabs] = usePersistedState<string[]>(
     "ws:openTabs", [],
@@ -637,12 +649,14 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
           id,
           label: tabLabel(id),
           isDraft: isDraft(id),
+          isModified: dirtyTabs[id],
           renderTab: (isActive) => (
             <WsTabHeader
               tabId={id}
               label={tabLabel(id)}
               isActive={isActive}
               isDraft={isDraft(id)}
+              isModified={dirtyTabs[id]}
               onClose={(e) => { e.stopPropagation(); closeTab(id); }}
             />
           ),
@@ -685,6 +699,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
                   onClose={() => closeTab(tabId)}
                   folders={folders}
                   activeEnv={activeEnv}
+                  onDirtyChange={(dirty) => setDirtyTabs((prev) => ({ ...prev, [tabId]: dirty }))}
                 />
               </div>
             );
@@ -716,8 +731,8 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
 
 // -- WsTabHeader - green/red dot based on connection status -----------------
 
-function WsTabHeader({ tabId, label, isDraft: draft, onClose }: {
-  tabId: string; label: string; isDraft: boolean; isActive?: boolean;
+function WsTabHeader({ tabId, label, isDraft: draft, isModified, onClose }: {
+  tabId: string; label: string; isDraft: boolean; isActive?: boolean; isModified?: boolean;
   onClose(e: React.MouseEvent): void;
 }) {
   const [dotColor, setDotColor] = useState("var(--c-text-dim)");
@@ -732,6 +747,7 @@ function WsTabHeader({ tabId, label, isDraft: draft, onClose }: {
 
   return (
     <>
+      {isModified && <span className="text-[10px] text-accent opacity-80 flex-shrink-0 leading-none">*</span>}
       <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
       {draft && <span className="text-[8px] text-yellow opacity-70 flex-shrink-0">●</span>}
       <span className="max-w-[160px] truncate">{label}</span>

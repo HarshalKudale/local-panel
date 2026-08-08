@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { strings } from "@/lib/strings";
 
 interface ConfirmDialogProps {
@@ -20,8 +20,11 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const confirmRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     if (!open) return;
+    confirmRef.current?.focus();
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -38,6 +41,7 @@ export default function ConfirmDialog({
       <div
         className="bg-bg2 border border-border rounded-lg shadow-2xl p-4 w-72"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onConfirm(); } }}
       >
         {title && <p className="text-xs font-semibold text-text-bright mb-1">{title}</p>}
         <p className="text-xs text-text-base leading-relaxed mb-4">{message}</p>
@@ -49,6 +53,7 @@ export default function ConfirmDialog({
             {strings.common.cancel}
           </button>
           <button
+            ref={confirmRef}
             className="px-3 py-1.5 text-xs rounded font-semibold text-white cursor-pointer"
             style={{ background: confirmVariant === "danger" ? "var(--c-red)" : "var(--c-accent)" }}
             onClick={onConfirm}

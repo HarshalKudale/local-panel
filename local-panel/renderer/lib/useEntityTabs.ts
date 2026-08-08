@@ -9,7 +9,7 @@ interface Options<T> {
   draftPrefix: string;
   extraDraftPrefixes?: string[];
   workspaceId: string;
-  entityKind: "mocks" | "requests" | "rules";
+  entityKind: "mocks" | "requests" | "rules" | "runners";
   entities: T[];
 }
 
@@ -47,6 +47,8 @@ export function useEntityTabs<T extends { id: string }>({
     `${storageKey}:openTabs`, [],
     (tabs) => tabs.filter((id) => {
       if (isDraft(id)) return getDraftIds(draftPrefix).includes(id) || extraDraftPrefixes.some((p) => id.startsWith(p));
+      // When entities haven't loaded yet, keep all persisted tabs to avoid premature eviction
+      if (entities.length === 0) return true;
       return entities.some((e) => e.id === id);
     }),
   );
@@ -56,9 +58,24 @@ export function useEntityTabs<T extends { id: string }>({
     (id) => {
       if (id === null) return null;
       if (isDraft(id)) return getDraftIds(draftPrefix).includes(id) || extraDraftPrefixes.some((p) => id.startsWith(p)) ? id : null;
+      // Same: keep the active tab when entities haven't loaded yet
+      if (entities.length === 0) return id;
       return entities.some((e) => e.id === id) ? id : null;
     },
   );
+
+  // Once entities load, prune any tabs that no longer exist
+  useEffect(() => {
+    if (entities.length === 0) return;
+    setOpenTabs((prev) => prev.filter((id) => {
+      if (isDraft(id)) return true;
+      return entities.some((e) => e.id === id);
+    }));
+    setActiveTab((cur) => {
+      if (cur === null || isDraft(cur)) return cur;
+      return entities.some((e) => e.id === cur) ? cur : null;
+    });
+  }, [entities.length]);
 
   const [loadedEntities, setLoadedEntities] = useState<Record<string, T>>({});
   const tabRefs = useRef<Record<string, RestTabHandle | null>>({});

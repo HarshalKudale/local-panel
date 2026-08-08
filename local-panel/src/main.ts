@@ -4,6 +4,7 @@ import * as dotenv from "dotenv";
 // Load .env before anything else so SUPABASE_* are available
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 import { processSpawner } from "@/applications/processSpawner";
+import { runnerSpawner } from "@/applications/runnerSpawner";
 import { registerIpcHandlers } from "@/ipc/handlers";
 import { loadConfig, generateId } from "@/store/config";
 import { loadSettings, saveSettings } from "@/store/appSettings";
@@ -186,6 +187,7 @@ function createWindow(): void {
   });
 
   processSpawner.setMainWindow(mainWindow);
+  runnerSpawner.setMainWindow(mainWindow);
 
   mainWindow.on("close", (e) => {
     if (!quitting && loadConfig().minimizeToTray) {

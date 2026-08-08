@@ -284,7 +284,8 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
   const actionLabel = tabType === "request" ? strings.server.send : strings.server.test;
   const actionLoading = tabType === "request" ? state.loading : state.testLoading;
   const actionLoadLabel = tabType === "request" ? strings.server.sending : strings.server.testing;
-  const actionDisabled = tabType === "request" ? !state.url.trim() : !state.url.trim();
+  const isValidAbsoluteUrl = (() => { try { return !!new URL(state.url.trim()); } catch { return false; } })();
+  const actionDisabled = tabType === "request" ? !state.url.trim() : (state.useRegex || !isValidAbsoluteUrl);
   const handleAction = tabType === "request" ? handleSend : handleTest;
   const methods = tabType === "request" ? METHODS : MOCK_METHODS;
 

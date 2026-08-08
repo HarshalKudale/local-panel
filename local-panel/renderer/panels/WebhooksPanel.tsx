@@ -43,12 +43,13 @@ interface WebhookEditorProps {
   payloads: WebhookPayload[];
   isActive: boolean;
   isAtLimit: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 function WebhookEditor({
   tabId, webhookId, initial, isNew,
   webhookPort, onSave, onClose, folders = [],
-  payloads, isActive, isAtLimit,
+  payloads, isActive, isAtLimit, onDirtyChange,
 }: WebhookEditorProps) {
   const draft = isDraftId(tabId) ? loadDraft<WebhookDraft>(tabId) : null;
   const src = draft ?? initial;
@@ -82,6 +83,15 @@ function WebhookEditor({
     () => ({ name, urlSuffix, folderId } satisfies WebhookDraft),
     isEmptyDraft,
   );
+
+  // Dirty detection
+  const savedName = (initial as SavedWebhook | null)?.name ?? "";
+  const savedUrlSuffix = (initial as SavedWebhook | null)?.urlSuffix ?? "";
+  const savedFolderId = (initial as SavedWebhook | null)?.folderId ?? null;
+  const isDirtyWh = isNew
+    ? (name.trim() !== "" || urlSuffix.trim() !== "")
+    : (name !== savedName || urlSuffix !== savedUrlSuffix || folderId !== savedFolderId);
+  useEffect(() => { onDirtyChange?.(isDirtyWh); }, [isDirtyWh, onDirtyChange]);
 
   const handleSave = useCallback(async () => {
     setSaving(true); setSaveErr(null);
@@ -243,6 +253,7 @@ function WebhookEditor({
         onCancel={onClose}
         onSave={handleSave}
         saveLabel={isNew ? strings.webhooks.saveWebhook : strings.webhooks.updateWebhook}
+        saveDisabled={!isNew && !isDirtyWh}
         saving={saving}
         savingLabel={strings.server.saving}
         extraLeft={saveErr ? <span className="text-xs text-red">{saveErr}</span> : undefined}
@@ -279,6 +290,7 @@ export default function WebhooksPanel({
 
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [dirtyTabs, setDirtyTabs] = useState<Record<string, boolean>>({});
   const [serverRunning, setServerRunning] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [serverLoading, setServerLoading] = useState(false);
@@ -629,8 +641,10 @@ export default function WebhooksPanel({
               id,
               label: tabLabel(id),
               isDraft: isDraftId(id),
+              isModified: dirtyTabs[id],
               renderTab: isDraftId(id) ? undefined : (isActive) => (
                 <span className="flex items-center gap-1.5">
+                  {dirtyTabs[id] && <span className="text-[10px] text-accent opacity-80 flex-shrink-0 leading-none">*</span>}
                   {activeTabs.has(id) && (
                     <span
                       className="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -685,6 +699,7 @@ export default function WebhooksPanel({
                     payloads={tabPayloads}
                     isActive={isActivated}
                     isAtLimit={isAtLimit && !isActivated}
+                    onDirtyChange={(dirty) => setDirtyTabs((prev) => ({ ...prev, [tabId]: dirty }))}
                   />
                 </div>
               );

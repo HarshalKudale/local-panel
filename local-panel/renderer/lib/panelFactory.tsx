@@ -17,7 +17,7 @@ import EnvironmentsPanel from "@/panels/EnvironmentsPanel";
 import AuditLogPanel from "@/panels/AuditLogPanel";
 import WorkspacePanel from "@/panels/WorkspacePanel";
 import HealthBarPanel from "@/panels/HealthBarPanel";
-import ApplicationsPanel from "@/panels/ApplicationsPanel";
+import RunnerPanel from "@/panels/RunnerPanel";
 import PlaceholderPanel from "@/panels/PlaceholderPanel";
 import GraphQLRequestsPanel from "@/panels/GraphQLRequestsPanel";
 import GraphQLMocksPanel from "@/panels/GraphQLMocksPanel";
@@ -295,9 +295,9 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
         />
     ),
     applications: (ctx) => (
-        <ApplicationsPanel
+        <RunnerPanel
             config={ctx.wsConfig}
-            onAddMapping={(target) => { ctx.setMappingPrefill(target); ctx.setPanel("mappings"); }}
+            onConfigChange={ctx.handleWsConfigChange}
         />
     ),
 };

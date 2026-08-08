@@ -180,27 +180,24 @@ contextBridge.exposeInMainWorld("api", {
   loadRunnerConfig: (wsId: string, folderId: string) => ipcRenderer.invoke("runner:loadConfig", wsId, folderId),
   listRunnerFolderIds: (wsId: string) => ipcRenderer.invoke("runner:listFolderIds", wsId),
 
-  // ── Applications ────────────────────────────────────────────────────────────
-  listApplications: (wsId: string) => ipcRenderer.invoke("applications:list", wsId),
-  saveApplication: (app: unknown) => ipcRenderer.invoke("applications:save", app),
-  deleteApplication: (wsId: string, id: string) => ipcRenderer.invoke("applications:delete", wsId, id),
-  startApplication: (wsId: string, appId: string, mode: "run" | "debug") =>
-    ipcRenderer.invoke("applications:start", wsId, appId, mode),
-  stopApplication: (appId: string) => ipcRenderer.invoke("applications:stop", appId),
-  getApplicationState: (appId: string) => ipcRenderer.invoke("applications:getState", appId),
-  getAllApplicationStates: () => ipcRenderer.invoke("applications:getAllStates"),
-  getApplicationLogs: (appId: string) => ipcRenderer.invoke("applications:getLogs", appId),
-  checkApplicationPort: (port: number) => ipcRenderer.invoke("applications:checkPort", port),
-  killApplicationPort: (port: number) => ipcRenderer.invoke("applications:killPort", port),
-  onAppLog: (cb: (chunk: unknown) => void) => {
+  // ── Runners ─────────────────────────────────────────────────────────────────
+  listRunners: (wsId: string) => ipcRenderer.invoke("runners:list", wsId),
+  saveRunner: (runner: unknown) => ipcRenderer.invoke("runners:save", runner),
+  deleteRunner: (wsId: string, id: string) => ipcRenderer.invoke("runners:delete", wsId, id),
+  startRunner: (wsId: string, runnerId: string) => ipcRenderer.invoke("runners:start", wsId, runnerId),
+  stopRunner: (runnerId: string) => ipcRenderer.invoke("runners:stop", runnerId),
+  getRunnerState: (runnerId: string) => ipcRenderer.invoke("runners:getState", runnerId),
+  getAllRunnerStates: () => ipcRenderer.invoke("runners:getAllStates"),
+  getRunnerLogs: (runnerId: string) => ipcRenderer.invoke("runners:getLogs", runnerId),
+  onRunnerLog: (cb: (chunk: unknown) => void) => {
     const handler = (_: unknown, chunk: unknown) => cb(chunk);
-    ipcRenderer.on("app:log", handler);
-    return () => ipcRenderer.off("app:log", handler);
+    ipcRenderer.on("runner:log", handler);
+    return () => ipcRenderer.off("runner:log", handler);
   },
-  onAppStatusChange: (cb: (data: unknown) => void) => {
+  onRunnerStatusChange: (cb: (data: unknown) => void) => {
     const handler = (_: unknown, data: unknown) => cb(data);
-    ipcRenderer.on("app:statusChange", handler);
-    return () => ipcRenderer.off("app:statusChange", handler);
+    ipcRenderer.on("runner:statusChange", handler);
+    return () => ipcRenderer.off("runner:statusChange", handler);
   },
 
   // ── Zoom ────────────────────────────────────────────────────────────────────

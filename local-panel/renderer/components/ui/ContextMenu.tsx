@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 export interface ContextMenuItem {
   label?: string;
@@ -21,21 +21,40 @@ export default function ContextMenu({ x, y, items, onClose, minWidth = 210 }: Co
   const totalH = items.reduce((s, i) => s + (i.sep ? 9 : 30), 0) + 8;
   const ax = Math.min(x, window.innerWidth - minWidth - 8);
   const ay = Math.min(y, window.innerHeight - totalH - 8);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const h = (e: MouseEvent) => { e.stopPropagation(); onClose(); };
-    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("click", h);
-    window.addEventListener("keydown", k);
-    return () => { window.removeEventListener("click", h); window.removeEventListener("keydown", k); };
+    return () => window.removeEventListener("click", h);
   }, [onClose]);
+
+  // Focus first enabled item on mount
+  useEffect(() => {
+    const first = menuRef.current?.querySelector<HTMLButtonElement>("button:not(:disabled)");
+    first?.focus();
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { e.preventDefault(); onClose(); return; }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)") ?? []);
+    if (!buttons.length) return;
+    const focused = document.activeElement as HTMLButtonElement;
+    const idx = buttons.indexOf(focused);
+    if (e.key === "ArrowDown") buttons[(idx + 1) % buttons.length].focus();
+    else buttons[(idx - 1 + buttons.length) % buttons.length].focus();
+  };
 
   return (
     <div
+      ref={menuRef}
       className="fixed z-50 bg-bg2 border border-border rounded-md shadow-2xl py-1 select-none animate-scale-in"
       style={{ left: ax, top: ay, minWidth }}
       onClick={(e) => e.stopPropagation()}
       onContextMenu={(e) => e.preventDefault()}
+      onKeyDown={handleKeyDown}
     >
       {items.map((item, i) =>
         item.sep ? (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Folder as FolderType } from "@/types";
-import { ChevronDown, Folder, FolderOpen, Play, ArrowUp, History, Copy, Trash2, Pencil, Plus, ChevronsUpDown, ToggleLeft, ToggleRight, ExternalLink, Ban } from "@/lib/icons";
+import { ChevronDown, Folder, FolderOpen, Play, Square, ArrowUp, History, Copy, Trash2, Pencil, Plus, ChevronsUpDown, ToggleLeft, ToggleRight, ExternalLink, Ban } from "@/lib/icons";
 import { methodColor, methodBg } from "@/lib/utils";
 import ActiveDot from "@/components/ui/ActiveDot";
 import SyncIndicator from "@/components/ui/SyncIndicator";
@@ -23,6 +23,8 @@ export interface FolderTreeItem {
   isRunner?: boolean;
   /** True for application-managed block mocks (live in the Blocks folder, non-editable) */
   isBlock?: boolean;
+  /** When true, the enabled/status dot is hidden entirely (used by runners when idle) */
+  hideDot?: boolean;
 }
 
 interface FolderNode {
@@ -122,6 +124,9 @@ function MoveDialog({ folders, onMove, onCancel }: {
   onMove(folderId: string | null): void;
   onCancel(): void;
 }) {
+  const firstRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { firstRef.current?.focus(); }, []);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -131,12 +136,16 @@ function MoveDialog({ folders, onMove, onCancel }: {
       <div
         className="bg-bg2 border border-border rounded-lg shadow-2xl w-56"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+        }}
       >
         <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-b border-border">
           {strings.folderTree.moveToFolder}
         </div>
         <div className="max-h-64 overflow-y-auto py-1">
           <button
+            ref={firstRef}
             className="w-full text-left px-3 py-1.5 text-xs hover:bg-bg3 text-text-dim cursor-pointer"
             onClick={() => onMove(null)}
           >
@@ -176,7 +185,7 @@ export type EntitySyncStatus = "clean" | "modified" | "new" | "deleted";
 export type FolderStatus = "enabled" | "mixed" | "disabled";
 
 interface Props {
-  kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "soapRequest" | "soapMock" | "grpcRequest" | "grpcMock";
+  kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "soapRequest" | "soapMock" | "grpcRequest" | "grpcMock" | "runner";
   folders: FolderType[];
   items: FolderTreeItem[];
   onOpenItem(id: string): void;
@@ -227,6 +236,10 @@ interface Props {
    * trackedIds = relPath exists in git (clean/modified/deleted); untrackedIds = new or absent.
    */
   onDeleteItems?: (trackedIds: string[], untrackedIds: string[]) => Promise<void>;
+  /** Start an item (used for runners). Shows "Start" in context menu when provided. */
+  onStartItem?: (id: string) => void;
+  /** Stop an item (used for runners). Shows "Stop" in context menu when provided. */
+  onStopItem?: (id: string) => void;
 }
 
 export default function FolderTree({
@@ -235,6 +248,7 @@ export default function FolderTree({
   pathStatusMap, entitySyncStatus, folderStatusMap, onPublishItem, onPublishFolder, onRestoreItem,
   onBeforeCreateFolder, onOpenRunner, onBeforeDeleteFolder,
   blocksFolderId, onBlockItem, onUnblockItem, onSelectedFolderChange, onDeleteItems,
+  onStartItem, onStopItem,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["__root__"]));
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: CtxMenuItem[] } | null>(null);
@@ -429,6 +443,12 @@ export default function FolderTree({
         icon: isEnabled ? <ToggleLeft size={11} /> : <ToggleRight size={11} />,
         action: () => { onToggleItem(item.id); closeMenu(); },
       });
+    }
+    if (!isDeleted && onStartItem) {
+      menuItems.push({ label: strings.folderTree.start, icon: <Play size={11} />, action: () => { onStartItem(item.id); closeMenu(); } });
+    }
+    if (!isDeleted && onStopItem) {
+      menuItems.push({ label: strings.folderTree.stop, icon: <Square size={11} />, action: () => { onStopItem(item.id); closeMenu(); } });
     }
     if (!isDeleted && onDuplicateItem) {
       menuItems.push({ label: strings.folderTree.duplicate, icon: <Copy size={11} />, action: () => { onDuplicateItem(item.id); closeMenu(); } });
@@ -672,7 +692,7 @@ export default function FolderTree({
           const fs = folderStatusMap[node.folder.id];
           return (
             <ActiveDot
-              active={fs === "enabled"}
+              active={fs !== "disabled"}
               color={fs === "enabled" ? "green" : fs === "mixed" ? "yellow" : "red"}
               size="sm"
             />
@@ -836,7 +856,7 @@ export default function FolderTree({
                 <Ban size={12} style={{ color: "var(--c-red)" }} />
               ) : (
                 <>
-                  <ActiveDot active={isEnabled} color="green" size="sm" />
+                  {!item.hideDot && <ActiveDot active={isEnabled} color="green" size="sm" />}
                   <SyncIndicator status={syncSt} />
                 </>
               )}

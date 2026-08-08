@@ -48,6 +48,7 @@ export interface AppConfig {
   soapMockFolders?: Folder[];
   environments: Environment[];
   activeEnvironmentId: string | null;
+  runnerFolders: Folder[];
 }
 
 
@@ -218,6 +219,7 @@ export function loadConfig(): AppConfig {
     savedWsdls: [],
     soapRequestFolders: (() => { try { return autoSyncFsDirectories(wsId, "soapRequests", generateId).folders as Folder[]; } catch { return []; } })(),
     soapMockFolders: (() => { try { return autoSyncFsDirectories(wsId, "soapMocks", generateId).folders as Folder[]; } catch { return []; } })(),
+    runnerFolders: (() => { try { return autoSyncFsDirectories(wsId, "runners", generateId).folders as Folder[]; } catch { return []; } })(),
   };
 }
 

@@ -112,12 +112,20 @@ export default function MocksPanel({
   }, [mocks, config.activeWorkspaceId, reloadMocks]);
 
   const handleToggleFolderItems = useCallback(async (folderId: string | null, enable: boolean) => {
-    const inFolder = mocks.filter((m) => (m.folderId ?? null) === folderId);
-    for (const m of inFolder) {
+    // Collect all descendant folder IDs recursively
+    const descendantFolderIds = new Set<string | null>([folderId]);
+    const queue = folders.filter((f) => (f.parentId ?? null) === folderId);
+    while (queue.length) {
+      const f = queue.shift()!;
+      descendantFolderIds.add(f.id);
+      folders.filter((c) => (c.parentId ?? null) === f.id).forEach((c) => queue.push(c));
+    }
+    const affected = mocks.filter((m) => descendantFolderIds.has(m.folderId ?? null));
+    for (const m of affected) {
       if (m.enabled !== enable) await window.api.setEntityEnabled(config.activeWorkspaceId, "mocks", m.id, enable);
     }
     await reloadMocks();
-  }, [mocks, config.activeWorkspaceId, reloadMocks]);
+  }, [mocks, folders, config.activeWorkspaceId, reloadMocks]);
 
   const handleNewMockSave = useCallback(async (tabId: string, data: Omit<MockRule, "id" | "createdAt" | "workspaceId">) => {
     const created = await window.api.addMock(data);

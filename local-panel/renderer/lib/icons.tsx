@@ -82,4 +82,7 @@ export {
   Search,        // search input
   Star,          // star on GitHub
   Heart,         // support project
+  TerminalSquare,// runner type icon (command)
+  Loader2,       // spinner for starting/stopping state
+  Hexagon,       // node.js
 } from "lucide-react";

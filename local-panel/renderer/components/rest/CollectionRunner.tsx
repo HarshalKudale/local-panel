@@ -173,10 +173,10 @@ export default function CollectionRunner({
             <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-bg0/60 flex-shrink-0">
                 <div className="flex-1 min-w-0">
                     <span className="text-xs font-semibold text-text-bright">{folderName}</span>
-                    <span className="text-[10px] text-text-dim ml-2">{strings.runner.requestCount.replace("{count}", String(orderedRequests.length)).replace("{s}", orderedRequests.length !== 1 ? "s" : "")}</span>
+                    <span className="text-[10px] text-text-dim ml-2">{strings.collectionRunner.requestCount.replace("{count}", String(orderedRequests.length)).replace("{s}", orderedRequests.length !== 1 ? "s" : "")}</span>
                 </div>
                 <label className="flex items-center gap-1.5 text-[10px] text-text-dim">
-                    {strings.runner.delay}
+                    {strings.collectionRunner.delay}
                     <input
                         type="number"
                         min={0}
@@ -186,13 +186,13 @@ export default function CollectionRunner({
                         disabled={running}
                         className="w-16 px-1.5 py-0.5 rounded bg-bg2 border border-border/60 text-text-bright text-[10px] font-mono text-center focus:outline-none focus:border-accent/60"
                     />
-                    <span>{strings.runner.ms}</span>
+                    <span>{strings.collectionRunner.ms}</span>
                 </label>
                 {report && !running && (
                     <button
                         onClick={handleExport}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-border/60 hover:border-accent/50 text-text-dim hover:text-text-bright text-xs cursor-pointer transition-colors"
-                        title={strings.runner.exportTitle}
+                        title={strings.collectionRunner.exportTitle}
                     >
                         <Download size={12} /> {strings.common.export}
                     </button>
@@ -204,7 +204,7 @@ export default function CollectionRunner({
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-accent hover:bg-accent/80 text-white text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                         <Play size={12} />
-                        {report ? strings.runner.runAgain : strings.runner.run}
+                        {report ? strings.collectionRunner.runAgain : strings.collectionRunner.run}
                     </button>
                 ) : (
                     <button
@@ -221,7 +221,7 @@ export default function CollectionRunner({
                 <div className="px-4 py-1.5 border-b border-border/40 bg-bg0/30 flex-shrink-0">
                     <div className="flex items-center gap-2 mb-1">
                         <Loader2 size={10} className="animate-spin text-accent" />
-                        <span className="text-[10px] text-text-dim">{strings.runner.running}</span>
+                        <span className="text-[10px] text-text-dim">{strings.collectionRunner.running}</span>
                         <span className="text-[10px] text-text-bright font-mono">{progress}/{orderedRequests.length}</span>
                     </div>
                     <div className="w-full h-1 bg-bg2 rounded overflow-hidden">
@@ -238,21 +238,21 @@ export default function CollectionRunner({
                 <div className="flex items-center gap-5 px-4 py-1.5 border-b border-border/40 bg-bg0/30 flex-shrink-0">
                     {allGood ? (
                         <span className="flex items-center gap-1.5 text-[11px] font-semibold text-green">
-                            <CheckCircle2 size={13} /> {strings.runner.allPassed}
+                            <CheckCircle2 size={13} /> {strings.collectionRunner.allPassed}
                         </span>
                     ) : (
                         <span className="flex items-center gap-1.5 text-[11px] font-semibold text-red">
-                            <XCircle size={13} /> {strings.runner.someFailed}
+                            <XCircle size={13} /> {strings.collectionRunner.someFailed}
                         </span>
                     )}
                     <span className="text-[11px] text-text-dim">
-                        <span className="text-text-bright font-mono">{results.length}</span> {strings.runner.requests}
+                        <span className="text-text-bright font-mono">{results.length}</span> {strings.collectionRunner.requests}
                     </span>
                     {totalTests > 0 && (
                         <span className="text-[11px] text-text-dim">
                             <span className="text-green font-mono">{passedTests}</span>
-                            {failedTests > 0 && <><span className="text-text-dim mx-1">/</span><span className="text-red font-mono">{failedTests} {strings.runner.failed}</span></>}
-                            {" "}{strings.runner.tests}
+                            {failedTests > 0 && <><span className="text-text-dim mx-1">/</span><span className="text-red font-mono">{failedTests} {strings.collectionRunner.failed}</span></>}
+                            {" "}{strings.collectionRunner.tests}
                         </span>
                     )}
                     <span className="text-[11px] text-text-dim ml-auto font-mono">
@@ -266,13 +266,13 @@ export default function CollectionRunner({
                 {/* Left panel -- request list */}
                 <div className="w-72 flex-shrink-0 border-r border-border/60 flex flex-col overflow-hidden bg-bg0/20">
                     <div className="px-3 py-2 border-b border-border/30 flex-shrink-0">
-                        <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">{strings.runner.requestsHeader}</span>
-                        <span className="text-[10px] text-text-dim ml-1">{strings.runner.dragToReorder}</span>
+                        <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">{strings.collectionRunner.requestsHeader}</span>
+                        <span className="text-[10px] text-text-dim ml-1">{strings.collectionRunner.dragToReorder}</span>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2 space-y-1">
                         {orderedRequests.length === 0 && (
                             <div className="flex items-center justify-center h-20">
-                                <p className="text-[11px] text-text-dim">{strings.runner.noRequests}</p>
+                                <p className="text-[11px] text-text-dim">{strings.collectionRunner.noRequests}</p>
                             </div>
                         )}
                         {orderedRequests.map((req, idx) => {
@@ -293,7 +293,7 @@ export default function CollectionRunner({
                                         {req.method}
                                     </span>
                                     <span className="text-[11px] text-text-bright truncate flex-1" title={req.name || req.url}>
-                                        {req.name || strings.runner.untitled}
+                                        {req.name || strings.collectionRunner.untitled}
                                     </span>
                                     {isRunning && (
                                         <Loader2 size={11} className="animate-spin text-accent flex-shrink-0" />
@@ -321,7 +321,7 @@ export default function CollectionRunner({
                         <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-8">
                             <Play size={36} className="opacity-10 text-text-bright" />
                             <p className="text-xs text-text-dim max-w-48">
-                                {strings.runner.pressRunPrefix} <span className="font-semibold text-text-bright">{strings.runner.run}</span> {strings.runner.pressRunSuffix}
+                                {strings.collectionRunner.pressRunPrefix} <span className="font-semibold text-text-bright">{strings.collectionRunner.run}</span> {strings.collectionRunner.pressRunSuffix}
                             </p>
                         </div>
                     ) : (
@@ -401,7 +401,7 @@ function RequestResultCard({ result, index }: { result: RunnerRequestResult; ind
                         {result.status}
                     </span>
                 ) : (
-                    result.error && <span className="text-[10px] text-red flex-shrink-0">{strings.runner.error}</span>
+                    result.error && <span className="text-[10px] text-red flex-shrink-0">{strings.collectionRunner.error}</span>
                 )}
 
                 {/* Response time */}
@@ -431,12 +431,12 @@ function RequestResultCard({ result, index }: { result: RunnerRequestResult; ind
                     )}
                     {result.preScriptError && (
                         <div className="text-[11px] text-yellow font-mono bg-yellow/5 rounded px-2 py-1">
-                            <span className="text-text-dim mr-1">{strings.runner.preScriptLabel}</span>{result.preScriptError}
+                            <span className="text-text-dim mr-1">{strings.collectionRunner.preScriptLabel}</span>{result.preScriptError}
                         </div>
                     )}
                     {result.postScriptError && (
                         <div className="text-[11px] text-yellow font-mono bg-yellow/5 rounded px-2 py-1">
-                            <span className="text-text-dim mr-1">{strings.runner.postScriptLabel}</span>{result.postScriptError}
+                            <span className="text-text-dim mr-1">{strings.collectionRunner.postScriptLabel}</span>{result.postScriptError}
                         </div>
                     )}
 
@@ -460,7 +460,7 @@ function RequestResultCard({ result, index }: { result: RunnerRequestResult; ind
                     {result.testLogs.length > 0 && (
                         <div className="border-t border-border/20 pt-2 space-y-0.5">
                             <div className="flex items-center gap-1 text-[9px] text-text-dim uppercase tracking-wider mb-1">
-                                <Terminal size={9} /> {strings.runner.console}
+                                <Terminal size={9} /> {strings.collectionRunner.console}
                             </div>
                             {result.testLogs.map((log, li) => (
                                 <div key={li} className="text-[10px] text-text-dim font-mono">{log}</div>
