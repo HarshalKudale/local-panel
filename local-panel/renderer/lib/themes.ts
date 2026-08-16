@@ -13,9 +13,67 @@ export interface ThemeDef {
     overlay: { color: string; symbolColor: string };
     /** CSS custom properties (without leading --) */
     vars: Record<string, string>;
+    /** Enables global "Terminal CLI" chrome: monospace everywhere, 0 radius, scanlines, phosphor glow */
+    terminal?: boolean;
 }
 
 // -- Dark Themes -------------------------------------------------------------
+
+const terminal: ThemeDef = {
+    id: "terminal",
+    name: "Terminal",
+    mode: "dark",
+    terminal: true,
+    overlay: { color: "#0a0a0a", symbolColor: "#33ff00" },
+    vars: {
+        "color-bg0-rgb": "10 10 10",
+        "color-bg1-rgb": "14 14 14",
+        "color-bg2-rgb": "18 18 18",
+        "color-bg3-rgb": "26 26 26",
+        "color-border-rgb": "31 82 31",
+        "color-accent-rgb": "51 255 0",
+        "color-accent-dim-rgb": "31 82 31",
+        "color-green-rgb": "51 255 0",
+        "color-red-rgb": "255 51 51",
+        "color-yellow-rgb": "255 176 0",
+        "color-text-base-rgb": "43 224 0",
+        "color-text-dim-rgb": "31 82 31",
+        "color-text-bright-rgb": "51 255 0",
+        "c-accent": "#33ff00",
+        "c-accent-contrast": "#0a0a0a",
+        "c-green": "#33ff00",
+        "c-red": "#ff3333",
+        "c-yellow": "#ffb000",
+        "c-text-base": "#2be000",
+        "c-text-dim": "#1f521f",
+        "c-text-bright": "#33ff00",
+        "c-bg2": "#121212",
+        "c-bg3": "#1a1a1a",
+        "c-border": "rgba(31, 82, 31, 0.75)",
+        "c-method-head": "#0a8f0a",
+        "c-method-head-bg": "rgba(10, 143, 10, 0.13)",
+        "c-sync-new": "#ff3333",
+        "c-sync-modified": "#ffb000",
+        "c-sync-clean": "#33ff00",
+        "c-syn-keyword": "#33ff00",
+        "c-syn-bool": "#ffb000",
+        "c-syn-string": "#2be000",
+        "c-syn-number": "#ffb000",
+        "c-syn-comment": "#1f521f",
+        "c-syn-property": "#33ff00",
+        "c-syn-tag": "#33ff00",
+        "c-syn-attr-name": "#2be000",
+        "c-syn-attr-val": "#ffb000",
+        "c-syn-bracket": "#1f521f",
+        "c-syn-variable": "#33ff00",
+        "c-syn-defn": "#ffb000",
+        "c-syn-type": "#2be000",
+        "c-syn-operator": "#1f521f",
+        "c-syn-regexp": "#ffb000",
+        "c-syn-escape": "#ff3333",
+        "c-syn-invalid": "#ff3333",
+    },
+};
 
 const midnightNavy: ThemeDef = {
     id: "midnight-navy",
@@ -571,12 +629,12 @@ const catppuccinLatte: ThemeDef = {
 
 // -- Exports -----------------------------------------------------------------
 
-export const darkThemes: ThemeDef[] = [midnightNavy, draculaPurple, tokyoNight, nordDark, monokai];
+export const darkThemes: ThemeDef[] = [terminal, midnightNavy, draculaPurple, tokyoNight, nordDark, monokai];
 export const lightThemes: ThemeDef[] = [defaultLight, solarizedLight, githubLight, rosePine, catppuccinLatte];
 export const allThemes: ThemeDef[] = [...darkThemes, ...lightThemes];
 
-export const DEFAULT_THEME_ID = "midnight-navy";
+export const DEFAULT_THEME_ID = "terminal";
 
 export function getThemeById(id: string): ThemeDef {
-    return allThemes.find((t) => t.id === id) ?? midnightNavy;
+    return allThemes.find((t) => t.id === id) ?? terminal;
 }

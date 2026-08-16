@@ -68,77 +68,79 @@
    Format: R G B (no rgb() wrapper — Tailwind injects it as rgb(R G B / alpha))  */
 
 :root {
-  --color-bg0-rgb: 1 15 31;
-  /* #010f1f surface-container-lowest */
-  --color-bg1-rgb: 13 28 45;
-  /* #0d1c2d surface-container-low    */
-  --color-bg2-rgb: 18 33 49;
-  /* #122131 surface-container        */
-  --color-bg3-rgb: 28 43 60;
-  /* #1c2b3c surface-container-high   */
-  --color-border-rgb: 70 69 84;
-  /* #464554 outline-variant          */
-  --color-accent-rgb: 192 193 255;
-  /* #c0c1ff primary                  */
-  --color-accent-dim-rgb: 225 224 255;
-  /* #e1e0ff primary-fixed            */
-  --color-green-rgb: 34 148 110;
-  /* #22946e success-a0               */
-  --color-red-rgb: 255 180 171;
-  /* #ffb4ab error                    */
-  --color-yellow-rgb: 168 122 42;
-  /* #a87a2a warning-a0               */
-  --color-text-base-rgb: 199 196 215;
-  /* #c7c4d7 on-surface-variant       */
-  --color-text-dim-rgb: 144 143 160;
-  /* #908fa0 outline                  */
-  --color-text-bright-rgb: 212 228 250;
-  /* #d4e4fa on-surface               */
+  /* Fallback values matching the default "Terminal" theme — avoids a flash of the
+     wrong palette before React hydrates and lib/useTheme.ts applies the stored theme. */
+  --color-bg0-rgb: 10 10 10;
+  /* #0a0a0a */
+  --color-bg1-rgb: 14 14 14;
+  /* #0e0e0e */
+  --color-bg2-rgb: 18 18 18;
+  /* #121212 */
+  --color-bg3-rgb: 26 26 26;
+  /* #1a1a1a */
+  --color-border-rgb: 31 82 31;
+  /* #1f521f */
+  --color-accent-rgb: 51 255 0;
+  /* #33ff00 */
+  --color-accent-dim-rgb: 31 82 31;
+  /* #1f521f */
+  --color-green-rgb: 51 255 0;
+  /* #33ff00 */
+  --color-red-rgb: 255 51 51;
+  /* #ff3333 */
+  --color-yellow-rgb: 255 176 0;
+  /* #ffb000 */
+  --color-text-base-rgb: 43 224 0;
+  /* #2be000 */
+  --color-text-dim-rgb: 31 82 31;
+  /* #1f521f */
+  --color-text-bright-rgb: 51 255 0;
+  /* #33ff00 */
 
   /* Inline style aliases (used in style={} props in components) */
-  --c-accent: #c0c1ff;
-  --c-green: #22946e;
-  --c-red: #ffb4ab;
-  --c-yellow: #a87a2a;
-  --c-text-base: #c7c4d7;
-  --c-text-dim: #908fa0;
-  --c-text-bright: #d4e4fa;
-  --c-bg2: #122131;
-  --c-bg3: #1c2b3c;
-  --c-border: rgba(70, 69, 84, 0.75);
+  --c-accent: #33ff00;
+  --c-green: #33ff00;
+  --c-red: #ff3333;
+  --c-yellow: #ffb000;
+  --c-text-base: #2be000;
+  --c-text-dim: #1f521f;
+  --c-text-bright: #33ff00;
+  --c-bg2: #121212;
+  --c-bg3: #1a1a1a;
+  --c-border: rgba(31, 82, 31, 0.75);
 
-  /* HTTP method — semantic purple (HEAD / OPTIONS) */
-  --c-method-head: #a78bfa;
-  --c-method-head-bg: rgba(167, 139, 250, 0.13);
+  /* HTTP method — dim green (HEAD / OPTIONS) */
+  --c-method-head: #0a8f0a;
+  --c-method-head-bg: rgba(10, 143, 10, 0.13);
 
   /* Git sync status dot colors */
-  --c-sync-new: #f87171;
-  --c-sync-modified: #fbbf24;
-  --c-sync-clean: #46ff09;
+  --c-sync-new: #ff3333;
+  --c-sync-modified: #ffb000;
+  --c-sync-clean: #33ff00;
 
   /* Syntax highlighting — dark */
-  --c-syn-keyword: #c0c1ff;
-  --c-syn-bool: #c0c1ff;
-  --c-syn-string: #22946e;
-  --c-syn-number: #a87a2a;
-  --c-syn-comment: #908fa0;
-  --c-syn-property: #d4e4fa;
-  --c-syn-tag: #c0c1ff;
-  --c-syn-attr-name: #c7c4d7;
-  --c-syn-attr-val: #22946e;
-  --c-syn-bracket: #908fa0;
-  --c-syn-variable: #d4e4fa;
-  --c-syn-defn: #bcc7de;
-  --c-syn-type: #c7c4d7;
-  --c-syn-operator: #908fa0;
-  --c-syn-regexp: #a87a2a;
-  --c-syn-escape: #c0c1ff;
-  --c-syn-invalid: #ffb4ab;
+  --c-syn-keyword: #33ff00;
+  --c-syn-bool: #ffb000;
+  --c-syn-string: #2be000;
+  --c-syn-number: #ffb000;
+  --c-syn-comment: #1f521f;
+  --c-syn-property: #33ff00;
+  --c-syn-tag: #33ff00;
+  --c-syn-attr-name: #2be000;
+  --c-syn-attr-val: #ffb000;
+  --c-syn-bracket: #1f521f;
+  --c-syn-variable: #33ff00;
+  --c-syn-defn: #ffb000;
+  --c-syn-type: #2be000;
+  --c-syn-operator: #1f521f;
+  --c-syn-regexp: #ffb000;
+  --c-syn-escape: #ff3333;
+  --c-syn-invalid: #ff3333;
 }
 
 /* Accent badge text — uses contrast token set by theme */
 :root .bg-accent {
-  color: var(--c-accent-contrast, #1000a9) !important;
+  color: var(--c-accent-contrast, #0a0a0a) !important;
 }
 
 html.light .bg-accent {
@@ -276,6 +278,89 @@ body,
   color: rgb(var(--color-text-base-rgb));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── Terminal CLI theme chrome ─────────────────────────────────────────────
+   Applied via html.theme-terminal (toggled by lib/useTheme.ts when the active
+   theme has `terminal: true`). Layers "Monospace Supremacy", 0px radius,
+   no drop shadows, phosphor glow and a faint CRT scanline overlay on top of
+   the terminal theme's green-on-black color tokens without touching markup. */
+
+html.theme-terminal,
+html.theme-terminal * {
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", monospace !important;
+  border-radius: 0 !important;
+}
+
+/* Keep icon glyph fonts (if any) and canvases/svg untouched */
+html.theme-terminal svg,
+html.theme-terminal img,
+html.theme-terminal canvas {
+  font-family: initial !important;
+}
+
+/* No drop shadows — pane depth comes from borders, not elevation */
+html.theme-terminal [class*="shadow"] {
+  box-shadow: none !important;
+}
+
+/* Phosphor glow on headings and the brightest/accent text */
+html.theme-terminal h1,
+html.theme-terminal h2,
+html.theme-terminal h3,
+html.theme-terminal .text-accent,
+html.theme-terminal .text-text-bright {
+  text-shadow: 0 0 5px rgba(51, 255, 0, 0.5);
+}
+
+/* Section headers read like shell prompts: uppercase + tracked out */
+html.theme-terminal h1,
+html.theme-terminal h2,
+html.theme-terminal h3 {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Blinking block cursor — glow-matched caret for prompt-style inputs */
+html.theme-terminal input,
+html.theme-terminal textarea {
+  caret-color: rgb(var(--color-accent-rgb));
+}
+
+@keyframes terminal-blink {
+
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Opt-in utility: append a blinking block cursor, e.g. <span className="terminal-cursor"> */
+html.theme-terminal .terminal-cursor::after {
+  content: "\2588";
+  display: inline-block;
+  margin-left: 2px;
+  color: rgb(var(--color-accent-rgb));
+  animation: terminal-blink 1s step-start infinite;
+}
+
+/* Faint CRT scanlines — subtle depth without harming legibility */
+html.theme-terminal body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.35) 3px);
+  opacity: 0.35;
 }
 
 /* ── Animations ───────────────────────────────────────────────────────────── */

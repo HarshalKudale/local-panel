@@ -11,6 +11,9 @@ function applyTheme(themeDef: ThemeDef) {
   html.classList.remove("dark", "light");
   html.classList.add(themeDef.mode);
 
+  // Toggle the "Terminal CLI" chrome (monospace-everywhere, 0 radius, scanlines, glow)
+  html.classList.toggle("theme-terminal", !!themeDef.terminal);
+
   // Apply all CSS custom properties
   for (const [key, value] of Object.entries(themeDef.vars)) {
     html.style.setProperty(`--${key}`, value);
