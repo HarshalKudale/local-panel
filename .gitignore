@@ -108,3 +108,11 @@ local-panel/userData/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+# ===== Editor / AI assistant artifacts =====
+.claude/
+claude.md
+CLAUDE.md
+
+# ===== Generated screenshots =====
+screenshots/
+screenshot.png
