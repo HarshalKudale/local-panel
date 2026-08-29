@@ -22,12 +22,10 @@ fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 interface PanelDef {
     /** Human-readable name for the screenshot file */
     name: string;
-    /** Section header text that the nav item lives under */
-    section?: string;
-    /** Exact nav label to click */
+    /** Exact visible nav label */
     navLabel: string;
-    /** If the section is collapsible, pass the section header label to expand it first */
-    collapsibleSection?: string;
+    /** For duplicated labels like REST/SOAP/gRPC, which visible match to use */
+    navOccurrence?: number;
     /** Opens a new draft tab after navigating (for tab-based panels) */
     openNewTab?: boolean;
 }
@@ -39,18 +37,18 @@ const PANELS: PanelDef[] = [
     { name: "03-capture", navLabel: "Capture" },
 
     // ── Mock (collapsible) ─────────────────────────────────────────────────
-    { name: "04-mock-rest", collapsibleSection: "Mock", navLabel: "REST", openNewTab: true },
-    { name: "05-mock-graphql", collapsibleSection: "Mock", navLabel: "GraphQL", openNewTab: true },
-    { name: "06-mock-soap", collapsibleSection: "Mock", navLabel: "SOAP", openNewTab: true },
-    { name: "07-mock-grpc", collapsibleSection: "Mock", navLabel: "gRPC", openNewTab: true },
+    { name: "04-mock-rest", navLabel: "REST", navOccurrence: 0, openNewTab: true },
+    { name: "05-mock-graphql", navLabel: "GraphQL", navOccurrence: 0, openNewTab: true },
+    { name: "06-mock-soap", navLabel: "SOAP", navOccurrence: 0, openNewTab: true },
+    { name: "07-mock-grpc", navLabel: "gRPC", navOccurrence: 0, openNewTab: true },
 
     // ── Request (collapsible) ──────────────────────────────────────────────
-    { name: "08-req-rest", collapsibleSection: "Request", navLabel: "REST", openNewTab: true },
-    { name: "09-req-graphql", collapsibleSection: "Request", navLabel: "GraphQL", openNewTab: true },
-    { name: "10-req-soap", collapsibleSection: "Request", navLabel: "SOAP", openNewTab: true },
-    { name: "11-req-grpc", collapsibleSection: "Request", navLabel: "gRPC", openNewTab: true },
-    { name: "12-websocket", collapsibleSection: "Request", navLabel: "WebSocket", openNewTab: true },
-    { name: "13-webhooks", collapsibleSection: "Request", navLabel: "Webhooks", openNewTab: true },
+    { name: "08-req-rest", navLabel: "REST", navOccurrence: 1, openNewTab: true },
+    { name: "09-req-graphql", navLabel: "GraphQL", navOccurrence: 1, openNewTab: true },
+    { name: "10-req-soap", navLabel: "SOAP", navOccurrence: 1, openNewTab: true },
+    { name: "11-req-grpc", navLabel: "gRPC", navOccurrence: 1, openNewTab: true },
+    { name: "12-websocket", navLabel: "WebSocket", openNewTab: true },
+    { name: "13-webhooks", navLabel: "Webhooks", openNewTab: true },
 
     // ── Tools (flat) ───────────────────────────────────────────────────────
     { name: "14-environments", navLabel: "Envs & Vars" },
@@ -74,67 +72,18 @@ async function shot(page: import("@playwright/test").Page, name: string) {
     console.log(`  ✓ ${file}`);
 }
 
-/** Expand a collapsible section if it is currently collapsed.
- *  Returns the container div of that section. */
-async function ensureSectionExpanded(
-    page: import("@playwright/test").Page,
-    label: string,
-): Promise<import("@playwright/test").Locator> {
-    // Each collapsible section is wrapped in a div.mt-1 that contains a toggle button
-    // whose text matches the label (case-insensitive, ignoring chevron svg text)
-    const allSections = page.locator("div.mt-1");
-    const count = await allSections.count();
-
-    for (let i = 0; i < count; i++) {
-        const sec = allSections.nth(i);
-        const toggleBtn = sec.locator("button").first();
-        const text = (await toggleBtn.textContent().catch(() => "")) ?? "";
-        if (text.toLowerCase().includes(label.toLowerCase())) {
-            // Check if the items div is visible (expanded)
-            const itemsDiv = sec.locator("div.flex.flex-col").first();
-            const isExpanded = await itemsDiv.isVisible().catch(() => false);
-            if (!isExpanded) {
-                await toggleBtn.click();
-                await page.waitForTimeout(400);
-            }
-            return sec;
-        }
-    }
-    return page.locator("body"); // fallback
+function escapeRegex(input: string): string {
+    return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Click a nav item scoped to an optional section container.
- *  When `sectionContainer` is provided (collapsible sections), we restrict
- *  the button search to that subtree to avoid duplicate-label collisions. */
-async function clickNavItem(
-    page: import("@playwright/test").Page,
-    label: string,
-    sectionContainer?: import("@playwright/test").Locator,
-) {
-    const root = sectionContainer ?? page;
-    // Items inside a collapsible section are in the inner div.flex.flex-col
-    const itemsRoot = sectionContainer
-        ? sectionContainer.locator("div.flex.flex-col").first()
-        : page;
-
-    // Match button text containing the label (badges are in separate spans)
-    const btn = itemsRoot
-        .locator("button")
-        .filter({ hasText: label })
-        .first();
-
-    if (await btn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await btn.scrollIntoViewIfNeeded().catch(() => {});
-        await btn.click();
-    } else {
-        // Broader fallback - removed exact:true since badges add extra text
-        const fallback = (root as import("@playwright/test").Page | import("@playwright/test").Locator)
-            .getByRole("button")
-            .filter({ hasText: label })
-            .first();
-        await fallback.scrollIntoViewIfNeeded().catch(() => {});
-        await fallback.click();
-    }
+async function clickNavItem(page: import("@playwright/test").Page, label: string, occurrence = 0) {
+    const sidebar = page.locator("nav").first();
+    const btn = sidebar.getByRole("button", { name: new RegExp(`^${escapeRegex(label)}(?:\\s|$)`, "i") }).nth(occurrence);
+    await btn.waitFor({ state: "attached", timeout: 5000 });
+    await btn.evaluate((el: Element) => {
+        (el as HTMLElement).scrollIntoView({ block: "center" });
+        (el as HTMLElement).click();
+    });
     await page.waitForTimeout(600);
 }
 
@@ -153,16 +102,9 @@ test("screenshot tour of all sidebar panels", async ({ page }) => {
     for (const panel of PANELS) {
         console.log(`\nNavigating to: ${panel.name}`);
 
-        // 1. If collapsible section, expand it first and get its container
-        let sectionContainer: import("@playwright/test").Locator | undefined;
-        if (panel.collapsibleSection) {
-            sectionContainer = await ensureSectionExpanded(page, panel.collapsibleSection);
-        }
+        await clickNavItem(page, panel.navLabel, panel.navOccurrence ?? 0);
 
-        // 2. Click the nav item (scoped to section container for collapsibles)
-        await clickNavItem(page, panel.navLabel, sectionContainer);
-
-        // 3. For tab-based panels, open a new draft tab by clicking the + button
+        // 2. For tab-based panels, open a new draft tab by clicking the + button
         if (panel.openNewTab) {
             // TabBar + buttons always have title="New <something>" (starts with "New ").
             // This avoids matching unrelated buttons like "Stop webhook server".
@@ -201,7 +143,7 @@ test("screenshot tour of all sidebar panels", async ({ page }) => {
             if (clicked) await page.waitForTimeout(900);
         }
 
-        // 4. Screenshot
+        // 3. Screenshot
         await shot(page, panel.name);
     }
 

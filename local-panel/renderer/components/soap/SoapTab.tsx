@@ -64,16 +64,6 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
         () => isSoapDraftEmpty(state, tabType),
     );
 
-    // Expose imperative refresh
-    useImperativeHandle(ref, () => ({
-        refresh(entity: SavedSoapRequest | SavedSoapMock) {
-            dispatch({ type: "REFRESH", entity, tabType });
-        },
-        save() {
-            void handleSave();
-        },
-    }), [tabType, handleSave]);
-
     // -- Header rows helper -----------------------------------------------
 
     const headerRows: KVRow[] = headersToRows(
@@ -125,6 +115,16 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
             dispatch({ type: "SAVE_ERROR" });
         }
     }, [state, tabType, onSave, markSaved]);
+
+    // Expose imperative refresh
+    useImperativeHandle(ref, () => ({
+        refresh(entity: SavedSoapRequest | SavedSoapMock) {
+            dispatch({ type: "REFRESH", entity, tabType });
+        },
+        save() {
+            void handleSave();
+        },
+    }), [tabType, handleSave]);
 
     // -- Request mode: left pane tabs -------------------------------------
 

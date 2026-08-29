@@ -71,15 +71,6 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
         () => isDraftEmpty(state, tabType),
     );
 
-    useImperativeHandle(ref, () => ({
-        refresh(entity: SavedGraphQLRequest | SavedGraphQLMock) {
-            dispatch({ type: "REFRESH", entity, tabType });
-        },
-        save() {
-            void handleSave();
-        },
-    }), [tabType, handleSave]);
-
     // -- Request pane sub-tabs ----------------------------------------------
 
     type ReqSubTab = "query" | "variables" | "headers" | "pre-script" | "post-script" | "schema";
@@ -133,6 +124,15 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
             dispatch({ type: "SAVE_ERROR" });
         }
     }, [state, tabType, onSave, markSaved]);
+
+    useImperativeHandle(ref, () => ({
+        refresh(entity: SavedGraphQLRequest | SavedGraphQLMock) {
+            dispatch({ type: "REFRESH", entity, tabType });
+        },
+        save() {
+            void handleSave();
+        },
+    }), [tabType, handleSave]);
 
     // -- Render: Request mode -----------------------------------------------
 

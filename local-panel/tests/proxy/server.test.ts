@@ -7,17 +7,22 @@ vi.mock("net");
 vi.mock("http");
 vi.mock("https");
 
-// Track rules so readAllEntities and bootstrapEnabledSet can serve them
+// Track workspace entities so readAllEntities and bootstrapEnabledSet can serve them
 let _testProxyRules: any[] = [];
+let _testMappings: any[] = [];
+let _testMocks: any[] = [];
 
 vi.mock("../../src/store/workspaceFs", () => ({
   readEnabledSet: vi.fn(() => null),
   bootstrapEnabledSet: vi.fn((_wsId: string, kind: string) => {
     if (kind === "rules") return new Set<string>(_testProxyRules.filter((r) => r.enabled).map((r) => r.id));
+    if (kind === "mappings") return new Set<string>(_testMappings.filter((m) => m.enabled).map((m) => m.id));
+    if (kind === "mocks") return new Set<string>(_testMocks.filter((m) => m.enabled).map((m) => m.id));
     return new Set<string>();
   }),
   readAllEntities: vi.fn((_wsId: string, kind: string) => {
     if (kind === "rules") return _testProxyRules;
+    if (kind === "mocks") return _testMocks;
     return [];
   }),
   dataRoot: vi.fn(() => "/tmp/test-data"),
@@ -29,6 +34,8 @@ vi.mock("../../src/store/config", () => ({
   loadConfig: vi.fn(() => ({
     port: 8080,
     minimizeToTray: true,
+    workspaces: [{ id: "default", name: "Workspace 1", activeEnvironmentId: null }],
+    activeWorkspaceId: "default",
     mappings: [],
     proxyRules: [],
     mocks: [],
@@ -98,7 +105,10 @@ describe("src/proxy/server.ts", () => {
 
     // Restore loadConfig mock after clearAllMocks resets call history
     vi.mocked(loadConfig).mockReturnValue({
-      port: 8080, minimizeToTray: true, mappings: [], proxyRules: [],
+      port: 8080, minimizeToTray: true,
+      workspaces: [{ id: "default", name: "Workspace 1", activeEnvironmentId: null }],
+      activeWorkspaceId: "default",
+      mappings: [], proxyRules: [],
       mocks: [], requests: [], mockFolders: [], requestFolders: [],
       environments: [], activeEnvironmentId: null,
     });
@@ -447,6 +457,8 @@ describe("src/proxy/server.ts", () => {
   describe("HTTP dispatch (via socket connection handler)", () => {
     const baseConfig = {
       port: 8080, minimizeToTray: true,
+      workspaces: [{ id: "default", name: "Workspace 1", activeEnvironmentId: null }],
+      activeWorkspaceId: "default",
       mappings: [] as any[], proxyRules: [] as any[],
       mocks: [] as any[], requests: [] as any[],
       mockFolders: [] as any[], requestFolders: [] as any[],
@@ -466,8 +478,17 @@ describe("src/proxy/server.ts", () => {
     }
 
     function setupDispatchServer(cfg: any = baseConfig) {
-      _testProxyRules = cfg.proxyRules ?? [];
-      vi.mocked(loadConfig).mockReturnValue(cfg);
+      const wsId = cfg.activeWorkspaceId ?? "default";
+      const normalizedCfg = {
+        ...cfg,
+        mappings: (cfg.mappings ?? []).map((m: any) => ({ workspaceId: wsId, ...m })),
+        proxyRules: (cfg.proxyRules ?? []).map((r: any) => ({ workspaceId: wsId, targetType: "mapping", ...r })),
+        mocks: (cfg.mocks ?? []).map((m: any) => ({ workspaceId: wsId, ...m })),
+      };
+      _testProxyRules = normalizedCfg.proxyRules;
+      _testMappings = normalizedCfg.mappings;
+      _testMocks = normalizedCfg.mocks;
+      vi.mocked(loadConfig).mockReturnValue(normalizedCfg);
       capturedConnectionCb = null;
       const srv = makeMockServer();
       vi.mocked(net.createServer).mockImplementation((cb: any) => {
@@ -788,7 +809,7 @@ describe("src/proxy/server.ts", () => {
       const socket = openConnection();
       sendHttp(socket, "GET", "http://api.example.com/data", "api.example.com");
       expect(http.request).toHaveBeenCalled();
-      const opts = (http.request as any).mock.calls[0][0];
+      const opts = (http.request as any).mock.calls.at(-1)[0];
       expect(opts.hostname).toBe("api.example.com");
     });
 
@@ -1243,4 +1264,3 @@ describe("src/proxy/server.ts", () => {
     });
   });
 });
-

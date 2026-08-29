@@ -79,7 +79,14 @@ describe("src/store/config.ts", () => {
       expect(cfg.proxyRules).toEqual([]);
       expect(cfg.mocks).toEqual([]);
       expect(cfg.requests).toEqual([]);
-      expect(cfg.environments).toEqual([]);
+      expect(cfg.environments).toEqual([
+        expect.objectContaining({
+          id: "__global__",
+          name: "Global",
+          variables: [],
+          workspaceId: "default",
+        }),
+      ]);
       expect(cfg.mockFolders).toEqual([]);
       expect(cfg.requestFolders).toEqual([]);
       expect(cfg.wsFolders).toEqual([]);

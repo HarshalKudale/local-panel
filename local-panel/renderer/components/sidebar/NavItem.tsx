@@ -12,6 +12,8 @@ interface Props {
 export default function NavItem({ label, icon, active, badge, onClick }: Props) {
   return (
     <button
+      type="button"
+      data-testid={`nav-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
       onClick={onClick}
       className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded text-sm font-medium w-full text-left transition-all duration-150 cursor-pointer whitespace-nowrap ${
         active

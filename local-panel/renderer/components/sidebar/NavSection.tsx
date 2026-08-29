@@ -19,6 +19,8 @@ interface Props {
 }
 
 export default function NavSection({ label, items, activePanel, badges, onSelect, defaultCollapsed, storageKey }: Props) {
+    const sectionTestId = `nav-section-${storageKey.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+
     const [collapsed, setCollapsed] = useState(() => {
         const stored = readStorageRaw(`nav-section:${storageKey}`);
         if (stored !== null) return stored === "1";
@@ -34,6 +36,8 @@ export default function NavSection({ label, items, activePanel, badges, onSelect
     return (
         <div className="mt-1">
             <button
+                type="button"
+                data-testid={sectionTestId}
                 onClick={toggle}
                 className="flex items-center gap-1 px-2.5 pt-2.5 pb-1 w-full text-left cursor-pointer group"
             >
@@ -49,6 +53,8 @@ export default function NavSection({ label, items, activePanel, badges, onSelect
                     {items.map((item) => (
                         <button
                             key={item.id}
+                            type="button"
+                            data-testid={`nav-${item.id}`}
                             onClick={() => onSelect(item.id)}
                             className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded text-sm font-medium w-full text-left transition-all duration-150 cursor-pointer whitespace-nowrap ${activePanel === item.id
                                     ? "bg-bg3 text-accent"
