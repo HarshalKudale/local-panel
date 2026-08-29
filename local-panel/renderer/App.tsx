@@ -178,6 +178,12 @@ export default function App() {
 
 
   useEffect(() => {
+    if (panel === "applications") {
+      setPanel("services");
+    }
+  }, [panel, setPanel]);
+
+  useEffect(() => {
     loadConfig().then(() => {
       // Fetch sync status after initial load
       window.api.getConfig().then((cfg) => refreshEntitySyncStatus(cfg.activeWorkspaceId)).catch(() => { });

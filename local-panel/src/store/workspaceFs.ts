@@ -82,7 +82,6 @@ export function initWorkspaceDir(wsId: string, name: string): void {
     entityDir(wsId, "grpcRequests"),
     entityDir(wsId, "grpcMocks"),
     entityDir(wsId, "applications"),
-    entityDir(wsId, "runners"),
   ];
   for (const d of dirs) fs.mkdirSync(d, { recursive: true });
 

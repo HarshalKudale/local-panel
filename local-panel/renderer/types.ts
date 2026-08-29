@@ -1,45 +1,3 @@
-export type RunnerProcessStatus = "idle" | "starting" | "running" | "stopping" | "error" | "exited";
-
-export interface RunnerProcessState {
-  runnerId: string;
-  status: RunnerProcessStatus;
-  pid?: number;
-  exitCode?: number | null;
-  error?: string;
-  startedAt?: number;
-  stoppedAt?: number;
-}
-
-export interface RunnerLogChunk {
-  runnerId: string;
-  stream: "stdout" | "stderr" | "system";
-  data: string;
-  ts: number;
-}
-
-export interface RunnerConfig {
-  id: string;
-  name: string;
-  type: string;
-  workingDirectory: string;
-  command?: string;
-  args: string;
-  preRunCommand?: string;
-  folderId?: string | null;
-  createdAt: number;
-  workspaceId: string;
-  shellConfig?: { scriptPath: string };
-  batConfig?: { scriptPath: string };
-  nodeConfig?: { scriptPath: string; nodeFlags?: string };
-  npmConfig?: { scriptName: string; packageManager: "npm" | "yarn" | "pnpm" | "bun" };
-  pythonConfig?: { mode: "script" | "module"; target: string };
-  dockerConfig?: { mode: "image" | "build"; image?: string; dockerfile?: string; ports?: string; volumes?: string; extraArgs?: string };
-  dockerComposeConfig?: { composeFile?: string; services?: string; extraArgs?: string };
-  resolvedCommand: string;
-  resolvedCwd: string;
-  resolvedEnv: Record<string, string>;
-}
-
 export interface LocalMapping {
   id: string;
   domain: string;
@@ -354,7 +312,6 @@ export interface AppConfig {
   soapMockFolders: Folder[];
   environments: Environment[];
   activeEnvironmentId: string | null;
-  runnerFolders: Folder[];
 }
 
 export interface ServiceInfo {
@@ -489,10 +446,10 @@ declare global {
       addWsConnection(conn: Omit<SavedWsConnection, "id" | "createdAt" | "workspaceId">): Promise<SavedWsConnection>;
       updateWsConnection(conn: SavedWsConnection): Promise<{ ok: boolean }>;
       deleteWsConnection(id: string): Promise<{ ok: boolean }>;
-      addFolder(kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock" | "runner", folder: Omit<Folder, "id" | "createdAt" | "workspaceId">): Promise<Folder>;
-      renameFolder(kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock" | "runner", id: string, name: string): Promise<{ ok: boolean }>;
-      moveFolder(kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock" | "runner", id: string, parentId: string | null): Promise<{ ok: boolean }>;
-      deleteFolder(kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock" | "runner", id: string): Promise<{ ok: boolean }>;
+      addFolder(kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock", folder: Omit<Folder, "id" | "createdAt" | "workspaceId">): Promise<Folder>;
+      renameFolder(kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock", id: string, name: string): Promise<{ ok: boolean }>;
+      moveFolder(kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock", id: string, parentId: string | null): Promise<{ ok: boolean }>;
+      deleteFolder(kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock", id: string): Promise<{ ok: boolean }>;
       addEnvironment(env: Omit<Environment, "id" | "createdAt" | "workspaceId">): Promise<Environment>;
       updateEnvironment(env: Environment): Promise<{ ok: boolean }>;
       deleteEnvironment(id: string): Promise<{ ok: boolean }>;
@@ -637,17 +594,6 @@ declare global {
       saveRunnerConfig(wsId: string, folderId: string, config: { requestOrder: string[]; delayMs: number }): Promise<{ ok: boolean }>;
       loadRunnerConfig(wsId: string, folderId: string): Promise<{ requestOrder: string[]; delayMs: number } | null>;
       listRunnerFolderIds(wsId: string): Promise<string[]>;
-      // -- Runners ---------------------------------------------------------------
-      listRunners(wsId: string): Promise<any[]>;
-      saveRunner(runner: unknown): Promise<any>;
-      deleteRunner(wsId: string, id: string): Promise<{ ok: boolean }>;
-      startRunner(wsId: string, runnerId: string): Promise<any>;
-      stopRunner(runnerId: string): Promise<{ ok: boolean }>;
-      getRunnerState(runnerId: string): Promise<any>;
-      getAllRunnerStates(): Promise<any[]>;
-      getRunnerLogs(runnerId: string): Promise<any[]>;
-      onRunnerLog(cb: (chunk: unknown) => void): () => void;
-      onRunnerStatusChange(cb: (data: unknown) => void): () => void;
     };
   }
 }

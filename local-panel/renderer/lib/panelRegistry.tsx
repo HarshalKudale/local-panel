@@ -210,15 +210,6 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         helpText: strings.services.helpText,
     },
     {
-        id: "applications",
-        label: strings.panels.sectionRunConfigs,
-        icon: <Play size={14} />,
-        section: strings.panels.sectionApplications,
-        sectionType: "flat",
-        enabled: true,
-        helpText: strings.runner.helpText,
-    },
-    {
         id: "healthbar",
         label: strings.panels.sectionHealthBar,
         icon: <Activity size={14} />,

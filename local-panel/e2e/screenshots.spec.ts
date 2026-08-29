@@ -53,9 +53,6 @@ const PANELS: PanelDef[] = [
     // ── Tools (flat) ───────────────────────────────────────────────────────
     { name: "14-environments", navLabel: "Envs & Vars" },
 
-    // ── Applications (flat) ────────────────────────────────────────────────
-    { name: "15-run-configs", navLabel: "Runner" },
-
     // ── Discovery (flat) ───────────────────────────────────────────────────
     { name: "16-services", navLabel: "Services" },
 
@@ -65,10 +62,24 @@ const PANELS: PanelDef[] = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-/** Save a full-page screenshot with an annotated filename */
-async function shot(page: import("@playwright/test").Page, name: string) {
+/**
+ * Save a screenshot of the actual Electron window.
+ * `page.screenshot({ fullPage: true })` only captures the web contents viewport,
+ * which can miss the bottom edge of the app window in Electron.
+ */
+async function shot(
+    page: import("@playwright/test").Page,
+    electronApp: import("@playwright/test").ElectronApplication,
+    name: string,
+) {
     const file = path.join(SCREENSHOT_DIR, `${name}.png`);
-    await page.screenshot({ path: file, fullPage: false });
+    await page.waitForTimeout(150);
+    const browserWindow = await electronApp.browserWindow(page);
+    const pngBase64 = await browserWindow.evaluate(async (win) => {
+        const image = await win.capturePage();
+        return image.toPNG().toString("base64");
+    });
+    fs.writeFileSync(file, Buffer.from(pngBase64, "base64"));
     console.log(`  ✓ ${file}`);
 }
 
@@ -91,13 +102,13 @@ async function clickNavItem(page: import("@playwright/test").Page, label: string
 
 test.setTimeout(120_000);
 
-test("screenshot tour of all sidebar panels", async ({ page }) => {
+test("screenshot tour of all sidebar panels", async ({ page, electronApp }) => {
     // Wait for the app to fully load
     await page.waitForLoadState("domcontentloaded");
     await page.waitForTimeout(2000);
 
     // Screenshot the initial state
-    await shot(page, "00-initial");
+    await shot(page, electronApp, "00-initial");
 
     for (const panel of PANELS) {
         console.log(`\nNavigating to: ${panel.name}`);
@@ -144,7 +155,7 @@ test("screenshot tour of all sidebar panels", async ({ page }) => {
         }
 
         // 3. Screenshot
-        await shot(page, panel.name);
+        await shot(page, electronApp, panel.name);
     }
 
     console.log(`\nAll screenshots saved to: ${SCREENSHOT_DIR}`);

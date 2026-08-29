@@ -71,12 +71,10 @@ function notifyRendererRefresh(): void {
 
 import { registerImportExportHandlers } from "@/ipc/importExport/index";
 import { registerApplicationHandlers } from "@/ipc/applicationHandlers";
-import { registerRunnerHandlers } from "@/ipc/runnerHandlers";
 
 export function registerIpcHandlers(): void {
   registerImportExportHandlers();
   registerApplicationHandlers();
-  registerRunnerHandlers();
   // Forward sync status events to every open window
   onSyncStatusChange((wsId, state) => {
     BrowserWindow.getAllWindows().forEach((w) => {
@@ -1140,11 +1138,11 @@ export function registerIpcHandlers(): void {
 
   // ── Folders ────────────────────────────────────────────────────────────────
 
-  ipcMain.handle("folder:add", async (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock" | "runner", folder: Omit<Folder, "id" | "createdAt">) => {
+  ipcMain.handle("folder:add", async (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock", folder: Omit<Folder, "id" | "createdAt">) => {
     const cfg = loadConfig();
     const wsId = folder.workspaceId ?? cfg.activeWorkspaceId;
     const newFolder: Folder = { ...folder, id: generateId(), createdAt: Date.now(), workspaceId: wsId };
-    const kindMap = { mock: "mocks", request: "requests", ws: "sockets", webhook: "webhooks", rule: "rules", graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks", grpcRequest: "grpcRequests", grpcMock: "grpcMocks", soapRequest: "soapRequests", soapMock: "soapMocks", runner: "runners" } as const;
+    const kindMap = { mock: "mocks", request: "requests", ws: "sockets", webhook: "webhooks", rule: "rules", graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks", grpcRequest: "grpcRequests", grpcMock: "grpcMocks", soapRequest: "soapRequests", soapMock: "soapMocks" } as const;
     const fsKind = kindMap[kind];
     if (kind === "mock") {
       cfg.mockFolders = cfg.mockFolders ?? [];
@@ -1176,9 +1174,6 @@ export function registerIpcHandlers(): void {
     } else if (kind === "soapMock") {
       (cfg as any).soapMockFolders = (cfg as any).soapMockFolders ?? [];
       (cfg as any).soapMockFolders.push(newFolder);
-    } else if (kind === "runner") {
-      cfg.runnerFolders = cfg.runnerFolders ?? [];
-      cfg.runnerFolders.push(newFolder);
     } else {
       cfg.requestFolders = cfg.requestFolders ?? [];
       cfg.requestFolders.push(newFolder);
@@ -1195,7 +1190,7 @@ export function registerIpcHandlers(): void {
     return newFolder;
   });
 
-  ipcMain.handle("folder:rename", (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock" | "runner", id: string, name: string) => {
+  ipcMain.handle("folder:rename", (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock", id: string, name: string) => {
     const cfg = loadConfig();
     const arr = kind === "mock" ? (cfg.mockFolders ?? [])
       : kind === "ws" ? (cfg.wsFolders ?? [])
@@ -1207,8 +1202,7 @@ export function registerIpcHandlers(): void {
                   : kind === "grpcMock" ? ((cfg as any).grpcMockFolders ?? [])
                     : kind === "soapRequest" ? ((cfg as any).soapRequestFolders ?? [])
                       : kind === "soapMock" ? ((cfg as any).soapMockFolders ?? [])
-                        : kind === "runner" ? (cfg.runnerFolders ?? [])
-                          : (cfg.requestFolders ?? []);
+                        : (cfg.requestFolders ?? []);
     const f = arr.find((x: Folder) => x.id === id);
     const oldName = f?.name;
     if (f) f.name = name;
@@ -1222,11 +1216,10 @@ export function registerIpcHandlers(): void {
     else if (kind === "grpcMock") (cfg as any).grpcMockFolders = arr;
     else if (kind === "soapRequest") (cfg as any).soapRequestFolders = arr;
     else if (kind === "soapMock") (cfg as any).soapMockFolders = arr;
-    else if (kind === "runner") cfg.runnerFolders = arr;
     else cfg.requestFolders = arr;
     saveConfig(cfg);
     if (f && oldName) {
-      const kindMap = { mock: "mocks", request: "requests", ws: "sockets", webhook: "webhooks", rule: "rules", graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks", grpcRequest: "grpcRequests", grpcMock: "grpcMocks", soapRequest: "soapRequests", soapMock: "soapMocks", runner: "runners" } as const;
+      const kindMap = { mock: "mocks", request: "requests", ws: "sockets", webhook: "webhooks", rule: "rules", graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks", grpcRequest: "grpcRequests", grpcMock: "grpcMocks", soapRequest: "soapRequests", soapMock: "soapMocks" } as const;
       const fsKind = kindMap[kind];
       // Rename the physical directory if it exists
       const base = path.join(workspaceDir(f.workspaceId), fsKind);
@@ -1254,7 +1247,7 @@ export function registerIpcHandlers(): void {
     return { ok: true };
   });
 
-  ipcMain.handle("folder:move", (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock" | "runner", id: string, parentId: string | null) => {
+  ipcMain.handle("folder:move", (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "grpcRequest" | "grpcMock" | "soapRequest" | "soapMock", id: string, parentId: string | null) => {
     const cfg = loadConfig();
     const arr: Folder[] = kind === "mock" ? (cfg.mockFolders ?? [])
       : kind === "ws" ? (cfg.wsFolders ?? [])
@@ -1266,8 +1259,7 @@ export function registerIpcHandlers(): void {
                   : kind === "grpcMock" ? ((cfg as any).grpcMockFolders ?? [])
                     : kind === "soapRequest" ? ((cfg as any).soapRequestFolders ?? [])
                       : kind === "soapMock" ? ((cfg as any).soapMockFolders ?? [])
-                        : kind === "runner" ? (cfg.runnerFolders ?? [])
-                          : (cfg.requestFolders ?? []);
+                        : (cfg.requestFolders ?? []);
     const f = arr.find((x: Folder) => x.id === id);
     if (f) f.parentId = parentId;
     if (kind === "mock") cfg.mockFolders = arr;
@@ -1280,10 +1272,9 @@ export function registerIpcHandlers(): void {
     else if (kind === "grpcMock") (cfg as any).grpcMockFolders = arr;
     else if (kind === "soapRequest") (cfg as any).soapRequestFolders = arr;
     else if (kind === "soapMock") (cfg as any).soapMockFolders = arr;
-    else if (kind === "runner") cfg.runnerFolders = arr;
     else cfg.requestFolders = arr;
     if (f) {
-      const kindMap = { mock: "mocks", request: "requests", ws: "sockets", webhook: "webhooks", rule: "rules", graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks", grpcRequest: "grpcRequests", grpcMock: "grpcMocks", soapRequest: "soapRequests", soapMock: "soapMocks", runner: "runners" } as const;
+      const kindMap = { mock: "mocks", request: "requests", ws: "sockets", webhook: "webhooks", rule: "rules", graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks", grpcRequest: "grpcRequests", grpcMock: "grpcMocks", soapRequest: "soapRequests", soapMock: "soapMocks" } as const;
       const idx = readIndex(f.workspaceId, kindMap[kind]);
       const fi = idx.folders.find((x: Folder) => x.id === id);
       if (fi) fi.parentId = parentId;
@@ -1293,7 +1284,7 @@ export function registerIpcHandlers(): void {
     return { ok: true };
   });
 
-  ipcMain.handle("folder:delete", async (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock" | "runner", id: string) => {
+  ipcMain.handle("folder:delete", async (_e, kind: "mock" | "request" | "ws" | "webhook" | "rule" | "graphqlRequest" | "graphqlMock", id: string) => {
     const cfg = loadConfig();
     let folder: Folder | undefined;
     let affectedEntityIds: string[] = [];
@@ -1329,9 +1320,6 @@ export function registerIpcHandlers(): void {
       affectedEntityIds = ((cfg as any).graphqlMocks ?? []).filter((m: any) => m.folderId === id).map((m: any) => m.id);
       (cfg as any).graphqlMockFolders = gqlMockFolders.filter((f: Folder) => f.id !== id);
       (cfg as any).graphqlMocks = ((cfg as any).graphqlMocks ?? []).filter((m: any) => m.folderId !== id);
-    } else if (kind === "runner") {
-      folder = (cfg.runnerFolders ?? []).find((f) => f.id === id);
-      cfg.runnerFolders = (cfg.runnerFolders ?? []).filter((f) => f.id !== id);
     } else {
       folder = (cfg.requestFolders ?? []).find((f) => f.id === id);
       affectedEntityIds = (cfg.requests ?? []).filter((r) => r.folderId === id).map((r) => r.id);
@@ -1340,7 +1328,7 @@ export function registerIpcHandlers(): void {
     }
     saveConfig(cfg);
     if (folder) {
-      const kindMap = { mock: "mocks", request: "requests", ws: "sockets", webhook: "webhooks", rule: "rules", graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks", runner: "runners" } as const;
+      const kindMap = { mock: "mocks", request: "requests", ws: "sockets", webhook: "webhooks", rule: "rules", graphqlRequest: "graphqlRequests", graphqlMock: "graphqlMocks" } as const;
       const fsKind = kindMap[kind];
       const wsId = folder.workspaceId;
       // Delete the physical folder directory (and all entity JSON files inside it) in one shot

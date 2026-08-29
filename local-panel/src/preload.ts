@@ -180,26 +180,6 @@ contextBridge.exposeInMainWorld("api", {
   loadRunnerConfig: (wsId: string, folderId: string) => ipcRenderer.invoke("runner:loadConfig", wsId, folderId),
   listRunnerFolderIds: (wsId: string) => ipcRenderer.invoke("runner:listFolderIds", wsId),
 
-  // ── Runners ─────────────────────────────────────────────────────────────────
-  listRunners: (wsId: string) => ipcRenderer.invoke("runners:list", wsId),
-  saveRunner: (runner: unknown) => ipcRenderer.invoke("runners:save", runner),
-  deleteRunner: (wsId: string, id: string) => ipcRenderer.invoke("runners:delete", wsId, id),
-  startRunner: (wsId: string, runnerId: string) => ipcRenderer.invoke("runners:start", wsId, runnerId),
-  stopRunner: (runnerId: string) => ipcRenderer.invoke("runners:stop", runnerId),
-  getRunnerState: (runnerId: string) => ipcRenderer.invoke("runners:getState", runnerId),
-  getAllRunnerStates: () => ipcRenderer.invoke("runners:getAllStates"),
-  getRunnerLogs: (runnerId: string) => ipcRenderer.invoke("runners:getLogs", runnerId),
-  onRunnerLog: (cb: (chunk: unknown) => void) => {
-    const handler = (_: unknown, chunk: unknown) => cb(chunk);
-    ipcRenderer.on("runner:log", handler);
-    return () => ipcRenderer.off("runner:log", handler);
-  },
-  onRunnerStatusChange: (cb: (data: unknown) => void) => {
-    const handler = (_: unknown, data: unknown) => cb(data);
-    ipcRenderer.on("runner:statusChange", handler);
-    return () => ipcRenderer.off("runner:statusChange", handler);
-  },
-
   // ── Zoom ────────────────────────────────────────────────────────────────────
   getZoomLevel: () => ipcRenderer.invoke("zoom:get"),
   setZoomLevel: (level: number) => ipcRenderer.invoke("zoom:set", level),

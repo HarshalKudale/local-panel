@@ -17,7 +17,6 @@ import EnvironmentsPanel from "@/panels/EnvironmentsPanel";
 import AuditLogPanel from "@/panels/AuditLogPanel";
 import WorkspacePanel from "@/panels/WorkspacePanel";
 import HealthBarPanel from "@/panels/HealthBarPanel";
-import RunnerPanel from "@/panels/RunnerPanel";
 import PlaceholderPanel from "@/panels/PlaceholderPanel";
 import GraphQLRequestsPanel from "@/panels/GraphQLRequestsPanel";
 import GraphQLMocksPanel from "@/panels/GraphQLMocksPanel";
@@ -298,12 +297,7 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
             onAfterSave={() => ctx.refreshEntitySyncStatus(ctx.wsId)}
         />
     ),
-    applications: (ctx) => (
-        <RunnerPanel
-            config={ctx.wsConfig}
-            onConfigChange={ctx.handleWsConfigChange}
-        />
-    ),
+    applications: () => <DisabledPanel />,
 };
 
 // -- Public API --------------------------------------------------------------
