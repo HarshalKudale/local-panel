@@ -28,12 +28,14 @@
       "package.json"
     ],
     "win": {
+      "artifactName": "Local.Panel.Setup.${ext}",
       "target": "nsis"
     },
     "mac": {
       "target": "dmg"
     },
     "linux": {
+      "artifactName": "Local.Panel.${ext}",
       "target": "AppImage"
     }
   },
