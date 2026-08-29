@@ -1,42 +1,26 @@
 # Support Local Panel
 
-Local Panel is a source-available project maintained by [Harshal Kudale](https://github.com/HarshalKudale).
+Local Panel is maintained by [Harshal Kudale](https://github.com/HarshalKudale).
 
-If you find Local Panel useful, consider supporting the project!
+## Community support
 
-## Ways to Support
+You can support the project by:
 
-### Star the Repository
+- starring the repository
+- opening issues with strong reproduction details
+- sending pull requests
+- sharing the tool with other developers
 
-The simplest way to show support — give us a star on GitHub:
+## Commercial and enterprise support
 
-[**⭐ Star on GitHub**](https://github.com/HarshalKudale/local-panel)
+Local Panel is free for individual developers and teams of up to 10 users.
 
-### Sponsor / Donate
+If you need:
 
-Help fund continued development and maintenance:
+- commercial usage rights
+- enterprise rollout
+- private-fork/internal deployment rights
+- larger-team licensing
+- direct commercial distribution rights
 
-[**💖 Sponsor on GitHub**](https://github.com/sponsors/HarshalKudale)
-
-### Contribute
-
-Contributions of code, documentation, and bug reports are always welcome:
-
-- See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-- Report bugs via [GitHub Issues](https://github.com/HarshalKudale/local-panel/issues).
-
-### Spread the Word
-
-- Share Local Panel with fellow developers.
-- Write a blog post or tutorial about using Local Panel.
-- Mention us in your project's README if Local Panel helped your workflow.
-
-## Commercial Licensing
-
-If your team or company uses Local Panel commercially, purchasing a license directly supports the project:
-
-**Email:** hello@harshalkudale.com
-
----
-
-Thank you for supporting independent developer tools! 🙏
+contact the author at **hello@harshalkudale.com**.

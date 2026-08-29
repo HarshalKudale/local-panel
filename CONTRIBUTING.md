@@ -1,62 +1,50 @@
 # Contributing to Local Panel
 
-Thank you for your interest in contributing to Local Panel! We welcome contributions from the community.
+We welcome documentation fixes, bug reports, design feedback, workflow improvements, and code contributions.
 
-## Contribution Checklist
+## Before you open a pull request
 
-Before submitting a pull request, please ensure you've completed the following:
+1. Fork the repository publicly.
+2. Read the [LICENSE](LICENSE) so you understand the contribution and usage terms.
+3. Keep your change focused.
+4. Update the website docs in `local-panel-website\content\docs` when behavior changes.
+5. Run the relevant existing tests for the area you changed.
 
-- [ ] **Fork the repository** and create your branch from `main`.
-- [ ] **Read the LICENSE** — contributions are accepted under the same source-available license terms.
-- [ ] **One feature/fix per PR** — keep pull requests focused and atomic.
-- [ ] **Test your changes** — run `npm test` and ensure all tests pass.
-- [ ] **Follow existing code style** — match the conventions already used in the codebase.
-- [ ] **Update documentation** if your change affects user-facing behavior.
-- [ ] **No breaking changes** without prior discussion in an issue.
-- [ ] **Sign-off your commits** — by contributing, you agree that your code is licensed under this project's terms and you assign copyright to the project maintainer.
+## Contribution scope
 
-## Getting Started
+Good contribution areas:
 
-1. Fork the repo on GitHub
-2. Clone your fork locally
-3. Install dependencies: `npm install`
-4. Create a feature branch: `git checkout -b feature/my-change`
-5. Make your changes
-6. Run tests: `npm test`
-7. Commit and push to your fork
-8. Open a Pull Request against the `main` branch
+- bug fixes
+- accessibility and UX improvements
+- documentation updates
+- test coverage
+- protocol workflow improvements
+- build and release hardening
 
-## What We Accept
+Please discuss first if your change alters:
 
-- Bug fixes
-- Performance improvements
-- Documentation improvements
-- New protocol support
-- UI/UX improvements
-- Accessibility improvements
-- Test coverage improvements
+- product scope
+- major architecture
+- licensing or commercial policy
+- large workflow redesigns
 
-## What Requires Discussion First
+## Pull request expectations
 
-Please open an issue before working on:
+- one logical change per PR
+- explain the user impact clearly
+- keep code style aligned with the repo
+- avoid unrelated cleanup
 
-- New features that change the application's scope
-- Architectural changes
-- Breaking changes to existing APIs
-- Changes to the build system or toolchain
+## Contribution licensing
 
-## Code of Conduct
+By submitting a contribution, you confirm that:
 
-- Be respectful and constructive in discussions.
-- Focus on the technical merits of contributions.
-- Help others learn and improve.
+- you have the right to contribute the code or content;
+- the contribution may be used, modified, and distributed by the project
+  maintainer under the Local Panel repository license; and
+- your contribution does not grant you any additional commercial rights beyond
+  the repository license.
 
-## Reporting Bugs
+## Need help?
 
-- Use GitHub Issues to report bugs.
-- Include steps to reproduce, expected behavior, and actual behavior.
-- Include your OS version and Local Panel version.
-
-## Questions?
-
-Open a GitHub Discussion or reach out at hello@harshalkudale.com.
+Open an issue or contact **hello@harshalkudale.com**.
