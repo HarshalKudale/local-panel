@@ -80,11 +80,17 @@ export interface ResponsePaneProps {
   onResModeChange?(m: BodyMode): void;
   resStatus?: number;
   onResStatusChange?(s: number): void;
+  resStatusMocked?: boolean;
+  onResStatusMockedChange?(mocked: boolean): void;
   /** Response delay in ms (mock mode only) */
   resDelay?: number;
   onResDelayChange?(ms: number): void;
+  resDelayMocked?: boolean;
+  onResDelayMockedChange?(mocked: boolean): void;
   /** Response body encoding (mock mode): "base64" for binary bodies */
   resBodyEncoding?: "utf8" | "base64";
+  resBodyMocked?: boolean;
+  onResBodyMockedChange?(mocked: boolean): void;
   /** Streaming mode (mock only) */
   streamingMode?: "none" | "sse" | "chunked";
   onStreamingModeChange?(mode: "none" | "sse" | "chunked"): void;
@@ -134,9 +140,10 @@ export default function EditorTab({
   resBody, onResBodyChange,
   resHeaders, onResHeadersChange,
   resMode, onResModeChange,
-  resStatus, onResStatusChange,
-  resDelay, onResDelayChange,
+  resStatus, onResStatusChange, resStatusMocked, onResStatusMockedChange,
+  resDelay, onResDelayChange, resDelayMocked, onResDelayMockedChange,
   resBodyEncoding,
+  resBodyMocked, onResBodyMockedChange,
   streamingMode, onStreamingModeChange,
   streamingChunkDelay, onStreamingChunkDelayChange,
   streamingChunkSeparator, onStreamingChunkSeparatorChange,
@@ -261,6 +268,15 @@ export default function EditorTab({
           suffix={
             <div className="flex items-center gap-2 pr-3">
               <span className="text-[10px] text-text-dim flex-shrink-0">{strings.editor.delay}</span>
+              <label className="flex items-center gap-1 text-[10px] text-text-dim cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={resDelayMocked ?? true}
+                  onChange={(e) => onResDelayMockedChange?.(e.target.checked)}
+                  className="accent-accent"
+                />
+                <span>Mock</span>
+              </label>
               <input
                 type="number"
                 min={0}
@@ -297,6 +313,15 @@ export default function EditorTab({
                   <span className="text-[10px] text-text-dim flex-shrink-0">{strings.editor.msPerChunk}</span>
                 </>
               )}
+              <label className="flex items-center gap-1 text-[10px] text-text-dim cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={resStatusMocked ?? true}
+                  onChange={(e) => onResStatusMockedChange?.(e.target.checked)}
+                  className="accent-accent"
+                />
+                <span>Mock</span>
+              </label>
               <input
                 type="number"
                 min={100}
@@ -314,10 +339,23 @@ export default function EditorTab({
           {resTab === "body" && (
             <>
               {(resMode !== "binary" && resMode !== "image") && (
-                <TokenToolbar
-                  env={activeEnv ?? null}
-                  onInsert={(token) => resBodyRef.current?.insertAtCursor(token)}
-                />
+                <div>
+                  <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/20 bg-bg0/20">
+                    <label className="flex items-center gap-2 text-[10px] text-text-dim cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={resBodyMocked ?? true}
+                        onChange={(e) => onResBodyMockedChange?.(e.target.checked)}
+                        className="accent-accent"
+                      />
+                      <span className="font-semibold uppercase tracking-wider">Mock body</span>
+                    </label>
+                  </div>
+                  <TokenToolbar
+                    env={activeEnv ?? null}
+                    onInsert={(token) => resBodyRef.current?.insertAtCursor(token)}
+                  />
+                </div>
               )}
               <BodyEditor
                 ref={resBodyRef}
@@ -343,7 +381,17 @@ export default function EditorTab({
                   }
                 }}
               />
-              <HeaderTable rows={resHeaders ?? []} onChange={onResHeadersChange ?? (() => { })} />
+              <HeaderTable
+                rows={resHeaders ?? []}
+                onChange={onResHeadersChange ?? (() => { })}
+                mockControls={{
+                  allMocked: (resHeaders ?? []).filter((row) => row.key.trim()).length > 0 && (resHeaders ?? []).filter((row) => row.key.trim()).every((row) => !!row.mocked),
+                  anyMocked: (resHeaders ?? []).some((row) => !!row.mocked),
+                  onToggleAll: (mocked) => {
+                    onResHeadersChange?.((resHeaders ?? []).map((row) => ({ ...row, mocked })));
+                  },
+                }}
+              />
             </>
           )}
         </div>

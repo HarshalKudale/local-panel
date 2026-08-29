@@ -48,9 +48,12 @@ export interface TabState {
 
   // Mock response fields (editable)
   resStatus: number;
+  resStatusMocked: boolean;
   resHeaders: KVRow[];
   resBody: string;
+  resBodyMocked: boolean;
   resDelay: number;
+  resDelayMocked: boolean;
   resBodyEncoding: "utf8" | "base64";
   streamingMode: "none" | "sse" | "chunked";
   streamingChunkDelay: number;
@@ -97,8 +100,9 @@ export interface MockDraft {
   name: string; method: string; urlPattern: string; useRegex: boolean;
   folderId: string | null;
   reqHeaders: Record<string, string>; reqBody: string; reqMode: BodyMode;
-  resStatus: number; resHeaders: Record<string, string>; resBody: string; resMode: BodyMode;
+  resStatus: number; resStatusMocked: boolean; resHeaders: Record<string, string>; mockedResponseHeaders?: string[]; resBody: string; resBodyMocked: boolean; resMode: BodyMode;
   resDelay: number; resBodyEncoding: "utf8" | "base64";
+  resDelayMocked: boolean;
   streamingMode: "none" | "sse" | "chunked";
   streamingChunkDelay: number;
   streamingChunkSeparator: string;
@@ -146,6 +150,7 @@ export type TabAction =
   | { type: "SET_HEADERS"; target: "req" | "res"; rows: KVRow[] }
   | { type: "SET_REQ_MODE"; mode: BodyMode }
   | { type: "SET_RES_MODE"; mode: BodyMode }
+  | { type: "SET_ALL_RES_HEADERS_MOCKED"; mocked: boolean }
   | { type: "LOAD_ENTITY"; entity: SavedRequest | MockRule | null; tabType: TabType }
   | { type: "LOAD_DRAFT"; draft: RequestDraft | MockDraft | null; tabType: TabType }
   | { type: "REFRESH"; entity: SavedRequest | MockRule; tabType: TabType }
@@ -174,8 +179,8 @@ function defaultState(): TabState {
     reqParams: [], reqHeaders: [], reqBody: "", reqMode: "json", reqBodyStash: {},
     resTab: "body",
     resMode: "json",
-    resStatus: 200, resHeaders: [], resBody: "",
-    resDelay: 0,
+    resStatus: 200, resStatusMocked: true, resHeaders: [], resBody: "", resBodyMocked: true,
+    resDelay: 0, resDelayMocked: true,
     resBodyEncoding: "utf8",
     streamingMode: "none",
     streamingChunkDelay: 100,
@@ -222,6 +227,7 @@ function buildMockReqHeaders(mock: Partial<MockRule>): KVRow[] {
 function entityFieldsFromMock(mock: Partial<MockRule>): Partial<TabState> {
   const reqContentType = getHeaderCaseInsensitive(mock.capturedHeaders, "content-type");
   const resContentType = getHeaderCaseInsensitive(mock.responseHeaders, "content-type");
+  const mockedHeaderKeys = new Set((mock.mockedResponseHeaders ?? []).map((key) => key.toLowerCase()));
 
   return {
     name: mock.name ?? "",
@@ -233,10 +239,13 @@ function entityFieldsFromMock(mock: Partial<MockRule>): Partial<TabState> {
     reqBody: tryFormat(b64ToText(mock.capturedBody ?? "")),
     reqMode: contentTypeToMode(reqContentType),
     resStatus: mock.responseStatus ?? 200,
-    resHeaders: headersToRows(mock.responseHeaders ?? { "content-type": "application/json" }),
+    resStatusMocked: mock.responseStatusMocked ?? true,
+    resHeaders: headersToRows(mock.responseHeaders ?? { "content-type": "application/json" }, undefined, mockedHeaderKeys),
     resBody: mock.responseBodyEncoding === "base64" ? (mock.responseBody ?? "") : tryFormat(mock.responseBody ?? ""),
+    resBodyMocked: mock.responseBodyMocked ?? true,
     resMode: contentTypeToMode(resContentType),
     resDelay: mock.responseDelay ?? 0,
+    resDelayMocked: mock.responseDelayMocked ?? true,
     resBodyEncoding: mock.responseBodyEncoding ?? "utf8",
     streamingMode: mock.streamingMode ?? "none",
     streamingChunkDelay: mock.streamingChunkDelay ?? 100,
@@ -267,6 +276,12 @@ export function tabReducer(state: TabState, action: TabAction): TabState {
         ? { ...state, reqHeaders: action.rows }
         : { ...state, resHeaders: action.rows };
 
+    case "SET_ALL_RES_HEADERS_MOCKED":
+      return {
+        ...state,
+        resHeaders: state.resHeaders.map((row) => ({ ...row, mocked: action.mocked })),
+      };
+
     case "SET_REQ_MODE": {
       const ct = modeToContentType(action.mode);
       const withoutCT = state.reqHeaders.filter((r) => r.key.toLowerCase() !== "content-type");
@@ -284,8 +299,9 @@ export function tabReducer(state: TabState, action: TabAction): TabState {
     case "SET_RES_MODE": {
       const ct = modeToContentType(action.mode);
       const withoutCT = state.resHeaders.filter((r) => r.key.toLowerCase() !== "content-type");
+      const existingCt = state.resHeaders.find((r) => r.key.toLowerCase() === "content-type");
       const resHeaders = ct
-        ? [{ id: mkRowId(), enabled: true, key: "content-type", value: ct }, ...withoutCT]
+        ? [{ id: mkRowId(), enabled: true, key: "content-type", value: ct, mocked: existingCt?.mocked ?? false }, ...withoutCT]
         : withoutCT;
       return { ...state, resMode: action.mode, resHeaders };
     }
@@ -321,10 +337,11 @@ export function tabReducer(state: TabState, action: TabAction): TabState {
           useRegex: d.useRegex, folderId: d.folderId,
           reqHeaders: headersToRows(d.reqHeaders),
           reqBody: d.reqBody, reqMode: d.reqMode,
-          resStatus: d.resStatus,
-          resHeaders: headersToRows(d.resHeaders),
-          resBody: d.resBody, resMode: d.resMode,
+          resStatus: d.resStatus, resStatusMocked: d.resStatusMocked ?? true,
+          resHeaders: headersToRows(d.resHeaders, undefined, new Set((d.mockedResponseHeaders ?? []).map((key) => key.toLowerCase()))),
+          resBody: d.resBody, resBodyMocked: d.resBodyMocked ?? true, resMode: d.resMode,
           resDelay: d.resDelay ?? 0,
+          resDelayMocked: d.resDelayMocked ?? true,
           resBodyEncoding: d.resBodyEncoding ?? "utf8",
           streamingMode: d.streamingMode ?? "none",
           streamingChunkDelay: d.streamingChunkDelay ?? 100,
@@ -381,6 +398,9 @@ export function tabReducer(state: TabState, action: TabAction): TabState {
         resStatus: action.resStatus,
         resHeaders: action.resHeaders,
         resBody: action.resBody,
+        resStatusMocked: false,
+        resBodyMocked: false,
+        resDelayMocked: false,
         resMode: action.resMode,
         resBodyEncoding: action.resBodyEncoding ?? "utf8",
         resTab: "body",
@@ -462,10 +482,14 @@ export function stateToSavePayload(
       capturedHeaders: rowsToHeaders(state.reqHeaders),
       capturedBody: textToB64(state.reqBody),
       responseStatus: state.resStatus,
+      responseStatusMocked: state.resStatusMocked,
       responseHeaders: rowsToHeaders(state.resHeaders),
+      mockedResponseHeaders: state.resHeaders.filter((row) => row.mocked && row.key.trim()).map((row) => row.key.trim()),
       responseBody: state.resBody,
+      responseBodyMocked: state.resBodyMocked,
       responseBodyEncoding: state.resBodyEncoding !== "utf8" ? state.resBodyEncoding : undefined,
       responseDelay: state.resDelay > 0 ? state.resDelay : undefined,
+      responseDelayMocked: state.resDelayMocked,
       streamingMode: state.streamingMode !== "none" ? state.streamingMode : undefined,
       streamingChunkDelay: state.streamingMode !== "none" ? state.streamingChunkDelay : undefined,
       streamingChunkSeparator: state.streamingMode === "chunked" ? state.streamingChunkSeparator : undefined,
@@ -488,9 +512,9 @@ export function stateToDraft(state: TabState, tabType: TabType): RequestDraft | 
       name: state.name, method: state.method, urlPattern: state.url,
       useRegex: state.useRegex, folderId: state.folderId,
       reqHeaders: rowsToHeaders(state.reqHeaders), reqBody: state.reqBody, reqMode: state.reqMode,
-      resStatus: state.resStatus,
-      resHeaders: rowsToHeaders(state.resHeaders), resBody: state.resBody, resMode: state.resMode,
-      resDelay: state.resDelay, resBodyEncoding: state.resBodyEncoding,
+      resStatus: state.resStatus, resStatusMocked: state.resStatusMocked,
+      resHeaders: rowsToHeaders(state.resHeaders), mockedResponseHeaders: state.resHeaders.filter((row) => row.mocked && row.key.trim()).map((row) => row.key.trim()), resBody: state.resBody, resBodyMocked: state.resBodyMocked, resMode: state.resMode,
+      resDelay: state.resDelay, resDelayMocked: state.resDelayMocked, resBodyEncoding: state.resBodyEncoding,
       streamingMode: state.streamingMode,
       streamingChunkDelay: state.streamingChunkDelay,
       streamingChunkSeparator: state.streamingChunkSeparator,

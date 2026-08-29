@@ -275,6 +275,103 @@ export function passthroughToUpstreamHttps(
   req.end();
 }
 
+export interface BufferedProxyResponse {
+  status: number;
+  headers: Record<string, string>;
+  body: Buffer;
+  durationMs: number;
+}
+
+export function fetchUpstreamResponse(
+  method: string,
+  target: string,
+  path: string,
+  reqHeaders: Record<string, string>,
+  reqBody: Buffer,
+  rule?: ProxyRule,
+): Promise<BufferedProxyResponse> {
+  return new Promise((resolve, reject) => {
+    let finalHeaders = { ...reqHeaders };
+    let finalBody = reqBody;
+
+    if (rule?.requestScript?.trim()) {
+      const result = executeRequestScript(rule.requestScript, finalHeaders, reqBody.toString("utf8"));
+      if (!result.error) {
+        finalHeaders = result.headers;
+        finalBody = Buffer.from(result.body, "utf8");
+      }
+    }
+
+    const t0 = Date.now();
+    const targetUrl = target.startsWith("http://") || target.startsWith("https://")
+      ? new URL(target)
+      : new URL(`http://${target}`);
+    const isHttps = targetUrl.protocol === "https:";
+    const transport = isHttps ? https : http;
+    const requestPath = target.startsWith("http://") || target.startsWith("https://")
+      ? `${targetUrl.pathname || "/"}${targetUrl.search || ""}`
+      : (path || "/");
+
+    const upstreamHeaders: Record<string, string> = { ...finalHeaders, connection: "close" };
+    if (finalBody.length > 0) upstreamHeaders["content-length"] = String(finalBody.length);
+
+    const req = transport.request(
+      {
+        hostname: targetUrl.hostname,
+        port: targetUrl.port ? parseInt(targetUrl.port, 10) : (isHttps ? 443 : 80),
+        path: requestPath,
+        method,
+        headers: upstreamHeaders,
+        ...(isHttps ? { rejectUnauthorized: false } : {}),
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (c: Buffer) => chunks.push(c));
+        res.on("end", () => {
+          const rawResHeaders: Record<string, string> = {};
+          for (const [k, v] of Object.entries(res.headers)) {
+            if (HOP_BY_HOP.has(k.toLowerCase())) continue;
+            if (k.toLowerCase() === "set-cookie") {
+              const cookies = Array.isArray(v) ? v : [v];
+              rawResHeaders[k] = cookies.filter(Boolean).join("\n");
+            } else {
+              const vals = Array.isArray(v) ? v : [v];
+              rawResHeaders[k] = vals.filter(Boolean).join(", ");
+            }
+          }
+
+          const resBodyBuf = Buffer.concat(chunks);
+          const ce = rawResHeaders["content-encoding"] ?? "";
+          const decompressedBuf = decompressBody(resBodyBuf, ce);
+          const decompressedHeaders = ce ? stripContentEncoding(rawResHeaders) : rawResHeaders;
+
+          if (!rule?.responseScript?.trim()) {
+            resolve({
+              status: res.statusCode ?? 0,
+              headers: decompressedHeaders,
+              body: decompressedBuf,
+              durationMs: Date.now() - t0,
+            });
+            return;
+          }
+
+          const scriptResult = executeResponseScript(rule.responseScript, decompressedHeaders, decompressedBuf.toString("utf8"));
+          resolve({
+            status: res.statusCode ?? 0,
+            headers: scriptResult.error ? decompressedHeaders : scriptResult.headers,
+            body: scriptResult.error ? decompressedBuf : Buffer.from(scriptResult.body, "utf8"),
+            durationMs: Date.now() - t0,
+          });
+        });
+      },
+    );
+
+    req.on("error", reject);
+    if (finalBody.length > 0) req.write(finalBody);
+    req.end();
+  });
+}
+
 export interface RuleMatchResult {
   matched: boolean;
   rule: ProxyRule | null;

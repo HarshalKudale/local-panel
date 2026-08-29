@@ -261,11 +261,15 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
       capturedHeaders: rowsToHeaders(state.reqHeaders),
       capturedBody: textToB64(state.reqBody),
       responseStatus: result?.status ?? 200,
+      responseStatusMocked: true,
       responseHeaders: result?.headers ?? {},
+      mockedResponseHeaders: [],
       responseBody: isBinaryRes
         ? (result?.body ?? "")
         : (result ? (resMode === "json" ? tryFormat(b64ToText(result.body)) : b64ToText(result.body)) : "{}"),
+      responseBodyMocked: true,
       responseBodyEncoding: isBinaryRes ? "base64" : undefined,
+      responseDelayMocked: true,
     });
   }, [state, onCreateMock]);
 
@@ -438,9 +442,15 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         onResModeChange={tabType === "mock" ? (m) => dispatch({ type: "SET_RES_MODE", mode: m }) : undefined}
         resStatus={tabType === "mock" ? state.resStatus : undefined}
         onResStatusChange={tabType === "mock" ? (s) => dispatch({ type: "SET_FIELD", field: "resStatus", value: s }) : undefined}
+        resStatusMocked={tabType === "mock" ? state.resStatusMocked : undefined}
+        onResStatusMockedChange={tabType === "mock" ? (mocked) => dispatch({ type: "SET_FIELD", field: "resStatusMocked", value: mocked }) : undefined}
         resDelay={tabType === "mock" ? state.resDelay : undefined}
         onResDelayChange={tabType === "mock" ? (ms) => dispatch({ type: "SET_FIELD", field: "resDelay", value: ms }) : undefined}
+        resDelayMocked={tabType === "mock" ? state.resDelayMocked : undefined}
+        onResDelayMockedChange={tabType === "mock" ? (mocked) => dispatch({ type: "SET_FIELD", field: "resDelayMocked", value: mocked }) : undefined}
         resBodyEncoding={tabType === "mock" ? state.resBodyEncoding : undefined}
+        resBodyMocked={tabType === "mock" ? state.resBodyMocked : undefined}
+        onResBodyMockedChange={tabType === "mock" ? (mocked) => dispatch({ type: "SET_FIELD", field: "resBodyMocked", value: mocked }) : undefined}
         streamingMode={tabType === "mock" ? state.streamingMode : undefined}
         onStreamingModeChange={tabType === "mock" ? (m) => dispatch({ type: "SET_FIELD", field: "streamingMode", value: m }) : undefined}
         streamingChunkDelay={tabType === "mock" ? state.streamingChunkDelay : undefined}

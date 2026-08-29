@@ -24,8 +24,12 @@ const MOCK: MockRule = {
   capturedHeaders: { "content-type": "application/json" },
   capturedBody: btoa('{"input":1}'),
   responseStatus: 200,
+  responseStatusMocked: true,
   responseHeaders: { "content-type": "application/json" },
+  mockedResponseHeaders: [],
   responseBody: '{"mocked":true}',
+  responseBodyMocked: true,
+  responseDelayMocked: true,
   folderId: null,
 };
 
@@ -82,7 +86,8 @@ describe("initState()", () => {
       name: "Mock Draft", method: "*", urlPattern: "/draft",
       useRegex: true, folderId: null,
       reqHeaders: {}, reqBody: "", reqMode: "json" as const,
-      resStatus: 404, resHeaders: {}, resBody: "not found", resMode: "text" as const,
+      resStatus: 404, resStatusMocked: true, resHeaders: {}, mockedResponseHeaders: [], resBody: "not found", resBodyMocked: true, resMode: "text" as const,
+      resDelayMocked: true,
     };
     const s = initState(MOCK, draft, "mock");
     expect(s.name).toBe("Mock Draft");
@@ -330,9 +335,20 @@ describe("stateToSavePayload()", () => {
     expect(payload.urlPattern).toBe("/api/user");
     expect(payload.responseStatus).toBe(200);
     expect(payload.responseBody).toBe('{\n  "mocked": true\n}');
+    expect(payload.mockedResponseHeaders).toEqual([]);
+    expect(payload.responseBodyMocked).toBe(true);
+    expect(payload.responseStatusMocked).toBe(true);
     // new mocks default to enabled:true; existing mocks preserve enabled via entity spread
     expect((payload as any).enabled).toBe(true);
     expect((payload as any).url).toBeUndefined();
+  });
+
+  it("persists mocked response header selections separately from header values", () => {
+    const s = initState(MOCK, null, "mock");
+    s.resHeaders = [{ id: "r1", enabled: true, key: "set-cookie", value: "session=1", mocked: true }];
+    const payload = stateToSavePayload(s, "mock") as Omit<MockRule, "id" | "createdAt" | "workspaceId">;
+    expect(payload.responseHeaders["set-cookie"]).toBe("session=1");
+    expect(payload.mockedResponseHeaders).toEqual(["set-cookie"]);
   });
 
   it("trims name and url before saving", () => {

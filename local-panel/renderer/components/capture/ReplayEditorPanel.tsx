@@ -92,8 +92,12 @@ export default function ReplayEditorPanel({ entry, onCreateMock, onClose }: Prop
       capturedHeaders: rowsToHeaders(reqHeaders),
       capturedBody: textToB64(reqBody),
       responseStatus: result?.status ?? 200,
+      responseStatusMocked: true,
       responseHeaders: result?.headers ?? {},
+      mockedResponseHeaders: [],
       responseBody: result ? (resMode === "json" ? tryFormat(b64ToText(result.body)) : b64ToText(result.body)) : "{}",
+      responseBodyMocked: true,
+      responseDelayMocked: true,
     };
     onCreateMock(initial);
   }, [method, url, reqHeaders, reqBody, result, resMode, onCreateMock]);

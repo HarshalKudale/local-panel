@@ -154,8 +154,12 @@ export function buildMockInitial(entry: RequestLogEntry): Partial<MockRule> {
     capturedHeaders: entry.reqHeaders,
     capturedBody: entry.reqBody,
     responseStatus: entry.resStatus ?? 200,
+    responseStatusMocked: true,
     responseHeaders: entry.resHeaders,
+    mockedResponseHeaders: [],
     responseBody: isBinaryRes ? entry.resBody : (b64ToText(entry.resBody) || "{}"),
+    responseBodyMocked: true,
     responseBodyEncoding: isBinaryRes ? "base64" : undefined,
+    responseDelayMocked: true,
   };
 }

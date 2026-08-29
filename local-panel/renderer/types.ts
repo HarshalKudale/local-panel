@@ -97,10 +97,14 @@ export interface MockRule {
   capturedHeaders: Record<string, string>;
   capturedBody: string;       // base64
   responseStatus: number;
+  responseStatusMocked?: boolean;
   responseHeaders: Record<string, string>;
+  mockedResponseHeaders?: string[];
   responseBody: string;       // plain text or base64 (see responseBodyEncoding)
+  responseBodyMocked?: boolean;
   responseBodyEncoding?: "utf8" | "base64";  // default "utf8"; "base64" for binary bodies
   responseDelay?: number;     // ms to wait before sending response (0 = no delay)
+  responseDelayMocked?: boolean;
   streamingMode?: "none" | "sse" | "chunked";  // default "none"
   streamingChunkDelay?: number;  // ms between chunks (default 100)
   streamingChunkSeparator?: string;  // delimiter to split body into chunks

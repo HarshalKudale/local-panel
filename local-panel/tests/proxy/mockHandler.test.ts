@@ -4,7 +4,7 @@ vi.mock("@/lib/randomizer", () => ({
     resolveRandomizers: vi.fn((text: string) => text),
 }));
 
-import { resolveVars, matchMock, serveMock, serveStreamingMock } from "@/proxy/mockHandler";
+import { resolveVars, matchMock, serveMock, serveStreamingMock, isFullyMocked, mergeMockWithUpstream } from "@/proxy/mockHandler";
 
 const createSocket = () => ({ writable: true, write: vi.fn(), end: vi.fn() } as any);
 
@@ -16,10 +16,14 @@ function makeMock(overrides: Partial<any> = {}): any {
         urlPattern: "/api/test",
         useRegex: false,
         responseStatus: 200,
+        responseStatusMocked: true,
         responseHeaders: { "x-custom": "value" },
+        mockedResponseHeaders: [],
         responseBody: '{"ok":true}',
+        responseBodyMocked: true,
         responseBodyEncoding: undefined,
         responseDelay: 0,
+        responseDelayMocked: true,
         streamingMode: undefined,
         streamingChunkDelay: undefined,
         ...overrides,
@@ -31,6 +35,51 @@ function makeMock(overrides: Partial<any> = {}): any {
 describe("resolveVars()", () => {
     it("returns text as-is when env is null", () => {
         expect(resolveVars("hello {{name}}", null)).toBe("hello {{name}}");
+    });
+
+    describe("partial mock merging", () => {
+        it("treats header mocking as explicit only", () => {
+            const mock = makeMock();
+            expect(isFullyMocked(mock)).toBe(false);
+        });
+
+        it("uses upstream headers when a header is not explicitly mocked", () => {
+            const merged = mergeMockWithUpstream(
+                makeMock({
+                    responseHeaders: { "set-cookie": "old=1", "x-custom": "mocked" },
+                    mockedResponseHeaders: ["x-custom"],
+                }),
+                {
+                    status: 201,
+                    headers: { "set-cookie": "fresh=1", "x-custom": "real" },
+                    body: Buffer.from('{"real":true}'),
+                    durationMs: 25,
+                },
+                null,
+            );
+            expect(merged.headers["set-cookie"]).toBe("fresh=1");
+            expect(merged.headers["x-custom"]).toBe("mocked");
+        });
+
+        it("keeps upstream status and body when those fields are unmocked", () => {
+            const merged = mergeMockWithUpstream(
+                makeMock({
+                    responseStatus: 418,
+                    responseStatusMocked: false,
+                    responseBody: '{"mocked":true}',
+                    responseBodyMocked: false,
+                }),
+                {
+                    status: 202,
+                    headers: { "content-type": "application/json" },
+                    body: Buffer.from('{"actual":true}'),
+                    durationMs: 10,
+                },
+                null,
+            );
+            expect(merged.status).toBe(202);
+            expect(merged.body.toString("utf8")).toBe('{"actual":true}');
+        });
     });
 
     it("returns empty string for empty input", () => {

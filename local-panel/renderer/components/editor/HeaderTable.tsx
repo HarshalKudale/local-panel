@@ -8,9 +8,14 @@ interface Props {
   onChange: (rows: KVRow[]) => void;
   readOnly?: boolean;
   emptyMessage?: string;
+  mockControls?: {
+    allMocked: boolean;
+    anyMocked: boolean;
+    onToggleAll: (mocked: boolean) => void;
+  };
 }
 
-export default function HeaderTable({ rows, onChange, readOnly = false, emptyMessage }: Props) {
+export default function HeaderTable({ rows, onChange, readOnly = false, emptyMessage, mockControls }: Props) {
   const update = (id: string, patch: Partial<KVRow>) =>
     onChange(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   const remove = (id: string) => onChange(rows.filter((r) => r.id !== id));
@@ -22,6 +27,29 @@ export default function HeaderTable({ rows, onChange, readOnly = false, emptyMes
     <div className="flex flex-col h-full">
       <div className="flex items-center border-b border-border/60 bg-bg0/20 flex-shrink-0">
         {!readOnly && <div className="w-9 flex-shrink-0 border-r border-border/40" />}
+        {mockControls && !readOnly && (
+          <div className="w-20 flex-shrink-0 border-r border-border/40 px-2 py-1.5">
+            <div className="flex flex-col gap-1">
+              <label className="flex items-center gap-1 text-[10px] text-text-dim cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={mockControls.allMocked}
+                  onChange={(e) => mockControls.onToggleAll(e.target.checked)}
+                  className="accent-accent cursor-pointer"
+                />
+                <span>Mock all</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => mockControls.onToggleAll(false)}
+                disabled={!mockControls.anyMocked}
+                className="text-left text-[10px] text-text-dim hover:text-text-base disabled:opacity-40 cursor-pointer"
+              >
+                Unmock all
+              </button>
+            </div>
+          </div>
+        )}
         <div className="flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim border-r border-border/40">
           {strings.common.key}
         </div>
@@ -50,6 +78,19 @@ export default function HeaderTable({ rows, onChange, readOnly = false, emptyMes
                 onChange={(e) => update(row.id, { enabled: e.target.checked })}
                 className="accent-accent cursor-pointer"
               />
+            </div>
+          )}
+          {mockControls && !readOnly && (
+            <div className="w-20 flex-shrink-0 flex items-center justify-center border-r border-border/30">
+              <label className="flex items-center gap-1.5 text-[10px] text-text-dim cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!row.mocked}
+                  onChange={(e) => update(row.id, { mocked: e.target.checked })}
+                  className="accent-accent cursor-pointer"
+                />
+                <span>Mock</span>
+              </label>
             </div>
           )}
           <div className="flex-1 border-r border-border/25 min-w-0">

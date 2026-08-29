@@ -3,6 +3,13 @@ import { MockRule, Environment } from "@/store/config";
 import { HOP_BY_HOP } from "@/proxy/constants";
 import { resolveRandomizers } from "@/lib/randomizer";
 
+export interface ResolvedMockResponse {
+  status: number;
+  headers: Record<string, string>;
+  body: Buffer;
+  delayMs: number;
+}
+
 export function resolveVars(text: string, env: Environment | null): string {
   if (!text) return text;
   let result = text;
@@ -37,6 +44,103 @@ const SKIP_MOCK_RES_HEADERS = new Set([
   "content-encoding",
 ]);
 
+function resolveMockBody(mock: MockRule, env: Environment | null): Buffer {
+  return mock.responseBodyEncoding === "base64"
+    ? Buffer.from(mock.responseBody, "base64")
+    : Buffer.from(resolveVars(mock.responseBody, env), "utf-8");
+}
+
+function resolveMockHeaders(mock: MockRule, env: Environment | null): Record<string, string> {
+  const headers: Record<string, string> = {};
+  for (const [k, v] of Object.entries(mock.responseHeaders)) {
+    if (!SKIP_MOCK_RES_HEADERS.has(k.toLowerCase())) {
+      headers[k] = mock.responseBodyEncoding === "base64" ? v : resolveVars(v, env);
+    }
+  }
+  return headers;
+}
+
+function ensureResponseHeaders(headers: Record<string, string>, body: Buffer, defaultContentType = "application/json"): Record<string, string> {
+  const next = { ...headers };
+  if (!Object.keys(next).some((key) => key.toLowerCase() === "content-type")) {
+    next["content-type"] = defaultContentType;
+  }
+  next["content-length"] = String(body.length);
+  next["connection"] = "close";
+  return next;
+}
+
+function writeResponse(socket: net.Socket, status: number, headers: Record<string, string>, body: Buffer): void {
+  let head = `HTTP/1.1 ${status} ${statusText(status)}\r\n`;
+  for (const [k, v] of Object.entries(headers)) {
+    if (k.toLowerCase() === "set-cookie") {
+      const cookieLines = v.split("\n").filter(Boolean);
+      for (const cookie of cookieLines) head += `${k}: ${cookie}\r\n`;
+      continue;
+    }
+    head += `${k}: ${v}\r\n`;
+  }
+  head += "\r\n";
+  socket.write(head);
+  socket.write(body);
+  socket.end();
+}
+
+function mockedHeaderKeys(mock: MockRule): Set<string> {
+  return new Set((mock.mockedResponseHeaders ?? []).map((key) => key.toLowerCase()));
+}
+
+export function isFullyMocked(mock: MockRule): boolean {
+  if (mock.streamingMode && mock.streamingMode !== "none") return true;
+  const keys = Object.keys(resolveMockHeaders(mock, null)).filter((key) => key.trim());
+  const mockedKeys = mockedHeaderKeys(mock);
+  const allHeadersMocked = keys.every((key) => mockedKeys.has(key.toLowerCase()));
+  return (mock.responseStatusMocked ?? true)
+    && (mock.responseBodyMocked ?? true)
+    && (mock.responseDelayMocked ?? true)
+    && allHeadersMocked;
+}
+
+export function resolveMockOnlyResponse(mock: MockRule, env: Environment | null): ResolvedMockResponse {
+  const body = resolveMockBody(mock, env);
+  const headers = ensureResponseHeaders(
+    resolveMockHeaders(mock, env),
+    body,
+    mock.responseBodyEncoding === "base64" ? "application/octet-stream" : "application/json",
+  );
+  return {
+    status: mock.responseStatus,
+    headers,
+    body,
+    delayMs: mock.responseDelay && mock.responseDelay > 0 ? mock.responseDelay : 0,
+  };
+}
+
+export function mergeMockWithUpstream(
+  mock: MockRule,
+  upstream: { status: number; headers: Record<string, string>; body: Buffer; durationMs: number },
+  env: Environment | null,
+): ResolvedMockResponse {
+  const resolvedMockHeaders = resolveMockHeaders(mock, env);
+  const body = (mock.responseBodyMocked ?? true) ? resolveMockBody(mock, env) : upstream.body;
+  const headers = { ...upstream.headers };
+  const mockedKeys = mockedHeaderKeys(mock);
+  for (const [key, value] of Object.entries(resolvedMockHeaders)) {
+    if (mockedKeys.has(key.toLowerCase())) headers[key] = value;
+  }
+
+  return {
+    status: (mock.responseStatusMocked ?? true) ? mock.responseStatus : upstream.status,
+    headers: ensureResponseHeaders(
+      headers,
+      body,
+      mock.responseBodyEncoding === "base64" ? "application/octet-stream" : "application/json",
+    ),
+    body,
+    delayMs: (mock.responseDelayMocked ?? true) ? (mock.responseDelay && mock.responseDelay > 0 ? mock.responseDelay : 0) : 0,
+  };
+}
+
 export function serveMock(socket: net.Socket, mock: MockRule, env: Environment | null): void {
   const delayMs = mock.responseDelay && mock.responseDelay > 0 ? mock.responseDelay : 0;
 
@@ -50,29 +154,24 @@ export function serveMock(socket: net.Socket, mock: MockRule, env: Environment |
 
   const send = () => {
     if (!socket.writable) return;
-    const isBinary = mock.responseBodyEncoding === "base64";
-    const body = isBinary
-      ? Buffer.from(mock.responseBody, "base64")
-      : Buffer.from(resolveVars(mock.responseBody, env), "utf-8");
-    const headers: Record<string, string> = {};
-    for (const [k, v] of Object.entries(mock.responseHeaders)) {
-      if (!SKIP_MOCK_RES_HEADERS.has(k.toLowerCase())) headers[k] = isBinary ? v : resolveVars(v, env);
-    }
-    if (!headers["content-type"]) headers["content-type"] = isBinary ? "application/octet-stream" : "application/json";
-    headers["content-length"] = String(body.length);
-    headers["connection"] = "close";
-
-    let head = `HTTP/1.1 ${mock.responseStatus} ${statusText(mock.responseStatus)}\r\n`;
-    for (const [k, v] of Object.entries(headers)) head += `${k}: ${v}\r\n`;
-    head += "\r\n";
-
-    socket.write(head);
-    socket.write(body);
-    socket.end();
+    const resolved = resolveMockOnlyResponse(mock, env);
+    writeResponse(socket, resolved.status, resolved.headers, resolved.body);
   };
 
   if (delayMs > 0) {
     setTimeout(send, delayMs);
+  } else {
+    send();
+  }
+}
+
+export function serveResolvedResponse(socket: net.Socket, response: ResolvedMockResponse): void {
+  const send = () => {
+    if (!socket.writable) return;
+    writeResponse(socket, response.status, response.headers, response.body);
+  };
+  if (response.delayMs > 0) {
+    setTimeout(send, response.delayMs);
   } else {
     send();
   }

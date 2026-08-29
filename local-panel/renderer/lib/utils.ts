@@ -5,15 +5,22 @@ export interface KVRow {
   enabled: boolean;
   key: string;
   value: string;
+  mocked?: boolean;
 }
 
 let _rid = 0;
 export const mkRowId = () => `r${++_rid}`;
 
-export function headersToRows(h: Record<string, string>, skip?: Set<string>): KVRow[] {
+export function headersToRows(h: Record<string, string>, skip?: Set<string>, mockedKeys?: Set<string>): KVRow[] {
   return Object.entries(h)
     .filter(([k]) => !skip || !skip.has(k.toLowerCase()))
-    .map(([key, value]) => ({ id: mkRowId(), enabled: true, key, value }));
+    .map(([key, value]) => ({
+      id: mkRowId(),
+      enabled: true,
+      key,
+      value,
+      mocked: mockedKeys ? mockedKeys.has(key.toLowerCase()) : undefined,
+    }));
 }
 
 export function rowsToHeaders(rows: KVRow[]): Record<string, string> {
