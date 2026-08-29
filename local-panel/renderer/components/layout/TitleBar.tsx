@@ -107,10 +107,10 @@ export default function TitleBar({
         onStop={onServerStop}
       />
 
-      {/* Server status pill */}
+      {/* Server status */}
       {serverError ? (
         <div
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-red bg-red/10 text-red text-xs font-medium max-w-xs"
+          className="flex items-center gap-1.5 text-red text-xs font-medium max-w-[220px]"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
           title={serverError}
         >
@@ -119,7 +119,7 @@ export default function TitleBar({
         </div>
       ) : serverRunning ? (
         <div
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-green bg-green/10 text-green text-xs font-medium"
+          className="flex items-center gap-1.5 text-green text-xs font-medium"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
           <span
@@ -135,7 +135,7 @@ export default function TitleBar({
         </div>
       ) : (
         <div
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-red bg-red/10 text-red text-xs font-medium"
+          className="flex items-center gap-1.5 text-text-dim text-xs font-medium"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
           <span
@@ -143,7 +143,7 @@ export default function TitleBar({
             style={{
               width: 6,
               height: 6,
-              background: "var(--c-red)",
+              background: "var(--c-text-dim)",
             }}
           />
           {strings.titleBar.stopped.replace("{port}", String(config.port))}

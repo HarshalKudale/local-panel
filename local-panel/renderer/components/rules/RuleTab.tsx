@@ -134,16 +134,6 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
     () => isDraftEmpty(state),
   );
 
-  // Imperative refresh handle (used by useEntityTabs when reloading a saved entity)
-  useImperativeHandle(ref, () => ({
-    refresh(rule: ProxyRule) {
-      setState(stateFromRule(rule));
-    },
-    save() {
-      void handleSave();
-    },
-  }), [handleSave]);
-
   const validate = (): boolean => {
     const errs: Partial<Record<keyof RuleTabState, string>> = {};
     if (!state.pattern.trim()) errs.pattern = strings.proxyRules.patternRequired;
@@ -180,6 +170,16 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
       setSaving(false);
     }
   }, [state, onSave, markSaved]);
+
+  // Imperative refresh handle (used by useEntityTabs when reloading a saved entity)
+  useImperativeHandle(ref, () => ({
+    refresh(rule: ProxyRule) {
+      setState(stateFromRule(rule));
+    },
+    save() {
+      void handleSave();
+    },
+  }), [handleSave]);
 
   const s = strings.proxyRules;
 

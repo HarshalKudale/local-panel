@@ -158,7 +158,7 @@ Receive and inspect incoming webhook payloads.
 When a POST arrives at your webhook endpoint, the payload appears in real-time in the tab. View headers and body of each received request.
 
 ### Webhook Server
-The webhook server runs on a separate port (default 9011). Start/stop it from the panel header.
+The webhook server runs on a separate port (default 9101). Start/stop it from the panel header.
 
 ---
 

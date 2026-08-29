@@ -63,8 +63,8 @@ export default function CapturePanel({ activeWorkspaceId, wsConfig, onConfigChan
   const [entries, setEntries] = useState<RequestLogEntry[]>(() => loadPersistedEntries(activeWorkspaceId));
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [paused, setPaused] = useState(true);
-  const pausedRef = useRef(true);
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
   pausedRef.current = paused;
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());

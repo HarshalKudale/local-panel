@@ -24,7 +24,7 @@ Coming soon.
 Click the extension icon to open the popup:
 - **Enable/Disable proxy**: One-click toggle to route browser traffic through Local Panel
 - **Proxy port**: Configure which port Local Panel's proxy server is on (default: 9010)
-- **Companion port**: Configure the companion WebSocket bridge port (default: 9012)
+- **Companion port**: Configure the companion WebSocket bridge port (default: 9271)
 
 When enabled, the extension sets a PAC (Proxy Auto-Config) script that routes HTTP traffic through Local Panel.
 
@@ -56,7 +56,7 @@ This routes all HTTP traffic through Local Panel while falling back to direct co
 
 ### Companion Bridge
 The extension communicates with Local Panel via a localhost WebSocket connection (the "companion server"):
-- Extension connects to `ws://127.0.0.1:9012`
+- Extension connects to `ws://127.0.0.1:9271`
 - Sends captured requests as structured messages
 - Local Panel creates entities and refreshes its UI
 

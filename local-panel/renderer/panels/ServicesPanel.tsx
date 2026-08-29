@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { AppConfig, ServiceInfo } from "@/types";
 import SearchInput from "@/components/common/SearchInput";
 import { RefreshCw, Zap } from "@/lib/icons";
-import { Button, Badge, EmptyState, DataTable, PanelLayout } from "@/components/ui";
+import { Button, Badge, EmptyState, DataTable, PanelLayout, SectionCard } from "@/components/ui";
 import { strings } from "@/lib/strings";
 import type { TableColumn } from "@/components/ui";
 
@@ -11,9 +11,22 @@ interface Props {
   config: AppConfig;
   onRefresh: () => void;
   onQuickMap: (target: string) => void;
+  onOpenMappings: () => void;
+  onOpenRequests: () => void;
+  onOpenCapture: () => void;
+  onOpenSettings: () => void;
 }
 
-export default function ServicesPanel({ services, config, onRefresh, onQuickMap }: Props) {
+export default function ServicesPanel({
+  services,
+  config,
+  onRefresh,
+  onQuickMap,
+  onOpenMappings,
+  onOpenRequests,
+  onOpenCapture,
+  onOpenSettings,
+}: Props) {
   const [search, setSearch] = useState("");
 
   const portToMapping = new Map(
@@ -35,6 +48,8 @@ export default function ServicesPanel({ services, config, onRefresh, onQuickMap 
           (portToMapping.get(s.port)?.label ?? "").toLowerCase().includes(q)
       )
     : services;
+  const runningService = services.find((s) => !portToMapping.has(s.port)) ?? services[0] ?? null;
+  const directHostHint = config.port === 80 ? "myapp.localhost" : `myapp.localhost:${config.port}`;
 
   const columns: TableColumn<ServiceInfo>[] = [
     {
@@ -101,6 +116,62 @@ export default function ServicesPanel({ services, config, onRefresh, onQuickMap 
         </>
       }
     >
+      <SectionCard className="mb-5">
+        <div className="grid gap-4 px-4 py-4 lg:grid-cols-[1.6fr_1fr]">
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-sm font-semibold text-text-bright">{strings.services.quickStartTitle}</h2>
+              <p className="mt-1 text-xs leading-relaxed text-text-dim">{strings.services.quickStartBody.replace("{domain}", directHostHint)}</p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={() => runningService ? onQuickMap(`localhost:${runningService.port}`) : onOpenMappings()}
+                className="rounded-md border border-border bg-bg2 px-3 py-3 text-left transition-colors hover:bg-bg3"
+              >
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">{strings.services.quickStepOne}</div>
+                <div className="mt-1 text-sm font-medium text-text-base">{strings.services.quickStepOneTitle}</div>
+                <div className="mt-1 text-xs text-text-dim">
+                  {runningService
+                    ? strings.services.quickStepOneHint.replace("{port}", String(runningService.port))
+                    : strings.services.quickStepOneEmpty}
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={onOpenRequests}
+                className="rounded-md border border-border bg-bg2 px-3 py-3 text-left transition-colors hover:bg-bg3"
+              >
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">{strings.services.quickStepTwo}</div>
+                <div className="mt-1 text-sm font-medium text-text-base">{strings.services.quickStepTwoTitle}</div>
+                <div className="mt-1 text-xs text-text-dim">{strings.services.quickStepTwoHint}</div>
+              </button>
+              <button
+                type="button"
+                onClick={onOpenCapture}
+                className="rounded-md border border-border bg-bg2 px-3 py-3 text-left transition-colors hover:bg-bg3"
+              >
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">{strings.services.quickStepThree}</div>
+                <div className="mt-1 text-sm font-medium text-text-base">{strings.services.quickStepThreeTitle}</div>
+                <div className="mt-1 text-xs text-text-dim">{strings.services.quickStepThreeHint}</div>
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-md border border-accent/20 bg-accent/5 px-4 py-4">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-accent">{strings.services.routingModesTitle}</div>
+            <div className="mt-2 space-y-2 text-xs leading-relaxed text-text-dim">
+              <p>{strings.services.routingModesBody.replace("{domain}", directHostHint).replace("{port}", String(config.port))}</p>
+              <p>{strings.services.routingModesTip}</p>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="secondary" size="sm" onClick={onOpenMappings}>{strings.services.openMappings}</Button>
+              <Button variant="secondary" size="sm" onClick={onOpenSettings}>{strings.services.openServerSettings}</Button>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
+
       {filtered.length === 0 ? (
         <EmptyState
           icon={<Zap size={36} />}

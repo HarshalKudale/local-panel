@@ -112,6 +112,10 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
             config={ctx.wsConfig}
             onRefresh={ctx.refreshServices}
             onQuickMap={(target) => { ctx.setMappingPrefill(target); ctx.setPanel("mappings"); }}
+            onOpenMappings={() => ctx.setPanel("mappings")}
+            onOpenRequests={() => ctx.setPanel("req-rest")}
+            onOpenCapture={() => ctx.setPanel("capture")}
+            onOpenSettings={() => ctx.setPanel("settings")}
         />
     ),
     mappings: (ctx) => (

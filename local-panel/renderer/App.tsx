@@ -17,7 +17,7 @@ import { usePersistedState } from "@/lib/usePersistedState";
 
 const EMPTY_CONFIG: AppConfig = {
   port: 80,
-  companionPort: 9100,
+  companionPort: 9271,
   minimizeToTray: true,
   tlsEnabled: false,
   tlsCaCertPath: null,

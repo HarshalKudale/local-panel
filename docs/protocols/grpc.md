@@ -214,6 +214,6 @@ const resolvedBody = resolveVars(body, activeEnv);
 | Port | Service | Configurable |
 |---|---|:---:|
 | 9010 | HTTP proxy server | ✓ |
-| 9011 | Webhook receiver | ✓ |
-| 9012 | Companion WebSocket | ✓ |
+| 9101 | Webhook receiver | ✓ |
+| 9271 | Companion WebSocket | ✓ |
 | 9102 | gRPC mock server | ✓ |

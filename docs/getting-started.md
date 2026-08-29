@@ -141,8 +141,8 @@ Send real requests to APIs:
 | Port | Purpose | Configurable |
 |------|---------|:---:|
 | 9010 | Main proxy server | ✓ |
-| 9011 | Webhook receiver | ✓ |
-| 9012 | Companion WebSocket (extension bridge) | ✓ |
+| 9101 | Webhook receiver | ✓ |
+| 9271 | Companion WebSocket (extension bridge) | ✓ |
 | 9102 | gRPC mock server | ✓ |
 
 All ports bind to `127.0.0.1` only — no external network exposure.

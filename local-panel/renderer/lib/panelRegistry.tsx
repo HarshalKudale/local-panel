@@ -236,7 +236,6 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         section: strings.nav.config,
         sectionType: "flat",
         enabled: true,
-        showInSidebar: false,   // accessed via the sticky workspace footer three-dot menu
         helpText: strings.workspace.helpText,
     },
     {
@@ -246,7 +245,6 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         section: strings.nav.config,
         sectionType: "flat",
         enabled: true,
-        showInSidebar: false,   // accessed via the sticky workspace footer three-dot menu
         helpText: strings.panels.auditHelp,
     },
     {
@@ -263,9 +261,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
 
 // -- Derived helpers ---------------------------------------------------------
 
-/** Panel entries that are both enabled and visible in the sidebar nav.
- *  Panels with showInSidebar: false (workspace, audit) are still functional
- *  but accessed via the sticky workspace footer menu instead. */
+/** Panel entries that are both enabled and visible in the sidebar nav. */
 export const enabledPanels = PANEL_REGISTRY.filter((e) => e.enabled && e.showInSidebar !== false);
 
 /** Panels that cannot be hidden by the user (always shown in sidebar). */
