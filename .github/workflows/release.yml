@@ -1,0 +1,158 @@
+name: Release desktop app
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag to publish"
+        required: false
+        type: string
+      release_name:
+        description: "GitHub release title"
+        required: false
+        type: string
+      include_linux:
+        description: "Build and upload the Linux AppImage"
+        required: false
+        default: true
+        type: boolean
+      prerelease:
+        description: "Mark the GitHub release as a prerelease"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      release_name: ${{ steps.meta.outputs.release_name }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: meta
+        shell: bash
+        run: |
+          version="$(node -p "require('./local-panel/package.json').version")"
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            tag="${GITHUB_REF_NAME}"
+            prerelease=true
+          else
+            tag="${{ inputs.tag_name }}"
+            prerelease="${{ inputs.prerelease }}"
+          fi
+
+          if [ -z "$tag" ]; then
+            tag="v${version}"
+          fi
+
+          release_name="${{ inputs.release_name }}"
+          if [ -z "$release_name" ]; then
+            release_name="Local Panel ${tag}"
+          fi
+
+          {
+            echo "version=$version"
+            echo "tag=$tag"
+            echo "release_name=$release_name"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
+
+  build-windows:
+    needs: prepare
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: local-panel
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: local-panel/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows installer
+        run: npm run package -- --win nsis --publish never
+
+      - name: Upload Windows release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            local-panel/release/*.exe
+          if-no-files-found: error
+
+  build-linux:
+    needs: prepare
+    if: ${{ github.event_name == 'push' || inputs.include_linux == true }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: local-panel
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: local-panel/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Linux AppImage
+        run: npm run package -- --linux AppImage --publish never
+
+      - name: Upload Linux release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          path: |
+            local-panel/release/*.AppImage
+          if-no-files-found: error
+
+  publish-release:
+    needs:
+      - prepare
+      - build-windows
+      - build-linux
+    if: >-
+      ${{
+        always() &&
+        needs.build-windows.result == 'success' &&
+        (needs.build-linux.result == 'success' || needs.build-linux.result == 'skipped')
+      }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packaged assets
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: ${{ needs.prepare.outputs.release_name }}
+          prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
+          generate_release_notes: true
+          files: |
+            release-assets/*.exe
+            release-assets/*.AppImage

@@ -1,6 +1,6 @@
 {
   "name": "local-panel",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Local development panel - localhost domain proxy manager",
   "main": "dist/main.js",
   "scripts": {
