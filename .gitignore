@@ -105,7 +105,6 @@ local-panel/userData/
 *.asar.unpacked/
 
 # ===== Package Manager =====
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 # ===== Editor / AI assistant artifacts =====
