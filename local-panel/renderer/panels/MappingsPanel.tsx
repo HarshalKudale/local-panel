@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { AppConfig, LocalMapping } from "@/types";
 import Modal from "@/components/common/Modal";
-import Toggle from "@/components/common/Toggle";
 import SearchInput from "@/components/common/SearchInput";
 import PanelHeader from "@/components/layout/PanelHeader";
 import { strings } from "@/lib/strings";
 import { flatEntityRelPath } from "@/lib/utils";
 import { ArrowLeftRight, History, Pencil } from "@/lib/icons";
-import { Button, IconButton, Input, FormField, EmptyState, DataTable, ModalFooter, StatusDot } from "@/components/ui";
+import { Button, IconButton, Input, FormField, EmptyState, DataTable, ModalFooter, StatusDot, Switch } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import type { TableColumn } from "@/components/ui";
 
@@ -197,7 +196,7 @@ export default function MappingsPanel({
       width: "w-14",
       render: (m) => (
         <div className="flex items-center justify-center">
-          <Toggle checked={m.enabled} onChange={(v) => toggleEnabled(m, v)} />
+          <Switch checked={m.enabled} onChange={(v) => toggleEnabled(m, v)} />
         </div>
       ),
     },

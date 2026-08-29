@@ -5,8 +5,8 @@ export const strings = {
   nav: {
     discovery: "Discovery",
     routing: "Routing",
-    tools: "Tools",
-    config: "Config",
+    tools: "Workspace",
+    config: "Global Config",
     services: "Services",
     mappings: "Mappings",
     proxyRules: "Proxy Rules",

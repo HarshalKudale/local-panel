@@ -633,7 +633,7 @@ export const darkThemes: ThemeDef[] = [terminal, midnightNavy, draculaPurple, to
 export const lightThemes: ThemeDef[] = [defaultLight, solarizedLight, githubLight, rosePine, catppuccinLatte];
 export const allThemes: ThemeDef[] = [...darkThemes, ...lightThemes];
 
-export const DEFAULT_THEME_ID = "terminal";
+export const DEFAULT_THEME_ID = "github-light";
 
 export function getThemeById(id: string): ThemeDef {
     return allThemes.find((t) => t.id === id) ?? terminal;

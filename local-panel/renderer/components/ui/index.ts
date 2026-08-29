@@ -9,6 +9,7 @@ export { default as ConfirmDialog } from "@/components/ui/ConfirmDialog";
 export { default as ContextMenu } from "@/components/ui/ContextMenu";
 export type { ContextMenuItem } from "@/components/ui/ContextMenu";
 export { default as Input } from "@/components/ui/Input";
+export { default as Switch } from "@/components/ui/Switch";
 export { default as Select } from "@/components/ui/Select";
 export { default as FormField } from "@/components/ui/FormField";
 export { default as SectionLabel } from "@/components/ui/SectionLabel";

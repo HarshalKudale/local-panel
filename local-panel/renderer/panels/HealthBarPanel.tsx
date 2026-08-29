@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { AppConfig, Environment, HealthBarService } from "@/types";
 import Modal from "@/components/common/Modal";
-import Toggle from "@/components/common/Toggle"; import PanelHeader from "@/components/layout/PanelHeader";
+import PanelHeader from "@/components/layout/PanelHeader";
 import { resolveVars } from "@/lib/resolveVars";
-import { Button, IconButton, Input, FormField, EmptyState, Badge, StatusDot, ModalFooter } from "@/components/ui";
+import { Button, IconButton, Input, FormField, EmptyState, Badge, StatusDot, ModalFooter, Switch } from "@/components/ui";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 import { Plus, RefreshCw, Activity, Trash2, Cloud, CheckCircle2, AlertCircle, X } from "@/lib/icons";
@@ -292,7 +292,7 @@ function ServiceCard({
       {/* Footer controls */}
       <div className="flex items-center gap-2 px-4 py-2 border-t border-border/40 bg-bg0/20">
         <span className="text-xs text-text-dim flex-shrink-0">{strings.healthBar.autoRefresh}</span>
-        <Toggle checked={service.autoRefreshEnabled} onChange={onToggleAutoRefresh} />
+        <Switch checked={service.autoRefreshEnabled} onChange={onToggleAutoRefresh} />
         <div className="flex-1" />
         <IconButton
           icon={<RefreshCw size={13} className={state.status === "checking" ? "animate-spin" : ""} />}

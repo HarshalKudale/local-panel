@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { AppConfig, Workspace, SyncState, SyncStatus } from "@/types";
-import Toggle from "@/components/common/Toggle";
 import { strings } from "@/lib/strings";
 import { Cloud, CloudOff, ArrowUp, ArrowDown, Link, Unlink, GitBranch, RefreshCw } from "@/lib/icons";
-import { Button, Input, SectionLabel, SectionCard, SettingsRow } from "@/components/ui";
+import { Button, Input, SectionLabel, SectionCard, SettingsRow, Switch } from "@/components/ui";
 import PanelLayout from "@/components/ui/PanelLayout";
 import ImportExportModal from "@/components/modals/ImportExportModal";
 
@@ -240,7 +239,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
                     <span className="text-xs font-mono text-text-dim">{syncConfig?.branch ?? "main"}</span>
                   </SettingsRow>
                   <SettingsRow title={strings.workspace.autoSync} desc={strings.workspace.autoSyncDesc}>
-                    <Toggle
+                    <Switch
                       checked={syncConfig?.autoSync ?? false}
                       ariaLabel={strings.workspace.autoSync}
                       onChange={handleAutoSyncToggle}

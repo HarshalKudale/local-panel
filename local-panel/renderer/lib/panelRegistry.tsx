@@ -64,6 +64,26 @@ export interface PanelEntry {
 // placeholder when navigated to directly. Useful for in-progress panels.
 
 export const PANEL_REGISTRY: PanelEntry[] = [
+    // --- Applications (flat) --------------------------------------------------
+    {
+        id: "services",
+        label: strings.nav.services,
+        icon: <Zap size={14} />,
+        section: strings.panels.sectionApplications,
+        sectionType: "flat",
+        enabled: true,
+        helpText: strings.services.helpText,
+    },
+    {
+        id: "healthbar",
+        label: strings.panels.sectionHealthBar,
+        icon: <Activity size={14} />,
+        section: strings.panels.sectionApplications,
+        sectionType: "flat",
+        enabled: true,
+        helpText: strings.panels.healthbarHelp,
+    },
+
     // --- Routing (flat) -------------------------------------------------------
     {
         id: "mappings",
@@ -91,44 +111,6 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         sectionType: "flat",
         enabled: true,
         helpText: strings.capture.helpText,
-    },
-
-    // --- Mock (flat) ------------------------------------------------------------
-    {
-        id: "mock-rest",
-        label: strings.panels.sectionRest,
-        icon: <ArrowUpRight size={14} />,
-        section: strings.panels.sectionMock,
-        sectionType: "flat",
-        enabled: true,
-        helpText: strings.mocks.helpText,
-    },
-    {
-        id: "mock-graphql",
-        label: strings.panels.sectionGraphql,
-        icon: <Braces size={14} />,
-        section: strings.panels.sectionMock,
-        sectionType: "flat",
-        enabled: true,
-        helpText: strings.panels.graphqlMockHelp,
-    },
-    {
-        id: "mock-soap",
-        label: strings.panels.sectionSoap,
-        icon: <FileCode size={14} />,
-        section: strings.panels.sectionMock,
-        sectionType: "flat",
-        enabled: true,
-        helpText: strings.panels.soapMockHelp,
-    },
-    {
-        id: "mock-grpc",
-        label: strings.panels.sectionGrpc,
-        icon: <Network size={14} />,
-        section: strings.panels.sectionMock,
-        sectionType: "flat",
-        enabled: true,
-        helpText: strings.panels.grpcMockHelp,
     },
 
     // --- Request (flat) -------------------------------------------------------
@@ -187,7 +169,45 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         helpText: strings.panels.webhooksHelp,
     },
 
-    // --- Tools (flat) ---------------------------------------------------------
+    // --- Mock (flat) ------------------------------------------------------------
+    {
+        id: "mock-rest",
+        label: strings.panels.sectionRest,
+        icon: <ArrowUpRight size={14} />,
+        section: strings.panels.sectionMock,
+        sectionType: "flat",
+        enabled: true,
+        helpText: strings.mocks.helpText,
+    },
+    {
+        id: "mock-graphql",
+        label: strings.panels.sectionGraphql,
+        icon: <Braces size={14} />,
+        section: strings.panels.sectionMock,
+        sectionType: "flat",
+        enabled: true,
+        helpText: strings.panels.graphqlMockHelp,
+    },
+    {
+        id: "mock-soap",
+        label: strings.panels.sectionSoap,
+        icon: <FileCode size={14} />,
+        section: strings.panels.sectionMock,
+        sectionType: "flat",
+        enabled: true,
+        helpText: strings.panels.soapMockHelp,
+    },
+    {
+        id: "mock-grpc",
+        label: strings.panels.sectionGrpc,
+        icon: <Network size={14} />,
+        section: strings.panels.sectionMock,
+        sectionType: "flat",
+        enabled: true,
+        helpText: strings.panels.grpcMockHelp,
+    },
+
+    // --- Workspace (flat) ---------------------------------------------------------
     {
         id: "environments",
         label: strings.nav.environments,
@@ -198,33 +218,11 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         alwaysVisible: true,
         helpText: strings.environments.helpText,
     },
-
-    // --- Applications (flat) --------------------------------------------------
-    {
-        id: "services",
-        label: strings.nav.services,
-        icon: <Zap size={14} />,
-        section: strings.panels.sectionApplications,
-        sectionType: "flat",
-        enabled: true,
-        helpText: strings.services.helpText,
-    },
-    {
-        id: "healthbar",
-        label: strings.panels.sectionHealthBar,
-        icon: <Activity size={14} />,
-        section: strings.panels.sectionApplications,
-        sectionType: "flat",
-        enabled: true,
-        helpText: strings.panels.healthbarHelp,
-    },
-
-    // --- Config (flat) --------------------------------------------------------
     {
         id: "workspace",
         label: strings.panels.sectionWorkspace,
         icon: <Layers size={14} />,
-        section: strings.nav.config,
+        section: strings.nav.tools,
         sectionType: "flat",
         enabled: true,
         helpText: strings.workspace.helpText,
@@ -233,11 +231,14 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         id: "audit",
         label: strings.panels.sectionAuditLog,
         icon: <ClipboardList size={14} />,
-        section: strings.nav.config,
+        section: strings.nav.tools,
         sectionType: "flat",
         enabled: true,
         helpText: strings.panels.auditHelp,
     },
+
+    // --- Config (flat) --------------------------------------------------------
+
     {
         id: "settings",
         label: strings.nav.settings,

@@ -1,7 +1,7 @@
 import React from "react";
 import { strings } from "@/lib/strings";
 import { X } from "@/lib/icons";
-import Toggle from "@/components/common/Toggle";
+import { Switch } from "@/components/ui";
 
 interface Props {
   label: string;
@@ -21,7 +21,7 @@ export default function EditorTitleBar({ label, namePlaceholder, name, onNameCha
         {label}
       </span>
       {onToggleEnabled !== undefined && enabled !== undefined && (
-        <Toggle checked={enabled} onChange={onToggleEnabled} />
+        <Switch checked={enabled} onChange={onToggleEnabled} />
       )}
       <input
         className="flex-1 bg-bg2 border border-border focus:border-accent rounded px-3 py-1.5 text-sm text-text-bright outline-none placeholder:text-text-dim transition-colors"

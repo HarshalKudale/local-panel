@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { AppConfig } from "@/types";
-import Toggle from "@/components/common/Toggle";
 import { strings } from "@/lib/strings";
 import iconUrl from "@/icon.png";
 import { Theme } from "@/lib/useTheme";
 import { allThemes, darkThemes, lightThemes, getThemeById } from "@/lib/themes";
-import { Button, Input, SectionLabel, SectionCard, Select, SettingsRow } from "@/components/ui";
+import { Button, Input, SectionLabel, SectionCard, Select, SettingsRow, Switch } from "@/components/ui";
 import PanelLayout from "@/components/ui/PanelLayout";
 import { Panel, enabledPanels, ALWAYS_VISIBLE_PANELS, PanelEntry } from "@/lib/panelRegistry";
 import { ChevronDown, ChevronRight, Star, Heart } from "@/lib/icons";
@@ -244,7 +243,7 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
               title={strings.settings.minimizeToTray}
               desc={strings.settings.minimizeToTrayDesc}
             >
-              <Toggle
+              <Switch
                 checked={config.minimizeToTray}
                 ariaLabel={strings.settings.minimizeToTray}
                 onChange={(v) => handleGlobalChange({ minimizeToTray: v })}
@@ -389,7 +388,7 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
             )}
 
             <SettingsRow title={strings.settings.tlsEnabled} desc={strings.settings.tlsEnabledDesc}>
-              <Toggle
+              <Switch
                 checked={config.tlsEnabled}
                 ariaLabel={strings.settings.tlsEnabled}
                 onChange={(v) => handleGlobalChange({ tlsEnabled: v })}
@@ -532,7 +531,7 @@ function AppearanceSection({ sidebarVisibility, onSidebarVisibilityChange }: App
                           <div className="text-[10px] text-text-dim">{strings.settings.alwaysVisible}</div>
                         )}
                       </div>
-                      <Toggle
+                      <Switch
                         checked={isVisible}
                         ariaLabel={entry.label}
                         onChange={(v) => onSidebarVisibilityChange(entry.id, v)}
