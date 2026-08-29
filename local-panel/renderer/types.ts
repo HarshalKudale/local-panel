@@ -466,6 +466,8 @@ declare global {
       startServer(): Promise<{ ok: boolean }>;
       openExternal(url: string): Promise<void>;
       setTitleBarOverlay?(color: string, symbolColor: string): Promise<{ ok: boolean }>;
+      getTheme?(): Promise<string | null>;
+      setTheme?(themeId: string): Promise<{ ok: boolean }>;
       listAudit(opts?: AuditListOptions): Promise<{ entries: AuditEntry[]; total: number }>;
       auditDiff(commitHash: string, entity: string, entityId: string, wsId: string): Promise<{ before: unknown | null; after: unknown | null }>;
       exportAudit(format: "json" | "csv"): Promise<{ ok: boolean }>;

@@ -144,6 +144,18 @@ export function registerIpcHandlers(): void {
     return { ok: true, zoomLevel: clamped };
   });
 
+  // ── Theme ───────────────────────────────────────────────────────────────────
+  ipcMain.handle("theme:get", () => {
+    const s = loadSettings();
+    return s.themeId ?? null;
+  });
+
+  ipcMain.handle("theme:set", (_e, themeId: string) => {
+    const s = loadSettings();
+    saveSettings({ ...s, themeId });
+    return { ok: true };
+  });
+
   ipcMain.handle("tls:generate", async () => {
     try {
       const { certPath, keyPath } = await generateCA(appDataDir());

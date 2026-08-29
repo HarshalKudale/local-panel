@@ -3,7 +3,7 @@ import { _electron as electron } from "playwright";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { writeSampleWorkspace } from "./sampleData";
+import { writeSampleWorkspace, readRealThemeId } from "./sampleData";
 
 export interface ElectronFixtures {
     electronApp: ElectronApplication;
@@ -25,7 +25,7 @@ export const test = base.extend<ElectronFixtures>({
         const appDir = path.join(dir, "Local Panel");
         const dataDir = path.join(appDir, "data");
         fs.mkdirSync(dataDir, { recursive: true });
-        writeSampleWorkspace(dataDir);
+        writeSampleWorkspace(dataDir, readRealThemeId());
 
         await use(dir);
         // Cleanup after test
@@ -34,8 +34,14 @@ export const test = base.extend<ElectronFixtures>({
 
     electronApp: async ({ userData }, use) => {
         const appPath = path.resolve(__dirname, "..", "..");
+        // Isolate Electron's own userData dir (localStorage/session partition, e.g. the
+        // theme preference) — this is separate from the LOCALAPPDATA override below, which
+        // only isolates our own app.json/workspace data files. Without this, every e2e run
+        // reuses the developer's real profile's localStorage (e.g. a leftover "terminal"
+        // theme selection) instead of starting with defaults.
+        const electronUserDataDir = path.join(userData, "electron-userdata");
         const app = await electron.launch({
-            args: [appPath],
+            args: [appPath, `--user-data-dir=${electronUserDataDir}`],
             env: {
                 ...process.env,
                 NODE_ENV: "test",

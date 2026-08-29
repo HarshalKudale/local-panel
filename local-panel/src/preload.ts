@@ -183,4 +183,8 @@ contextBridge.exposeInMainWorld("api", {
   // ── Zoom ────────────────────────────────────────────────────────────────────
   getZoomLevel: () => ipcRenderer.invoke("zoom:get"),
   setZoomLevel: (level: number) => ipcRenderer.invoke("zoom:set", level),
+
+  // ── Theme ───────────────────────────────────────────────────────────────────
+  getTheme: () => ipcRenderer.invoke("theme:get"),
+  setTheme: (themeId: string) => ipcRenderer.invoke("theme:set", themeId),
 });

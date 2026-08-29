@@ -12,6 +12,26 @@ import * as path from "path";
 export const WORKSPACE_ID = "default";
 export const WORKSPACE_NAME = "Sample Workspace";
 
+// ── Real dev profile theme lookup ─────────────────────────────────────────
+
+/**
+ * Reads the currently selected theme from the developer's real (non-isolated)
+ * app.json, so e2e/screenshot runs reflect whatever theme is actually set in
+ * the app, rather than always resetting to the built-in default.
+ */
+export function readRealThemeId(): string | null {
+    try {
+        const localAppData = process.env.LOCALAPPDATA;
+        if (!localAppData) return null;
+        const realAppJson = path.join(localAppData, "Local Panel", "app.json");
+        const raw = fs.readFileSync(realAppJson, "utf-8");
+        const parsed = JSON.parse(raw) as { themeId?: string | null };
+        return parsed.themeId ?? null;
+    } catch {
+        return null;
+    }
+}
+
 // ── Folders ────────────────────────────────────────────────────────────────
 
 const mockFolderApi = {
@@ -306,8 +326,13 @@ export const SAMPLE_DATA = {
 /**
  * Writes the complete sample workspace to the specified data directory.
  * Creates the folder structure, entity files, and workspace metadata.
+ *
+ * @param themeId The UI theme id to seed the isolated test profile with. Pass the
+ * real dev profile's current theme (see `readRealThemeId`) so e2e runs render
+ * with whatever theme is actually selected, instead of silently resetting to
+ * the built-in default.
  */
-export function writeSampleWorkspace(dataRoot: string): void {
+export function writeSampleWorkspace(dataRoot: string, themeId: string | null = null): void {
     const wsDir = path.join(dataRoot, WORKSPACE_ID);
 
     // Create all entity directories
@@ -340,6 +365,7 @@ export function writeSampleWorkspace(dataRoot: string): void {
         workspaces: [{ id: WORKSPACE_ID, name: WORKSPACE_NAME, activeEnvironmentId: envDev.id }],
         activeWorkspaceId: WORKSPACE_ID,
         hasSeenWelcome: true,
+        themeId,
     };
     fs.writeFileSync(
         path.join(path.dirname(dataRoot), "app.json"),
