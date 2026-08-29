@@ -11,6 +11,7 @@ import { Input, Select, FormField } from "@/components/ui";
 
 export interface RuleTabHandle {
   refresh(rule: ProxyRule): void;
+  save(): void;
 }
 
 interface RuleTabState {
@@ -138,7 +139,10 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
     refresh(rule: ProxyRule) {
       setState(stateFromRule(rule));
     },
-  }), []);
+    save() {
+      void handleSave();
+    },
+  }), [handleSave]);
 
   const validate = (): boolean => {
     const errs: Partial<Record<keyof RuleTabState, string>> = {};

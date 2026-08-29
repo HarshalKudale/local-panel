@@ -22,6 +22,7 @@ import { strings } from "@/lib/strings";
 
 export interface SoapTabHandle {
     refresh(entity: SavedSoapRequest | SavedSoapMock): void;
+    save(): void;
 }
 
 // -- Props ------------------------------------------------------------------
@@ -68,7 +69,10 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
         refresh(entity: SavedSoapRequest | SavedSoapMock) {
             dispatch({ type: "REFRESH", entity, tabType });
         },
-    }), [tabType]);
+        save() {
+            void handleSave();
+        },
+    }), [tabType, handleSave]);
 
     // -- Header rows helper -----------------------------------------------
 

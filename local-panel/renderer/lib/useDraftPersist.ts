@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { readStorageRaw, removeStorage, writeStorage } from "@/lib/storage";
 
 const PREFIX = "lp:draft:";
 
@@ -7,19 +8,19 @@ const discarded = new Set<string>();
 
 export function saveDraft(tabId: string, data: unknown): void {
   if (discarded.has(tabId)) return;
-  try { localStorage.setItem(PREFIX + tabId, JSON.stringify(data)); } catch { /* quota */ }
+  writeStorage(PREFIX + tabId, data);
 }
 
 export function loadDraft<T>(tabId: string): T | null {
   try {
-    const raw = localStorage.getItem(PREFIX + tabId);
+    const raw = readStorageRaw(PREFIX + tabId);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch { return null; }
 }
 
 export function clearDraft(tabId: string): void {
   discarded.add(tabId);
-  try { localStorage.removeItem(PREFIX + tabId); } catch { /* ignore */ }
+  removeStorage(PREFIX + tabId);
 }
 
 /** Return all draft tab IDs currently stored (for a given id prefix). */

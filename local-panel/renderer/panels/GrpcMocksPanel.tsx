@@ -11,6 +11,9 @@ import { Network, Play, Square } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { strings } from "@/lib/strings";
+import { usePersistedState } from "@/lib/usePersistedState";
+import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
+import type { GrpcTabHandle } from "@/components/grpc/GrpcTab";
 
 import { GrpcMockDraft } from "@/components/grpc/grpcTabReducer";
 
@@ -33,8 +36,8 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
     const mocks = config.grpcMocks ?? [];
     const folders = config.grpcMockFolders ?? [];
 
-    const [search, setSearch] = useState("");
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [search, setSearch] = usePersistedState(`grpc-mocks:${config.activeWorkspaceId}:search`, "");
+    const [sidebarOpen, setSidebarOpen] = usePersistedState(`grpc-mocks:${config.activeWorkspaceId}:sidebar-open`, true);
     const [mockServerRunning, setMockServerRunning] = useState(false);
     const [mockServerPort, setMockServerPort] = useState(config.grpcMockServerPort ?? 9102);
     const [serverBusy, setServerBusy] = useState(false);
@@ -64,7 +67,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
 
     const {
         openTabs, activeTab, setActiveTab,
-        loadedEntities, setLoadedEntities,
+        loadedEntities, setLoadedEntities, tabRefs,
         openTab, openNewTab, closeTab, replaceTab, closeOtherTabs, closeAllTabs,
     } = useEntityTabs<SavedGrpcMock>({
         storageKey: "grpcMocks",
@@ -73,6 +76,8 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
         entityKind: "grpcMocks" as any,
         entities: mocks,
     });
+
+    useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab });
 
     const reloadConfig = useCallback(async () => {
         const fresh = await window.api.getConfig();
@@ -252,6 +257,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                         return (
                             <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
                                 <GrpcTab
+                                    ref={(el: GrpcTabHandle | null) => { tabRefs.current[tabId] = el; }}
                                     tabType="mock"
                                     tabId={tabId}
                                     draftTabId={isUnsaved ? tabId : null}

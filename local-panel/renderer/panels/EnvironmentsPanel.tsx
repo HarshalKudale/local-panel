@@ -6,6 +6,7 @@ import { strings } from "@/lib/strings";
 import SidebarLayout, { SidebarHeader } from "@/components/ui/SidebarLayout";
 import ActiveDot from "@/components/ui/ActiveDot";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { usePersistedState } from "@/lib/usePersistedState";
 
 const GLOBAL_ENV_ID = "__global__";
 
@@ -253,8 +254,8 @@ export default function EnvironmentsPanel({ config, onConfigChange, onHistoryOpe
   const globalEnv = allEnvs.find((e) => e.id === GLOBAL_ENV_ID) ?? null;
   const userEnvs = allEnvs.filter((e) => e.id !== GLOBAL_ENV_ID);
 
-  const [selectedEnvId, setSelectedEnvId] = useState<string>(GLOBAL_ENV_ID);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedEnvId, setSelectedEnvId] = usePersistedState<string>(`environments:${config.activeWorkspaceId}:selected`, GLOBAL_ENV_ID);
+  const [sidebarOpen, setSidebarOpen] = usePersistedState(`environments:${config.activeWorkspaceId}:sidebar-open`, true);
   const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
   const selectedEnv = allEnvs.find((e) => e.id === selectedEnvId) ?? globalEnv;

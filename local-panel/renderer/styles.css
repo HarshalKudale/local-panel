@@ -278,6 +278,24 @@ body,
   color: rgb(var(--color-text-base-rgb));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(var(--color-accent-rgb), 0.5);
+  outline-offset: 2px;
 }
 
 /* ── Terminal CLI theme chrome ─────────────────────────────────────────────

@@ -23,6 +23,7 @@ import SchemaExplorer from "@/components/graphql/SchemaExplorer";
 
 export interface GraphQLTabHandle {
     refresh(entity: SavedGraphQLRequest | SavedGraphQLMock): void;
+    save(): void;
 }
 
 // -- Props ------------------------------------------------------------------
@@ -74,7 +75,10 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
         refresh(entity: SavedGraphQLRequest | SavedGraphQLMock) {
             dispatch({ type: "REFRESH", entity, tabType });
         },
-    }), [tabType]);
+        save() {
+            void handleSave();
+        },
+    }), [tabType, handleSave]);
 
     // -- Request pane sub-tabs ----------------------------------------------
 

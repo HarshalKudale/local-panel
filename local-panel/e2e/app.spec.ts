@@ -64,4 +64,20 @@ test.describe("Navigation", () => {
             expect(content).toBeTruthy();
         }
     });
+
+    test("common tab keybinds work on tabbed panels", async ({ page }) => {
+        await page.getByRole("button", { name: /^REST 3$/i }).nth(1).click();
+        await page.waitForTimeout(400);
+
+        await page.keyboard.press("ControlOrMeta+T");
+        await expect(page.getByText("New Request").first()).toBeVisible();
+
+        await page.getByRole("textbox", { name: /Request name \(optional\)/i }).fill("Keyboard Save Test");
+        await page.getByPlaceholder("https://example.localhost/endpoint").fill("https://example.localhost/keybind-save-test");
+        await page.keyboard.press("ControlOrMeta+S");
+        await expect(page.getByRole("button", { name: /Update Request/i })).toBeVisible();
+
+        await page.keyboard.press("ControlOrMeta+W");
+        await expect(page.getByText("No requests open")).toBeVisible();
+    });
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo, forwardRef, useImperativeHandle } from "react";
 import { Button, Badge, Input } from "@/components/ui";
 import { Play, Square, RefreshCw, ChevronDown, ChevronRight, FolderSearch2, Loader2 } from "@/lib/icons";
 import { strings } from "@/lib/strings";
@@ -14,6 +14,10 @@ interface Props {
     onSaved: (runner: RunnerConfig, fromTabId: string) => void;
     onDelete: (id: string) => void;
     onDirtyChange?: (dirty: boolean) => void;
+}
+
+export interface RunnerTabHandle {
+    save(): void;
 }
 
 const DRAFT_ID_PREFIX = "runner-draft-";
@@ -122,7 +126,7 @@ function FieldRow({ label, children, full }: { label: string; children: React.Re
 
 // -- Main component ---------------------------------------------------------
 
-export default function RunnerTab({ runnerId, workspaceId, initial, onSaved, onDelete, onDirtyChange }: Props) {
+const RunnerTab = forwardRef<RunnerTabHandle, Props>(function RunnerTab({ runnerId, workspaceId, initial, onSaved, onDelete, onDirtyChange }: Props, ref) {
     const s = strings.runner;
     const isNew = isDraft(runnerId);
 
@@ -200,6 +204,12 @@ export default function RunnerTab({ runnerId, workspaceId, initial, onSaved, onD
             setSaving(false);
         }
     }, [runner, workspaceId, runnerId, isNew, onSaved]);
+
+    useImperativeHandle(ref, () => ({
+        save() {
+            void handleSave();
+        },
+    }), [handleSave]);
 
     const handleRun = useCallback(async () => {
         if (isNew) return;
@@ -367,4 +377,6 @@ export default function RunnerTab({ runnerId, workspaceId, initial, onSaved, onD
             </div>
         </div>
     );
-}
+});
+
+export default RunnerTab;

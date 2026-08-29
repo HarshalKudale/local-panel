@@ -5,6 +5,7 @@ import EnvSelector from "@/components/sidebar/EnvSelector";
 import { strings } from "@/lib/strings";
 import { Menu, ChevronRight } from "@/lib/icons";
 import iconUrl from "@/icon.png";
+import HelpTooltip from "@/components/common/HelpTooltip";
 
 interface Props {
   sidebarOpen: boolean;
@@ -42,7 +43,7 @@ export default function TitleBar({
 
   return (
     <div
-      className="h-9 bg-bg0 flex items-center px-3 gap-2 flex-shrink-0 relative"
+      className="h-12 bg-bg0 flex items-center px-3 gap-2 flex-shrink-0 relative"
       style={{
         WebkitAppRegion: "drag",
         paddingRight: "calc(100vw - env(titlebar-area-width, 100vw) + 5px)",
@@ -52,9 +53,11 @@ export default function TitleBar({
 
       {/* Sidebar toggle */}
       <button
+        type="button"
         className="w-7 h-7 flex items-center justify-center rounded hover:bg-bg2 text-text-dim hover:text-text-base transition-colors cursor-pointer flex-shrink-0"
         style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         onClick={onSidebarToggle}
+        aria-label={sidebarOpen ? strings.titleBar.collapseSidebar : strings.titleBar.expandSidebar}
         title={sidebarOpen ? strings.titleBar.collapseSidebar : strings.titleBar.expandSidebar}
       >
         {sidebarOpen ? <Menu size={14} /> : <ChevronRight size={14} />}
@@ -74,20 +77,8 @@ export default function TitleBar({
       <div className="flex-1" />
 
       {/* Help tooltip */}
-      <div
-        className="relative flex-shrink-0 group"
-        style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-      >
-        <button
-          className="w-5 h-5 rounded-full border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-text-base text-[10px] font-bold flex items-center justify-center transition-colors cursor-default"
-          tabIndex={-1}
-        >
-          ?
-        </button>
-        <div className="absolute top-full right-0 mt-2 z-50 hidden group-hover:block w-72 p-3 rounded-lg border border-border bg-bg2 shadow-2xl text-xs text-text-dim leading-relaxed pointer-events-none animate-fade-in">
-          {helpText}
-          <div className="absolute -top-1.5 right-2 w-2.5 h-2.5 bg-bg2 border-l border-t border-border rotate-45" />
-        </div>
+      <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+        <HelpTooltip text={helpText} />
       </div>
 
       {/* Environment selector */}

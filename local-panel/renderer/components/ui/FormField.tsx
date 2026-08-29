@@ -2,14 +2,21 @@ import React from "react";
 
 interface FormFieldProps {
   label: string;
+  htmlFor?: string;
+  description?: string;
   error?: string;
   children: React.ReactNode;
 }
 
-export default function FormField({ label, error, children }: FormFieldProps) {
+export default function FormField({ label, htmlFor, description, error, children }: FormFieldProps) {
   return (
-    <div className="mb-4">
-      <label className="block text-xs font-medium text-text-dim mb-1.5">{label}</label>
+    <div className="mb-5">
+      {label && (
+        <label htmlFor={htmlFor} className="block text-sm font-medium text-text-base mb-1.5">
+          {label}
+        </label>
+      )}
+      {description && <p className="text-xs text-text-dim mb-2">{description}</p>}
       {children}
       {error && <p className="text-xs text-red mt-1">{error}</p>}
     </div>

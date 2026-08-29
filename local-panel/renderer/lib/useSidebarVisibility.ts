@@ -1,13 +1,12 @@
 import { useState, useCallback } from "react";
 import { Panel, PANEL_REGISTRY, ALWAYS_VISIBLE_PANELS } from "@/lib/panelRegistry";
+import { readStorage, writeStorage } from "@/lib/storage";
 
 const STORAGE_KEY = "sidebar-visibility";
 
 function getStoredVisibility(): Record<Panel, boolean> {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) return JSON.parse(raw);
-    } catch { /* ignore */ }
+    const stored = readStorage<Record<Panel, boolean> | null>(STORAGE_KEY, null);
+    if (stored) return stored;
     // Default: all panels visible
     return Object.fromEntries(
         PANEL_REGISTRY.filter((e) => e.enabled && e.showInSidebar !== false)
@@ -16,7 +15,7 @@ function getStoredVisibility(): Record<Panel, boolean> {
 }
 
 function saveVisibility(v: Record<Panel, boolean>) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
+    writeStorage(STORAGE_KEY, v);
 }
 
 export function useSidebarVisibility() {

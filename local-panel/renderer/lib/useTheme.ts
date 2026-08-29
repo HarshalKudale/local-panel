@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ThemeDef, getThemeById, DEFAULT_THEME_ID } from "./themes";
+import { readStorageRaw, writeStorageRaw } from "@/lib/storage";
 
 export type Theme = string; // theme id
 
@@ -25,15 +26,14 @@ function applyTheme(themeDef: ThemeDef) {
 
 export function useTheme(): [Theme, (t: Theme) => void] {
   const [themeId, setThemeId] = useState<Theme>(() => {
-    return localStorage.getItem(STORAGE_KEY) ?? DEFAULT_THEME_ID;
+    return readStorageRaw(STORAGE_KEY) ?? DEFAULT_THEME_ID;
   });
 
   useEffect(() => {
     const def = getThemeById(themeId);
     applyTheme(def);
-    localStorage.setItem(STORAGE_KEY, themeId);
+    writeStorageRaw(STORAGE_KEY, themeId);
   }, [themeId]);
 
   return [themeId, setThemeId];
 }
-

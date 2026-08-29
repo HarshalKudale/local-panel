@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { usePersistedState } from "@/lib/usePersistedState";
 import { clearDraft, getDraftIds, loadDraft } from "@/lib/useDraftPersist";
-import type { RestTabHandle } from "@/components/rest/RestTab";
 import type { SavedRequest, MockRule } from "@/types";
+
+export interface PersistableTabHandle {
+  refresh?: (entity: unknown) => void;
+  save?: () => void;
+}
 
 interface Options<T> {
   storageKey: string;
@@ -19,7 +23,7 @@ interface EntityTabsResult<T> {
   setActiveTab: React.Dispatch<React.SetStateAction<string | null>>;
   loadedEntities: Record<string, T>;
   setLoadedEntities: React.Dispatch<React.SetStateAction<Record<string, T>>>;
-  tabRefs: React.MutableRefObject<Record<string, RestTabHandle | null>>;
+  tabRefs: React.MutableRefObject<Record<string, PersistableTabHandle | null>>;
   isDraft: (id: string) => boolean;
   openTab: (id: string) => void;
   openNewTab: () => void;
@@ -78,7 +82,7 @@ export function useEntityTabs<T extends { id: string }>({
   }, [entities.length]);
 
   const [loadedEntities, setLoadedEntities] = useState<Record<string, T>>({});
-  const tabRefs = useRef<Record<string, RestTabHandle | null>>({});
+  const tabRefs = useRef<Record<string, PersistableTabHandle | null>>({});
 
   useEffect(() => {
     if (!activeTab || isDraft(activeTab)) return;
@@ -87,7 +91,7 @@ export function useEntityTabs<T extends { id: string }>({
       if (res.ok && res.entity) {
         const entity = res.entity as T;
         setLoadedEntities((prev) => ({ ...prev, [activeTab]: entity }));
-        tabRefs.current[activeTab]?.refresh(entity as unknown as MockRule | SavedRequest);
+        tabRefs.current[activeTab]?.refresh?.(entity as unknown as MockRule | SavedRequest);
       }
     }).catch(() => {});
   }, [activeTab, workspaceId]);

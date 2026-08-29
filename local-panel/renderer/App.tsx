@@ -13,6 +13,7 @@ import { useTheme } from "@/lib/useTheme";
 import { Panel, enabledPanels, PANEL_HELP } from "@/lib/panelRegistry";
 import { renderPanel, PanelRenderContext } from "@/lib/panelFactory";
 import { useSidebarVisibility } from "@/lib/useSidebarVisibility";
+import { usePersistedState } from "@/lib/usePersistedState";
 
 const EMPTY_CONFIG: AppConfig = {
   port: 80,
@@ -57,8 +58,8 @@ const EMPTY_CONFIG: AppConfig = {
 
 export default function App() {
   const [theme, setTheme] = useTheme();
-  const [panel, setPanel] = useState<Panel>("services");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [panel, setPanel] = usePersistedState<Panel>("app:active-panel", "services");
+  const [sidebarOpen, setSidebarOpen] = usePersistedState("app:sidebar-open", true);
   const [config, setConfig] = useState<AppConfig>(EMPTY_CONFIG);
   const { visibility, setPanelVisible, isPanelVisible } = useSidebarVisibility();
   const [wsLoading, setWsLoading] = useState<string | null>("Loading workspace…");
@@ -154,7 +155,6 @@ export default function App() {
     setWsLoading(loadingMsg);
     try {
       const cfg = await window.api.getConfig();
-      console.log(cfg);
       setConfig(cfg);
       const status = await window.api.serverStatus();
       setServerRunning(status.running);
@@ -171,7 +171,6 @@ export default function App() {
 
   const refreshEntitySyncStatus = useCallback((wsId: string) => {
     window.api.getEntitySyncStatus(wsId).then((status) => {
-      console.log("[syncStatus] pathStatusMap keys:", Object.keys(status));
       setEntitySyncStatus(status);
     }).catch(() => { });
   }, []);
@@ -497,14 +496,14 @@ export default function App() {
 
   if (wsLoading) {
     return (
-      <div className="flex flex-col h-screen bg-bg0 text-text-base select-none overflow-hidden items-center justify-center gap-3">
+      <div className="flex flex-col h-screen bg-bg0 text-text-base overflow-hidden items-center justify-center gap-3">
         <div className="text-text-dim text-sm animate-pulse">{wsLoading}</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-bg0 text-text-base select-none overflow-hidden">
+    <div className="flex flex-col h-screen bg-bg0 text-text-base overflow-hidden">
       <TitleBar
         sidebarOpen={sidebarOpen}
         onSidebarToggle={() => setSidebarOpen((v) => !v)}

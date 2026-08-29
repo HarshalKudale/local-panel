@@ -11,6 +11,8 @@ import { FileCode } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { strings } from "@/lib/strings";
+import { usePersistedState } from "@/lib/usePersistedState";
+import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 
 
 // -- Draft tab prefix -------------------------------------------------------
@@ -32,8 +34,8 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
     const mocks = config.soapMocks ?? [];
     const folders = config.soapMockFolders ?? [];
 
-    const [search, setSearch] = useState("");
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [search, setSearch] = usePersistedState(`soap-mocks:${config.activeWorkspaceId}:search`, "");
+    const [sidebarOpen, setSidebarOpen] = usePersistedState(`soap-mocks:${config.activeWorkspaceId}:sidebar-open`, true);
 
     const {
         openTabs, activeTab, setActiveTab,
@@ -48,6 +50,8 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
         entityKind: "soapMocks" as any,
         entities: mocks,
     });
+
+    useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab });
 
     const reloadConfig = useCallback(async () => {
         const fresh = await window.api.getConfig();

@@ -10,6 +10,8 @@ import { Braces } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { strings } from "@/lib/strings";
+import { usePersistedState } from "@/lib/usePersistedState";
+import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 
 
 // -- Draft tab prefix -------------------------------------------------------
@@ -30,8 +32,8 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
     const requests = config.graphqlRequests ?? [];
     const folders = config.graphqlRequestFolders ?? [];
 
-    const [search, setSearch] = useState("");
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [search, setSearch] = usePersistedState(`graphql-requests:${config.activeWorkspaceId}:search`, "");
+    const [sidebarOpen, setSidebarOpen] = usePersistedState(`graphql-requests:${config.activeWorkspaceId}:sidebar-open`, true);
 
     const {
         openTabs, activeTab, setActiveTab,
@@ -46,6 +48,8 @@ export default function GraphQLRequestsPanel({ config, onConfigChange, activeEnv
         entityKind: "graphqlRequests" as any,
         entities: requests,
     });
+
+    useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab });
 
     const reloadConfig = useCallback(async () => {
         const fresh = await window.api.getConfig();

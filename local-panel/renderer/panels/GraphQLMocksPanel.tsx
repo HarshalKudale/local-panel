@@ -11,6 +11,8 @@ import { Braces } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { strings } from "@/lib/strings";
+import { usePersistedState } from "@/lib/usePersistedState";
+import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 
 
 // -- Draft tab prefix -------------------------------------------------------
@@ -31,8 +33,8 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
     const mocks = config.graphqlMocks ?? [];
     const folders = config.graphqlMockFolders ?? [];
 
-    const [search, setSearch] = useState("");
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [search, setSearch] = usePersistedState(`graphql-mocks:${config.activeWorkspaceId}:search`, "");
+    const [sidebarOpen, setSidebarOpen] = usePersistedState(`graphql-mocks:${config.activeWorkspaceId}:sidebar-open`, true);
 
     const {
         openTabs, activeTab, setActiveTab,
@@ -47,6 +49,8 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
         entityKind: "graphqlMocks" as any,
         entities: mocks,
     });
+
+    useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab });
 
     const reloadConfig = useCallback(async () => {
         const fresh = await window.api.getConfig();

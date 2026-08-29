@@ -5,7 +5,7 @@ import { strings } from "@/lib/strings";
 import iconUrl from "@/icon.png";
 import { Theme } from "@/lib/useTheme";
 import { allThemes, darkThemes, lightThemes, getThemeById } from "@/lib/themes";
-import { Button, SectionLabel, SectionCard, SettingsRow } from "@/components/ui";
+import { Button, Input, SectionLabel, SectionCard, Select, SettingsRow } from "@/components/ui";
 import PanelLayout from "@/components/ui/PanelLayout";
 import { Panel, enabledPanels, ALWAYS_VISIBLE_PANELS, PanelEntry } from "@/lib/panelRegistry";
 import { ChevronDown, ChevronRight, Star, Heart } from "@/lib/icons";
@@ -193,9 +193,10 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
               title={strings.settings.serverPort}
               desc={strings.settings.serverPortDesc.replace("{hint}", portHint)}
             >
-              <input
+              <Input
+                aria-label={strings.settings.serverPort}
                 type="number"
-                className="bg-bg2 border border-border focus:border-accent rounded text-sm font-mono text-text-bright px-3 py-1.5 outline-none w-24 text-right transition-colors"
+                className="w-24 text-right font-mono"
                 min={1}
                 max={65535}
                 value={portInput}
@@ -209,9 +210,10 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
               title={strings.settings.webhookServerPort}
               desc={`${strings.settings.webhookServerPortDesc} ${strings.settings.currentlyLabel} localhost:${config.webhookPort ?? 9101}/localpanel/webhooks/`}
             >
-              <input
+              <Input
+                aria-label={strings.settings.webhookServerPort}
                 type="number"
-                className="bg-bg2 border border-border focus:border-accent rounded text-sm font-mono text-text-bright px-3 py-1.5 outline-none w-24 text-right transition-colors"
+                className="w-24 text-right font-mono"
                 min={1}
                 max={65535}
                 value={webhookPortInput}
@@ -225,9 +227,10 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
               title={strings.settings.companionPort}
               desc={strings.settings.companionPortDesc}
             >
-              <input
+              <Input
+                aria-label={strings.settings.companionPort}
                 type="number"
-                className="bg-bg2 border border-border focus:border-accent rounded text-sm font-mono text-text-bright px-3 py-1.5 outline-none w-24 text-right transition-colors"
+                className="w-24 text-right font-mono"
                 min={1}
                 max={65535}
                 value={companionPortInput}
@@ -243,6 +246,7 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
             >
               <Toggle
                 checked={config.minimizeToTray}
+                ariaLabel={strings.settings.minimizeToTray}
                 onChange={(v) => handleGlobalChange({ minimizeToTray: v })}
               />
             </SettingsRow>
@@ -258,8 +262,9 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
             </SettingsRow>
 
             <SettingsRow title={strings.settings.darkMode} desc={strings.settings.darkModeDesc}>
-              <select
-                className="bg-bg2 border border-border focus:border-accent rounded text-sm text-text-bright px-3 py-1.5 outline-none w-48 transition-colors"
+              <Select
+                aria-label={strings.settings.darkMode}
+                className="w-56"
                 value={theme}
                 onChange={(e) => onThemeChange(e.target.value)}
               >
@@ -273,7 +278,7 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </optgroup>
-              </select>
+              </Select>
             </SettingsRow>
           </SectionCard>
         </section>
@@ -386,6 +391,7 @@ export default function SettingsPanel({ config, serverRunning, serverError, onCo
             <SettingsRow title={strings.settings.tlsEnabled} desc={strings.settings.tlsEnabledDesc}>
               <Toggle
                 checked={config.tlsEnabled}
+                ariaLabel={strings.settings.tlsEnabled}
                 onChange={(v) => handleGlobalChange({ tlsEnabled: v })}
                 disabled={!tlsReady}
               />
@@ -528,6 +534,7 @@ function AppearanceSection({ sidebarVisibility, onSidebarVisibilityChange }: App
                       </div>
                       <Toggle
                         checked={isVisible}
+                        ariaLabel={entry.label}
                         onChange={(v) => onSidebarVisibilityChange(entry.id, v)}
                         disabled={isAlwaysVisible}
                       />

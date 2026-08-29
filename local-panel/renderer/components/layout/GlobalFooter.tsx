@@ -162,7 +162,7 @@ export default function GlobalFooter({
     // -- Render -------------------------------------------------------------
 
     return (
-        <div className="border-t border-border bg-bg0 flex items-center gap-3 px-4 py-1.5 flex-shrink-0 select-none z-20">
+        <div className="border-t border-border bg-bg0 flex min-h-11 h-11 items-center gap-3 px-4 flex-shrink-0 select-none z-20">
             {/* Left: git / sync status */}
             <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
                 {renderSyncInfo()}

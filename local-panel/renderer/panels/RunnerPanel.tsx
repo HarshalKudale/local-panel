@@ -11,7 +11,10 @@ import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 import { strings } from "@/lib/strings";
 import { Plus, Terminal } from "@/lib/icons";
 import RunnerTab from "@/components/runner/RunnerTab";
+import type { RunnerTabHandle } from "@/components/runner/RunnerTab";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { usePersistedState } from "@/lib/usePersistedState";
+import { useRef } from "react";
 
 // -- Draft tab prefix -------------------------------------------------------
 
@@ -33,11 +36,12 @@ export default function RunnerPanel({ config, onConfigChange }: Props) {
     const folders = config.runnerFolders ?? [];
 
     const [runners, setRunners] = useState<RunnerConfig[]>([]);
-    const [search, setSearch] = useState("");
-    const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+    const [search, setSearch] = usePersistedState(`runner:${wsId}:search`, "");
+    const [sidebarOpen, setSidebarOpen] = usePersistedState(`runner:${wsId}:sidebar-open`, true);
+    const [selectedFolderId, setSelectedFolderId] = usePersistedState<string | null>(`runner:${wsId}:selected-folder`, null);
     const [processStates, setProcessStates] = useState<Record<string, RunnerProcessState>>({});
     const [dirtyTabs, setDirtyTabs] = useState<Record<string, boolean>>({});
+    const tabRefs = useRef<Record<string, RunnerTabHandle | null>>({});
 
     const { confirm, ConfirmDialogElement } = useConfirmDialog();
 
@@ -90,7 +94,7 @@ export default function RunnerPanel({ config, onConfigChange }: Props) {
         openTab(tabId);
     }, [openTab]);
 
-    useTabKeyBindings({ activeTab, tabRefs: { current: {} }, closeTab, openNewTab: openNewTabInFolder });
+    useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab: openNewTabInFolder });
 
     // Handlers
     const handleSaved = useCallback(async (saved: RunnerConfig, fromTabId: string) => {
@@ -258,6 +262,7 @@ export default function RunnerPanel({ config, onConfigChange }: Props) {
                             style={{ display: activeTab === tabId ? "flex" : "none" }}
                         >
                             <RunnerTab
+                                ref={(el) => { tabRefs.current[tabId] = el; }}
                                 key={tabId}
                                 runnerId={tabId}
                                 workspaceId={wsId}

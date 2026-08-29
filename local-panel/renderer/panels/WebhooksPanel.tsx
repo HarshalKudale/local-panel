@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { forwardRef, useImperativeHandle, useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { AppConfig, SavedWebhook, Folder, WebhookPayload } from "@/types";
 import SearchInput from "@/components/common/SearchInput";
 import FolderTree, { FolderTreeItem } from "@/components/sidebar/FolderTree";
@@ -13,6 +13,7 @@ import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import CodeEditor from "@/components/common/CodeEditor";
 import EditorTitleBar from "@/components/editor/EditorTitleBar";
 import { BottomBar } from "@/components/editor/RequestTab";
+import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 
 // -- Constants --------------------------------------------------------------
 
@@ -46,11 +47,15 @@ interface WebhookEditorProps {
   onDirtyChange?: (dirty: boolean) => void;
 }
 
-function WebhookEditor({
+interface WebhookEditorHandle {
+  save(): void;
+}
+
+const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(function WebhookEditor({
   tabId, webhookId, initial, isNew,
   webhookPort, onSave, onClose, folders = [],
   payloads, isActive, isAtLimit, onDirtyChange,
-}: WebhookEditorProps) {
+}: WebhookEditorProps, ref) {
   const draft = isDraftId(tabId) ? loadDraft<WebhookDraft>(tabId) : null;
   const src = draft ?? initial;
 
@@ -104,6 +109,12 @@ function WebhookEditor({
       setSaving(false);
     }
   }, [name, urlSuffix, folderId, onSave, markSaved]);
+
+  useImperativeHandle(ref, () => ({
+    save() {
+      void handleSave();
+    },
+  }), [handleSave]);
 
   const fullUrl = `http://localhost:${webhookPort}${BASE_URL_SEGMENT}${urlSuffix.replace(/^\/+/, "")}`;
 
@@ -260,7 +271,7 @@ function WebhookEditor({
       />
     </div>
   );
-}
+});
 
 // -- Props ------------------------------------------------------------------
 
@@ -288,9 +299,10 @@ export default function WebhooksPanel({
   const folders = config.webhookFolders ?? [];
   const webhookPort = config.webhookPort ?? 9101;
 
-  const [search, setSearch] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [search, setSearch] = usePersistedState(`webhooks:${config.activeWorkspaceId}:search`, "");
+  const [sidebarOpen, setSidebarOpen] = usePersistedState(`webhooks:${config.activeWorkspaceId}:sidebar-open`, true);
   const [dirtyTabs, setDirtyTabs] = useState<Record<string, boolean>>({});
+  const tabRefs = useRef<Record<string, WebhookEditorHandle | null>>({});
   const [serverRunning, setServerRunning] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [serverLoading, setServerLoading] = useState(false);
@@ -445,6 +457,8 @@ export default function WebhooksPanel({
       return next;
     });
   }, [deregisterWebhook]);
+
+  useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab });
 
   // -- Save handlers ---------------------------------------------------------
 
@@ -688,6 +702,7 @@ export default function WebhooksPanel({
               return (
                 <div key={tabId} style={{ display: isTabActive ? "flex" : "none", flexDirection: "column", height: "100%" }}>
                   <WebhookEditor
+                    ref={(el) => { tabRefs.current[tabId] = el; }}
                     tabId={tabId}
                     webhookId={isDraft ? null : tabId}
                     initial={hook}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { forwardRef, useImperativeHandle, useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { AppConfig, SavedWsConnection, Folder as FolderType, Environment } from "@/types";
 import SearchInput from "@/components/common/SearchInput";
 import FolderTree, { FolderTreeItem } from "@/components/sidebar/FolderTree";
@@ -21,6 +21,7 @@ import { Plus, X, Folder, Zap, Play, Send, Radio } from "@/lib/icons";
 import { strings } from "@/lib/strings";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 
 // -- Constants --------------------------------------------------------------
 
@@ -51,7 +52,11 @@ interface WsEditorProps {
   onDirtyChange?: (dirty: boolean) => void;
 }
 
-function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], activeEnv = null, onDirtyChange }: WsEditorProps) {
+interface WsEditorHandle {
+  save(): void;
+}
+
+const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], activeEnv = null, onDirtyChange }: WsEditorProps, ref) {
   const draft = isDraft(tabId) ? loadDraft<WsDraft>(tabId) : null;
   const src = draft ?? initial;
 
@@ -136,6 +141,12 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
       setSaving(false);
     }
   }, [name, url, headers, folderId, onSave, markSaved]);
+
+  useImperativeHandle(ref, () => ({
+    save() {
+      void handleSave();
+    },
+  }), [handleSave]);
 
   const headerCount = headers.filter((r) => r.enabled && r.key.trim()).length;
 
@@ -391,7 +402,7 @@ function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], active
       />
     </div>
   );
-}
+});
 
 // -- Message row ------------------------------------------------------------
 
@@ -446,9 +457,10 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
   const connections = config.wsConnections ?? [];
   const folders = config.wsFolders ?? [];
 
-  const [search, setSearch] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [search, setSearch] = usePersistedState(`sockets:${config.activeWorkspaceId}:search`, "");
+  const [sidebarOpen, setSidebarOpen] = usePersistedState(`sockets:${config.activeWorkspaceId}:sidebar-open`, true);
   const [dirtyTabs, setDirtyTabs] = useState<Record<string, boolean>>({});
+  const tabRefs = useRef<Record<string, WsEditorHandle | null>>({});
 
   const [openTabs, setOpenTabs] = usePersistedState<string[]>(
     "ws:openTabs", [],
@@ -504,6 +516,8 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
       return next;
     });
   }, []);
+
+  useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab });
 
   const reloadConnections = useCallback(async () => {
     const fresh = await window.api.getConfig();
@@ -691,6 +705,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
             return (
               <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
                 <WsEditor
+                  ref={(el) => { tabRefs.current[tabId] = el; }}
                   key={tabId}
                   tabId={tabId}
                   initial={conn}
@@ -756,4 +771,3 @@ function WsTabHeader({ tabId, label, isDraft: draft, isModified, onClose }: {
     </>
   );
 }
-

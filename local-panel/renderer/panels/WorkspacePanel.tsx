@@ -3,7 +3,7 @@ import { AppConfig, Workspace, SyncState, SyncStatus } from "@/types";
 import Toggle from "@/components/common/Toggle";
 import { strings } from "@/lib/strings";
 import { Cloud, CloudOff, ArrowUp, ArrowDown, Link, Unlink, GitBranch, RefreshCw } from "@/lib/icons";
-import { Button, SectionLabel, SectionCard, SettingsRow } from "@/components/ui";
+import { Button, Input, SectionLabel, SectionCard, SettingsRow } from "@/components/ui";
 import PanelLayout from "@/components/ui/PanelLayout";
 import ImportExportModal from "@/components/modals/ImportExportModal";
 
@@ -169,8 +169,9 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
             <SectionLabel>{strings.workspace.sectionDetails}</SectionLabel>
             <SectionCard>
               <SettingsRow title={strings.workspace.workspaceName} desc="">
-                <input
-                  className="bg-bg2 border border-border focus:border-accent rounded text-sm font-mono text-text-bright px-3 py-1.5 outline-none w-48 transition-colors"
+                <Input
+                  aria-label={strings.workspace.workspaceName}
+                  className="w-56 font-mono"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
                   onBlur={handleNameBlur}
@@ -195,16 +196,18 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
               {!isConnected ? (
                 <>
                   <SettingsRow title={strings.workspace.remoteUrl} desc={strings.workspace.remoteUrlDesc}>
-                    <input
-                      className="bg-bg2 border border-border focus:border-accent rounded text-xs font-mono text-text-bright px-3 py-1.5 outline-none w-72 transition-colors"
+                    <Input
+                      aria-label={strings.workspace.remoteUrl}
+                      className="w-72 font-mono text-sm"
                       placeholder={strings.workspace.remoteUrlPlaceholder}
                       value={remoteInput}
                       onChange={(e) => setRemoteInput(e.target.value)}
                     />
                   </SettingsRow>
                   <SettingsRow title={strings.workspace.branch} desc="">
-                    <input
-                      className="bg-bg2 border border-border focus:border-accent rounded text-xs font-mono text-text-bright px-3 py-1.5 outline-none w-32 transition-colors"
+                    <Input
+                      aria-label={strings.workspace.branch}
+                      className="w-40 font-mono text-sm"
                       placeholder={strings.workspace.branchPlaceholder}
                       value={branchInput}
                       onChange={(e) => setBranchInput(e.target.value)}
@@ -239,6 +242,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
                   <SettingsRow title={strings.workspace.autoSync} desc={strings.workspace.autoSyncDesc}>
                     <Toggle
                       checked={syncConfig?.autoSync ?? false}
+                      ariaLabel={strings.workspace.autoSync}
                       onChange={handleAutoSyncToggle}
                     />
                   </SettingsRow>

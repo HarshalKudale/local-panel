@@ -10,6 +10,9 @@ import { Network } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { strings } from "@/lib/strings";
+import { usePersistedState } from "@/lib/usePersistedState";
+import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
+import type { GrpcTabHandle } from "@/components/grpc/GrpcTab";
 
 import { GrpcRequestDraft } from "@/components/grpc/grpcTabReducer";
 
@@ -32,12 +35,12 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
     const requests = config.grpcRequests ?? [];
     const folders = config.grpcRequestFolders ?? [];
 
-    const [search, setSearch] = useState("");
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [search, setSearch] = usePersistedState(`grpc-requests:${config.activeWorkspaceId}:search`, "");
+    const [sidebarOpen, setSidebarOpen] = usePersistedState(`grpc-requests:${config.activeWorkspaceId}:sidebar-open`, true);
 
     const {
         openTabs, activeTab, setActiveTab,
-        loadedEntities, setLoadedEntities,
+        loadedEntities, setLoadedEntities, tabRefs,
         openTab, openNewTab, closeTab, replaceTab, closeOtherTabs, closeAllTabs,
     } = useEntityTabs<SavedGrpcRequest>({
         storageKey: "grpcRequests",
@@ -46,6 +49,8 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
         entityKind: "grpcRequests" as any,
         entities: requests,
     });
+
+    useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab });
 
     const reloadConfig = useCallback(async () => {
         const fresh = await window.api.getConfig();
@@ -199,6 +204,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                         return (
                             <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
                                 <GrpcTab
+                                    ref={(el: GrpcTabHandle | null) => { tabRefs.current[tabId] = el; }}
                                     tabType="request"
                                     tabId={tabId}
                                     draftTabId={isUnsaved ? tabId : null}

@@ -53,10 +53,10 @@ const PANELS: PanelDef[] = [
     { name: "13-webhooks", collapsibleSection: "Request", navLabel: "Webhooks", openNewTab: true },
 
     // ── Tools (flat) ───────────────────────────────────────────────────────
-    { name: "14-environments", navLabel: "Environments" },
+    { name: "14-environments", navLabel: "Envs & Vars" },
 
     // ── Applications (flat) ────────────────────────────────────────────────
-    { name: "15-run-configs", navLabel: "Run Configs" },
+    { name: "15-run-configs", navLabel: "Runner" },
 
     // ── Discovery (flat) ───────────────────────────────────────────────────
     { name: "16-services", navLabel: "Services" },
@@ -124,14 +124,16 @@ async function clickNavItem(
         .first();
 
     if (await btn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await btn.scrollIntoViewIfNeeded().catch(() => {});
         await btn.click();
     } else {
         // Broader fallback - removed exact:true since badges add extra text
-        await (root as import("@playwright/test").Page | import("@playwright/test").Locator)
+        const fallback = (root as import("@playwright/test").Page | import("@playwright/test").Locator)
             .getByRole("button")
             .filter({ hasText: label })
-            .first()
-            .click();
+            .first();
+        await fallback.scrollIntoViewIfNeeded().catch(() => {});
+        await fallback.click();
     }
     await page.waitForTimeout(600);
 }

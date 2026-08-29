@@ -13,6 +13,7 @@ import { Zap } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
+import { usePersistedState } from "@/lib/usePersistedState";
 
 
 // -- Draft tab prefix -------------------------------------------------------
@@ -48,9 +49,9 @@ export default function MocksPanel({
   const mocks = config.mocks ?? [];
   const folders = config.mockFolders ?? [];
 
-  const [search, setSearch] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [search, setSearch] = usePersistedState(`mocks:${config.activeWorkspaceId}:search`, "");
+  const [sidebarOpen, setSidebarOpen] = usePersistedState(`mocks:${config.activeWorkspaceId}:sidebar-open`, true);
+  const [selectedFolderId, setSelectedFolderId] = usePersistedState<string | null>(`mocks:${config.activeWorkspaceId}:selected-folder`, null);
 
   const {
     openTabs, activeTab, setActiveTab,
@@ -419,4 +420,3 @@ export default function MocksPanel({
     </>
   );
 }
-

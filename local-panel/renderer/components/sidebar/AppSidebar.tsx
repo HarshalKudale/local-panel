@@ -5,6 +5,8 @@ import NavItem from "@/components/sidebar/NavItem";
 import NavSection from "@/components/sidebar/NavSection";
 import { MoreHorizontal, Plus, Pencil, Trash2, ClipboardList, Settings, Search } from "@/lib/icons";
 import { strings } from "@/lib/strings";
+import { Button, Input } from "@/components/ui";
+import { usePersistedState } from "@/lib/usePersistedState";
 
 interface Props {
     entries: PanelEntry[];
@@ -30,7 +32,7 @@ export default function AppSidebar({
     workspaces, activeWorkspaceId,
     onWorkspaceChange, onWorkspaceCreate, onWorkspaceRename, onWorkspaceDelete,
 }: Props) {
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = usePersistedState("app-sidebar:search", "");
     const [wsSwitcherOpen, setWsSwitcherOpen] = useState(false);
     const [wsMenuOpen, setWsMenuOpen] = useState(false);
     const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -120,17 +122,19 @@ export default function AppSidebar({
 
             {/* -- Search ---------------------------------------------------- */}
             <div className="px-2 pt-2 pb-1 flex-shrink-0">
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-bg2 border border-border/60">
+                <div className="flex items-center gap-1.5 rounded bg-bg2 border border-border/60 px-2 py-1.5">
                     <Search size={11} className="flex-shrink-0 text-text-dim opacity-60" />
-                    <input
+                    <Input
                         ref={searchRef}
                         value={search}
+                        inputSize="sm"
                         onChange={(e) => setSearch(e.target.value)}
                         onKeyDown={(e) => {
                             if (e.key === "Escape") { setSearch(""); e.currentTarget.blur(); }
                         }}
                         placeholder={strings.sidebar.searchPanels}
-                        className="flex-1 bg-transparent outline-none text-xs text-text-base placeholder:text-text-dim/50 min-w-0"
+                        aria-label={strings.sidebar.searchPanels}
+                        className="min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none focus:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                     {!search && (
                         <span className="text-[9px] font-mono text-text-dim opacity-40 flex-shrink-0">⌘K</span>
@@ -203,8 +207,11 @@ export default function AppSidebar({
 
                     {/* Avatar + name -> opens workspace switcher */}
                     <button
-                        className="flex items-center gap-2 flex-1 min-w-0 rounded hover:bg-bg2 px-1 py-1 transition-colors cursor-pointer"
+                        type="button"
+                        className="flex min-h-10 items-center gap-2 flex-1 min-w-0 rounded-md hover:bg-bg2 px-2 py-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 focus-visible:ring-offset-2 focus-visible:ring-offset-bg1"
                         onClick={() => { setWsSwitcherOpen((v) => !v); setWsMenuOpen(false); }}
+                        aria-haspopup="menu"
+                        aria-expanded={wsSwitcherOpen}
                         title={strings.sidebar.switchWorkspace}
                         style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                     >
@@ -222,8 +229,11 @@ export default function AppSidebar({
                     {/* Three-dot menu */}
                     <div ref={menuRef} className="relative flex-shrink-0">
                         <button
-                            className="w-6 h-6 flex items-center justify-center rounded text-text-dim hover:text-text-base hover:bg-bg2 transition-colors cursor-pointer"
+                            type="button"
+                            className="w-8 h-8 flex items-center justify-center rounded-md text-text-dim hover:text-text-base hover:bg-bg2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 focus-visible:ring-offset-2 focus-visible:ring-offset-bg1"
                             onClick={() => { setWsMenuOpen((v) => !v); setWsSwitcherOpen(false); }}
+                            aria-haspopup="menu"
+                            aria-expanded={wsMenuOpen}
                             title={strings.sidebar.workspaceOptions}
                             style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                         >
@@ -262,13 +272,15 @@ export default function AppSidebar({
                             ref={switcherRef}
                             className="absolute bottom-full left-0 right-0 z-50 bg-bg2 border border-border rounded-md shadow-2xl py-1 animate-scale-in"
                         >
-                            <button
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => { onWorkspaceCreate(); setWsSwitcherOpen(false); }}
-                                className="w-full text-left px-3 py-1.5 text-xs text-accent hover:bg-bg3 cursor-pointer transition-colors flex items-center gap-1.5 border-b border-border/60"
+                                className="w-full justify-start rounded-none border-b border-border/60 px-3 text-sm text-accent hover:bg-bg3"
                             >
                                 <Plus size={12} />
                                 {strings.sidebar.createWorkspace}
-                            </button>
+                            </Button>
 
                             <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-dim">
                                 {strings.sidebar.workspaces}
@@ -294,9 +306,10 @@ export default function AppSidebar({
                                                 style={{ boxShadow: activeWorkspaceId === ws.id ? "0 0 4px var(--c-accent)" : "none" }}
                                             />
                                             {renamingId === ws.id ? (
-                                                <input
+                                                <Input
                                                     ref={renameRef}
-                                                    className="flex-1 min-w-0 bg-bg3 border border-accent/40 rounded px-1.5 py-0.5 text-xs text-text-bright outline-none"
+                                                    inputSize="sm"
+                                                    className="flex-1 min-w-0 bg-bg3 border-accent/40"
                                                     value={renameValue}
                                                     onChange={(e) => setRenameValue(e.target.value)}
                                                     onClick={(e) => e.stopPropagation()}
@@ -313,7 +326,8 @@ export default function AppSidebar({
                                             {renamingId !== ws.id && (
                                                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
                                                     <button
-                                                        className="text-text-dim hover:text-accent text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer"
+                                                        type="button"
+                                                        className="text-text-dim hover:text-accent text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
                                                         title={strings.sidebar.renameWorkspace}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -326,7 +340,8 @@ export default function AppSidebar({
                                                     </button>
                                                     {canDelete && (
                                                         <button
-                                                            className="text-text-dim hover:text-red text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer"
+                                                            type="button"
+                                                            className="text-text-dim hover:text-red text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red/35"
                                                             title={strings.sidebar.deleteWorkspace}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -350,18 +365,22 @@ export default function AppSidebar({
                                                     {strings.sidebar.deleteWorkspacePrefix} <span className="font-semibold text-text-base">"{ws.name}"</span>{strings.sidebar.deleteWorkspaceSuffix}
                                                 </p>
                                                 <div className="flex gap-1.5">
-                                                    <button
+                                                    <Button
+                                                        variant="danger"
+                                                        size="sm"
                                                         onClick={() => handleDeleteConfirm(ws.id)}
-                                                        className="flex-1 px-2 py-1 rounded bg-red/15 border border-red/40 text-red text-[10px] font-semibold hover:bg-red/25 cursor-pointer transition-colors"
+                                                        className="flex-1 border border-red/40 bg-red/15 justify-center text-[10px] hover:bg-red/25"
                                                     >
                                                         {strings.common.delete}
-                                                    </button>
-                                                    <button
+                                                    </Button>
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="sm"
                                                         onClick={() => setConfirmDeleteId(null)}
-                                                        className="flex-1 px-2 py-1 rounded bg-bg3 border border-border text-text-dim text-[10px] hover:text-text-base cursor-pointer transition-colors"
+                                                        className="flex-1 justify-center text-[10px]"
                                                     >
                                                         {strings.common.cancel}
-                                                    </button>
+                                                    </Button>
                                                 </div>
                                             </div>
                                         )}

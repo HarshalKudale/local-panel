@@ -11,6 +11,8 @@ import { entityRelPath, calculateFolderStatus } from "@/lib/utils";
 import { Settings } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
+import { usePersistedState } from "@/lib/usePersistedState";
+import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 
 const DRAFT_PREFIX = "rule-draft-";
 
@@ -30,8 +32,8 @@ export default function ProxyRulesPanel({
   const rules = config.proxyRules ?? [];
   const folders = config.ruleFolders ?? [];
 
-  const [search, setSearch] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [search, setSearch] = usePersistedState(`rules:${config.activeWorkspaceId}:search`, "");
+  const [sidebarOpen, setSidebarOpen] = usePersistedState(`rules:${config.activeWorkspaceId}:sidebar-open`, true);
 
   const {
     openTabs, activeTab, setActiveTab,
@@ -45,6 +47,8 @@ export default function ProxyRulesPanel({
     entityKind: "rules",
     entities: rules,
   });
+
+  useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab });
 
   const reloadRules = useCallback(async () => {
     const fresh = await window.api.getConfig();

@@ -13,6 +13,7 @@ import { Zap } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
 import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
+import { usePersistedState } from "@/lib/usePersistedState";
 
 
 // -- Draft tab prefix -------------------------------------------------------
@@ -51,9 +52,9 @@ export default function RequestsPanel({
   const requests = config.requests ?? [];
   const folders = config.requestFolders ?? [];
 
-  const [search, setSearch] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [search, setSearch] = usePersistedState(`requests:${config.activeWorkspaceId}:search`, "");
+  const [sidebarOpen, setSidebarOpen] = usePersistedState(`requests:${config.activeWorkspaceId}:sidebar-open`, true);
+  const [selectedFolderId, setSelectedFolderId] = usePersistedState<string | null>(`requests:${config.activeWorkspaceId}:selected-folder`, null);
   const [runnerFolderIds, setRunnerFolderIds] = useState<Set<string>>(new Set());
 
   // Load which folders have saved runner configs - refresh when workspace changes
@@ -431,4 +432,3 @@ export default function RequestsPanel({
     </>
   );
 }
-

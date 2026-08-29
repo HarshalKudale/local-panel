@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import type { RestTabHandle } from "@/components/rest/RestTab";
+import type { PersistableTabHandle } from "@/lib/useEntityTabs";
 
 interface Options {
   activeTab: string | null;
-  tabRefs: React.MutableRefObject<Record<string, RestTabHandle | null>>;
+  tabRefs: React.MutableRefObject<Record<string, PersistableTabHandle | null>>;
   closeTab: (id: string) => void;
   openNewTab: () => void;
 }
@@ -24,7 +24,7 @@ export function useTabKeyBindings({ activeTab, tabRefs, closeTab, openNewTab }: 
       if (e.key === "s" || e.key === "S") {
         if (!activeTab) return;
         const ref = tabRefs.current[activeTab];
-        if (!ref) return;
+        if (!ref?.save) return;
         e.preventDefault();
         ref.save();
         return;

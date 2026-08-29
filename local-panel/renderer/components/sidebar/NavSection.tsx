@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronRight } from "@/lib/icons";
+import { readStorageRaw, writeStorageRaw } from "@/lib/storage";
 
 interface NavSectionItem {
     id: string;
@@ -19,7 +20,7 @@ interface Props {
 
 export default function NavSection({ label, items, activePanel, badges, onSelect, defaultCollapsed, storageKey }: Props) {
     const [collapsed, setCollapsed] = useState(() => {
-        const stored = localStorage.getItem(`nav-section:${storageKey}`);
+        const stored = readStorageRaw(`nav-section:${storageKey}`);
         if (stored !== null) return stored === "1";
         return defaultCollapsed ?? false;
     });
@@ -27,7 +28,7 @@ export default function NavSection({ label, items, activePanel, badges, onSelect
     const toggle = () => {
         const next = !collapsed;
         setCollapsed(next);
-        localStorage.setItem(`nav-section:${storageKey}`, next ? "1" : "0");
+        writeStorageRaw(`nav-section:${storageKey}`, next ? "1" : "0");
     };
 
     return (

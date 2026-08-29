@@ -1,35 +1,37 @@
-import React from "react";
+import * as React from "react";
+import * as Switch from "@radix-ui/react-switch";
+import { cn } from "@/components/ui/cn";
 
 interface Props {
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
+  ariaLabel?: string;
 }
 
-export default function Toggle({ checked, onChange, disabled }: Props) {
+export default function Toggle({ checked, onChange, disabled, ariaLabel }: Props) {
   return (
-    <button
-      role="switch"
-      aria-checked={checked}
+    <Switch.Root
+      checked={checked}
+      onCheckedChange={onChange}
       disabled={disabled}
-      onClick={() => !disabled && onChange(!checked)}
-      style={{ width: "2.25rem", height: "1.25rem", minWidth: "2.25rem" }}
-      className={`relative rounded-full border transition-all flex-shrink-0 ${
-        disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
-      } ${checked ? "bg-green/20 border-green" : "bg-bg3 border-border"}`}
+      aria-label={ariaLabel}
+      className={cn(
+        "relative inline-flex h-6 w-11 min-w-[2.75rem] shrink-0 items-center rounded-full border transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 focus-visible:ring-offset-2 focus-visible:ring-offset-bg1",
+        "disabled:cursor-not-allowed disabled:opacity-40",
+        "data-[state=checked]:border-green data-[state=checked]:bg-green/20",
+        "data-[state=unchecked]:border-border data-[state=unchecked]:bg-bg3",
+        !disabled && "cursor-pointer",
+      )}
     >
-      <span
-        style={{
-          position: "absolute",
-          top: "3px",
-          left: checked ? "calc(100% - 15px)" : "3px",
-          width: "14px",
-          height: "14px",
-          borderRadius: "50%",
-          transition: "left 0.15s ease",
-          background: checked ? "var(--c-green)" : "var(--c-text-dim)",
-        }}
+      <Switch.Thumb
+        className={cn(
+          "pointer-events-none block h-[18px] w-[18px] rounded-full shadow-sm transition-transform duration-150 ease-out will-change-transform",
+          "translate-x-[3px] data-[state=checked]:translate-x-[23px]",
+        )}
+        style={{ background: checked ? "var(--c-green)" : "var(--c-text-dim)" }}
       />
-    </button>
+    </Switch.Root>
   );
 }

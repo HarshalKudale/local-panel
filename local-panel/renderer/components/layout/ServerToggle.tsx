@@ -22,11 +22,13 @@ export default function ServerToggle({ running, error, onStart, onStop }: Props)
 
   return (
     <button
+      type="button"
       onClick={handle}
       disabled={busy}
+      aria-label={running ? strings.titleBar.stopServer : strings.titleBar.startServer}
       style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
       title={running ? strings.titleBar.stopServer : strings.titleBar.startServer}
-      className={`flex items-center justify-center w-7 h-7 rounded border transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 ${
+      className={`flex items-center justify-center w-8 h-8 rounded-md border transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 focus-visible:ring-offset-2 focus-visible:ring-offset-bg1 ${
         running
           ? "border-green/40 bg-green/10 hover:bg-red/15 hover:border-red/40 text-green hover:text-red"
           : hasError

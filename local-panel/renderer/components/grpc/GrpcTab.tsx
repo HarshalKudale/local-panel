@@ -1,4 +1,4 @@
-import React, { useReducer, useCallback, useEffect, useState } from "react";
+import React, { forwardRef, useImperativeHandle, useReducer, useCallback, useEffect, useState } from "react";
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
 import { SavedGrpcRequest, SavedGrpcMock, Folder, Environment } from "@/types";
 import CodeEditor from "@/components/common/CodeEditor";
@@ -19,6 +19,10 @@ import {
 import ProtoExplorer from "@/components/grpc/ProtoExplorer";
 
 // -- Props ------------------------------------------------------------------
+
+export interface GrpcTabHandle {
+    save(): void;
+}
 
 interface Props {
     tabType: GrpcTabType;
@@ -56,7 +60,10 @@ const STREAMING_BADGES: Record<string, string> = {
 
 // -- Component --------------------------------------------------------------
 
-export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, activeEnv = null, onSave, onClose }: Props) {
+const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
+    { tabType, tabId, draftTabId, initial, folders, activeEnv = null, onSave, onClose }: Props,
+    ref,
+) {
     const isNew = !!draftTabId;
 
     // Initialize state from draft or saved entity
@@ -161,6 +168,12 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
             dispatch({ type: "SAVE_DONE" });
         }
     }, [state, tabType, onSave]);
+
+    useImperativeHandle(ref, () => ({
+        save() {
+            void handleSave();
+        },
+    }), [handleSave]);
 
     const set = (field: keyof GrpcTabState) => (value: unknown) => dispatch({ type: "SET_FIELD", field, value });
 
@@ -464,4 +477,6 @@ export default function GrpcTab({ tabType, tabId, draftTabId, initial, folders, 
             />
         </div>
     );
-}
+});
+
+export default GrpcTab;
