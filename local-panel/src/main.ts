@@ -1,8 +1,5 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage, dialog, ipcMain, screen } from "electron";
 import * as path from "path";
-import * as dotenv from "dotenv";
-// Load .env before anything else so SUPABASE_* are available
-dotenv.config({ path: path.join(__dirname, "..", ".env") });
 import { processSpawner } from "@/applications/processSpawner";
 import { registerIpcHandlers } from "@/ipc/handlers";
 import { loadConfig, generateId } from "@/store/config";
