@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useImperativeHandle, forwardRef } from "react";
+import React, { useState, useCallback, useMemo, useImperativeHandle, forwardRef } from "react";
 import { AppConfig, ProxyRule, Folder } from "@/types";
 import EditorTitleBar from "@/components/editor/EditorTitleBar";
 import { BottomBar } from "@/components/editor/RequestTab";
