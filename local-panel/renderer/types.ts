@@ -495,9 +495,13 @@ declare global {
       syncGetState(wsId: string): Promise<SyncState>;
       syncSetAutoSync(wsId: string, enabled: boolean): Promise<{ ok: boolean }>;
       onSyncStatus(cb: (state: { wsId: string; status: SyncStatus; error?: string | null; updatedIds?: string[] }) => void): () => void;
-      publishEntity(wsId: string, paths: string[]): Promise<{ ok: boolean; error?: string }>;
+      publishEntity(wsId: string, paths: string[], message?: string): Promise<{ ok: boolean; error?: string }>;
       publishFolder(wsId: string, kind: string, folderName: string | null): Promise<{ ok: boolean; error?: string }>;
       restoreEntity(wsId: string, relPath: string): Promise<{ ok: boolean; error?: string }>;
+      gitGetDiff(wsId: string, relPath: string): Promise<{ hasDiff: boolean; status: "clean" | "modified" | "new" | "deleted"; diff?: string; original?: string | null; current?: string | null }>;
+      gitDiscard(wsId: string, relPath: string): Promise<{ ok: boolean; error?: string }>;
+      gitSync(wsId: string, paths: string[], message?: string): Promise<{ ok: boolean; error?: string }>;
+      gitGetHistory(wsId: string, relPath: string, opts?: { limit?: number; offset?: number }): Promise<{ entries: AuditEntry[]; total: number }>;
       getEntitySyncStatus(wsId: string): Promise<Record<string, "clean" | "modified" | "new" | "deleted">>;
       onEntitySyncStatus(cb: (data: { wsId: string; status: Record<string, "clean" | "modified" | "new" | "deleted"> }) => void): () => void;
       executeScript(opts: {

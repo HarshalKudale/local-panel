@@ -59,6 +59,14 @@ export const strings = {
     noResults: "No results.",
     key: "Key",
     value: "Value",
+    sync: "Sync",
+    syncing: "Syncing…",
+    revert: "Revert",
+    reverting: "Reverting…",
+    syncTooltip: "Sync (commit & push)",
+    revertTooltip: "Revert local changes to last synced version",
+    noChangesToRevert: "No local changes to revert",
+    noChangesToSync: "No local changes to sync",
   },
 
   // Server status

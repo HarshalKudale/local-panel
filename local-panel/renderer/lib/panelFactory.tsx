@@ -76,11 +76,11 @@ export interface PanelRenderContext {
     // Capture
     onStatsChange: (stats: CaptureStats | null) => void;
     // Publish helpers
-    makePublishItem: (kind: "requests" | "mocks" | "sockets" | "webhooks" | "rules", folders: Folder[]) => (id: string) => Promise<void>;
-    makePublishFolder: (kind: "requests" | "mocks" | "sockets" | "webhooks" | "rules", folders: Folder[]) => (folderId: string | null) => Promise<void>;
+    makePublishItem: (kind: string, folders: Folder[]) => (id: string) => Promise<void>;
+    makePublishFolder: (kind: "requests" | "mocks" | "sockets" | "webhooks" | "rules" | string, folders: Folder[]) => (folderId: string | null) => Promise<void>;
     makeFlatPublish: (kind: "mappings") => (id: string) => Promise<void>;
     makeFlatRevert: (kind: "mappings") => (id: string) => Promise<void>;
-    makeRestoreItem: (kind: "requests" | "mocks" | "sockets" | "webhooks" | "rules", folders: Folder[]) => (id: string) => Promise<void>;
+    makeRestoreItem: (kind: string, folders: Folder[]) => (id: string) => Promise<void>;
     handlePublishHealthBar: () => Promise<void>;
     // Workspace panel handlers
     onWorkspaceRename: (id: string, name: string) => Promise<void>;
@@ -173,6 +173,10 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
             config={ctx.wsConfig}
             onConfigChange={ctx.handleWsConfigChange}
             activeEnv={ctx.activeEnv}
+            onHistoryOpen={ctx.openHistory}
+            entitySyncStatus={ctx.entitySyncStatus}
+            onPublishItem={ctx.makePublishItem("graphqlMocks", ctx.wsConfig.graphqlMockFolders ?? [])}
+            onRestoreItem={ctx.makeRestoreItem("graphqlMocks", ctx.wsConfig.graphqlMockFolders ?? [])}
         />
     ),
     "mock-soap": (ctx) => (
@@ -180,6 +184,10 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
             config={ctx.wsConfig}
             onConfigChange={ctx.handleWsConfigChange}
             activeEnv={ctx.activeEnv}
+            onHistoryOpen={ctx.openHistory}
+            entitySyncStatus={ctx.entitySyncStatus}
+            onPublishItem={ctx.makePublishItem("soapMocks", ctx.wsConfig.soapMockFolders ?? [])}
+            onRestoreItem={ctx.makeRestoreItem("soapMocks", ctx.wsConfig.soapMockFolders ?? [])}
         />
     ),
     "mock-grpc": (ctx) => (
@@ -187,6 +195,10 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
             config={ctx.wsConfig}
             onConfigChange={ctx.handleWsConfigChange}
             activeEnv={ctx.activeEnv}
+            onHistoryOpen={ctx.openHistory}
+            entitySyncStatus={ctx.entitySyncStatus}
+            onPublishItem={ctx.makePublishItem("grpcMocks", ctx.wsConfig.grpcMockFolders ?? [])}
+            onRestoreItem={ctx.makeRestoreItem("grpcMocks", ctx.wsConfig.grpcMockFolders ?? [])}
         />
     ),
     "req-rest": (ctx) => (
@@ -212,6 +224,10 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
             config={ctx.wsConfig}
             onConfigChange={ctx.handleWsConfigChange}
             activeEnv={ctx.activeEnv}
+            onHistoryOpen={ctx.openHistory}
+            entitySyncStatus={ctx.entitySyncStatus}
+            onPublishItem={ctx.makePublishItem("graphqlRequests", ctx.wsConfig.graphqlRequestFolders ?? [])}
+            onRestoreItem={ctx.makeRestoreItem("graphqlRequests", ctx.wsConfig.graphqlRequestFolders ?? [])}
         />
     ),
     "req-soap": (ctx) => (
@@ -219,6 +235,10 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
             config={ctx.wsConfig}
             onConfigChange={ctx.handleWsConfigChange}
             activeEnv={ctx.activeEnv}
+            onHistoryOpen={ctx.openHistory}
+            entitySyncStatus={ctx.entitySyncStatus}
+            onPublishItem={ctx.makePublishItem("soapRequests", ctx.wsConfig.soapRequestFolders ?? [])}
+            onRestoreItem={ctx.makeRestoreItem("soapRequests", ctx.wsConfig.soapRequestFolders ?? [])}
         />
     ),
     "req-grpc": (ctx) => (
@@ -226,6 +246,10 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
             config={ctx.wsConfig}
             onConfigChange={ctx.handleWsConfigChange}
             activeEnv={ctx.activeEnv}
+            onHistoryOpen={ctx.openHistory}
+            entitySyncStatus={ctx.entitySyncStatus}
+            onPublishItem={ctx.makePublishItem("grpcRequests", ctx.wsConfig.grpcRequestFolders ?? [])}
+            onRestoreItem={ctx.makeRestoreItem("grpcRequests", ctx.wsConfig.grpcRequestFolders ?? [])}
         />
     ),
     sockets: (ctx) => (

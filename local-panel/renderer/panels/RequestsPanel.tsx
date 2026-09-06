@@ -138,6 +138,7 @@ export default function RequestsPanel({
     setPendingData((prev) => { const next = { ...prev }; delete next[tabId]; return next; });
     setNewTabInitials((prev) => { const next = { ...prev }; delete next[tabId]; return next; });
     onAfterSave?.();
+    return created;
   }, [reloadRequests, replaceTab, onAfterSave]);
 
   const handleTabSave = useCallback(async (tabId: string, data: Omit<SavedRequest, "id" | "createdAt" | "workspaceId">) => {
@@ -148,6 +149,7 @@ export default function RequestsPanel({
     await window.api.updateRequest(updated);
     await reloadRequests();
     onAfterSave?.();
+    return updated;
   }, [loadedEntities, requests, reloadRequests, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
@@ -386,6 +388,8 @@ export default function RequestsPanel({
             const req = isUnsaved ? null : (loadedEntities[tabId] ?? requests.find((r) => r.id === tabId) ?? null);
             const initialData = isUnsaved ? (pendingData[tabId] ?? newTabInitials[tabId] ?? null) : req;
             if (!isUnsaved && !req) return null;
+            const relPath = req ? entityRelPath("requests", req, folders) : "";
+            const syncStatus = relPath ? entitySyncStatus?.[relPath] : undefined;
             return (
               <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
                 <RestTab
@@ -404,6 +408,24 @@ export default function RequestsPanel({
                   onClose={() => closeTab(tabId)}
                   onDirtyChange={(dirty) => setDirtyTabs((prev) => ({ ...prev, [tabId]: dirty }))}
                   showCurlImport={isUnsaved}
+                  onSync={onPublishItem ? async (savedId?: string) => {
+                    const targetId = savedId ?? tabId;
+                    await onPublishItem(targetId);
+                  } : undefined}
+                  onRevert={onRestoreItem ? async () => {
+                    await onRestoreItem(tabId);
+                    const res = await window.api.loadEntity(config.activeWorkspaceId, "requests", tabId);
+                    if (res.ok && res.entity) {
+                      const entity = res.entity as SavedRequest;
+                      setLoadedEntities((prev) => ({ ...prev, [tabId]: entity }));
+                      tabRefs.current[tabId]?.refresh?.(entity);
+                    } else if (!res.ok) {
+                      closeTab(tabId);
+                    }
+                    setDirtyTabs((prev) => ({ ...prev, [tabId]: false }));
+                  } : undefined}
+                  onHistory={onHistoryOpen && relPath && !isUnsaved ? () => onHistoryOpen(relPath) : undefined}
+                  syncStatus={syncStatus}
                 />
               </div>
             );

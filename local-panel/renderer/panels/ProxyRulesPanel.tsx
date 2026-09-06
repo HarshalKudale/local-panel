@@ -84,6 +84,7 @@ export default function ProxyRulesPanel({
     } as Omit<ProxyRule, "id" | "createdAt" | "workspaceId">);
     await reloadRules();
     replaceTab(tabId, created.id);
+    return created;
   }, [rules.length, config.activeWorkspaceId, reloadRules, replaceTab]);
 
   const handleTabSave = useCallback(async (tabId: string, data: RuleSavePayload) => {
@@ -95,6 +96,7 @@ export default function ProxyRulesPanel({
     setLoadedEntities((prev) => ({ ...prev, [tabId]: updated }));
     await window.api.updateRule(updated);
     await reloadRules();
+    return updated;
   }, [rules, loadedEntities, config.activeWorkspaceId, setLoadedEntities, reloadRules]);
 
   const handleDelete = useCallback(async (id: string) => {
@@ -239,6 +241,8 @@ export default function ProxyRulesPanel({
             const isUnsaved = isDraft(tabId);
             const rule = isUnsaved ? null : (loadedEntities[tabId] ?? rules.find((r) => r.id === tabId) ?? null);
             if (!isUnsaved && !rule) return null;
+            const relPath = rule ? entityRelPath("rules", rule, folders) : "";
+            const syncStatus = relPath ? entitySyncStatus?.[relPath] : undefined;
             return (
               <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
                 <RuleTab
@@ -255,6 +259,23 @@ export default function ProxyRulesPanel({
                   onClose={() => closeTab(tabId)}
                   enabled={isUnsaved ? undefined : rules.find((r) => r.id === tabId)?.enabled}
                   onToggleEnabled={isUnsaved ? undefined : () => { const r = rules.find((x) => x.id === tabId); if (r) handleToggle(r); }}
+                  onSync={onPublishItem ? async (savedId?: string) => {
+                    const targetId = savedId ?? tabId;
+                    await onPublishItem(targetId);
+                  } : undefined}
+                  onRevert={onRestoreItem ? async () => {
+                    await onRestoreItem(tabId);
+                    const res = await window.api.loadEntity(config.activeWorkspaceId, "rules", tabId);
+                    if (res.ok && res.entity) {
+                      const entity = res.entity as ProxyRule;
+                      setLoadedEntities((prev) => ({ ...prev, [tabId]: entity }));
+                      (tabRefs as React.MutableRefObject<Record<string, RuleTabHandle | null>>).current[tabId]?.refresh(entity);
+                    } else if (!res.ok) {
+                      closeTab(tabId);
+                    }
+                  } : undefined}
+                  onHistory={onHistoryOpen && relPath && !isUnsaved ? () => onHistoryOpen(relPath) : undefined}
+                  syncStatus={syncStatus}
                 />
               </div>
             );

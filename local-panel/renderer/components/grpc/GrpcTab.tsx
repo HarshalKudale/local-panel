@@ -21,7 +21,8 @@ import ProtoExplorer from "@/components/grpc/ProtoExplorer";
 // -- Props ------------------------------------------------------------------
 
 export interface GrpcTabHandle {
-    save(): void;
+    save(): Promise<any> | void;
+    refresh?(entity: SavedGrpcRequest | SavedGrpcMock): void;
 }
 
 interface Props {
@@ -31,8 +32,12 @@ interface Props {
     initial: SavedGrpcRequest | SavedGrpcMock | null;
     folders: Folder[];
     activeEnv?: Environment | null;
-    onSave: (data: Omit<SavedGrpcRequest, "id" | "createdAt" | "workspaceId"> | Omit<SavedGrpcMock, "id" | "createdAt" | "workspaceId">) => Promise<void>;
+    onSave: (data: Omit<SavedGrpcRequest, "id" | "createdAt" | "workspaceId"> | Omit<SavedGrpcMock, "id" | "createdAt" | "workspaceId">) => Promise<any>;
     onClose: () => void;
+    onSync?: (savedId?: string) => Promise<void>;
+    onRevert?: () => Promise<void>;
+    syncStatus?: "clean" | "modified" | "new" | "deleted";
+    onHistory?: () => void;
 }
 
 // -- Helpers ----------------------------------------------------------------
@@ -61,7 +66,7 @@ const STREAMING_BADGES: Record<string, string> = {
 // -- Component --------------------------------------------------------------
 
 const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
-    { tabType, tabId, draftTabId, initial, folders, activeEnv = null, onSave, onClose }: Props,
+    { tabType, tabId, draftTabId, initial, folders, activeEnv = null, onSave, onClose, onSync, onRevert, syncStatus, onHistory }: Props,
     ref,
 ) {
     const isNew = !!draftTabId;
@@ -158,22 +163,77 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
     const handleSave = useCallback(async () => {
         dispatch({ type: "SAVE_START" });
         try {
+            let res: any;
             if (tabType === "request") {
-                await onSave(requestToSaveData(state));
+                res = await onSave(requestToSaveData(state));
             } else {
-                await onSave(mockToSaveData(state));
+                res = await onSave(mockToSaveData(state));
             }
             dispatch({ type: "SAVE_DONE" });
-        } catch {
+            return res;
+        } catch (err) {
             dispatch({ type: "SAVE_DONE" });
+            throw err;
         }
     }, [state, tabType, onSave]);
 
     useImperativeHandle(ref, () => ({
         save() {
-            void handleSave();
+            return handleSave();
         },
-    }), [handleSave]);
+        refresh(entity: SavedGrpcRequest | SavedGrpcMock) {
+            if (tabType === "request") {
+                const freshState = initGrpcRequestState(entity as SavedGrpcRequest);
+                dispatch({ type: "LOAD", state: freshState });
+                setMetaRows(metadataToRows(freshState.metadata));
+                setResMetaRows(metadataToRows(freshState.responseMetadata));
+            } else {
+                const freshState = initGrpcMockState(entity as SavedGrpcMock);
+                dispatch({ type: "LOAD", state: freshState });
+                setMetaRows(metadataToRows(freshState.metadata));
+                setResMetaRows(metadataToRows(freshState.responseMetadata));
+            }
+        },
+    }), [handleSave, tabType]);
+
+    // Sync and Revert handling
+    const [syncing, setSyncing] = useState(false);
+    const [reverting, setReverting] = useState(false);
+
+    const handleSyncClick = useCallback(async () => {
+        if (!onSync || syncing) return;
+        setSyncing(true);
+        try {
+            let targetId = tabId;
+            if (state.dirty || isNew) {
+                const saved: any = await handleSave();
+                if (saved && typeof saved === "object" && saved.id) {
+                    targetId = saved.id;
+                }
+            }
+            await onSync(targetId);
+        } finally {
+            setSyncing(false);
+        }
+    }, [onSync, syncing, state.dirty, isNew, handleSave, tabId]);
+
+    const hasChanges = !isNew && Boolean(state.dirty || (syncStatus && syncStatus !== "clean"));
+
+    const handleRevertClick = useCallback(async () => {
+        if (!onRevert || reverting) return;
+        setReverting(true);
+        try {
+            await onRevert();
+        } finally {
+            setReverting(false);
+        }
+    }, [onRevert, reverting]);
+
+    const canSave = Boolean(state.serviceName && state.methodName);
+    const syncDisabled = !hasChanges || (!canSave && state.dirty) || syncing;
+    const revertDisabled = !hasChanges || reverting;
+    const syncTitle = !hasChanges ? strings.common.noChangesToSync : strings.common.syncTooltip;
+    const revertTitle = !hasChanges ? strings.common.noChangesToRevert : strings.common.revertTooltip;
 
     const set = (field: keyof GrpcTabState) => (value: unknown) => dispatch({ type: "SET_FIELD", field, value });
 
@@ -474,6 +534,16 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
                 saveDisabled={tabType === "request" ? (!state.serviceName || !state.methodName) : (!state.serviceName || !state.methodName)}
                 saving={state.saving}
                 savingLabel={strings.server.saving}
+                onSync={onSync ? handleSyncClick : undefined}
+                onRevert={onRevert ? handleRevertClick : undefined}
+                onHistory={onHistory}
+                historyDisabled={!onHistory || !!draftTabId}
+                syncDisabled={syncDisabled}
+                revertDisabled={revertDisabled}
+                syncing={syncing}
+                reverting={reverting}
+                syncTitle={syncTitle}
+                revertTitle={revertTitle}
             />
         </div>
     );

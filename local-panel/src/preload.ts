@@ -67,9 +67,13 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("sync:status", handler);
     return () => ipcRenderer.off("sync:status", handler);
   },
-  publishEntity: (wsId: string, paths: string[]) => ipcRenderer.invoke("entity:publish", wsId, paths),
+  publishEntity: (wsId: string, paths: string[], message?: string) => ipcRenderer.invoke("entity:publish", wsId, paths, message),
   publishFolder: (wsId: string, kind: string, folderName: string | null) => ipcRenderer.invoke("folder:publish", wsId, kind, folderName),
   restoreEntity: (wsId: string, relPath: string) => ipcRenderer.invoke("entity:restore", wsId, relPath),
+  gitGetDiff: (wsId: string, relPath: string) => ipcRenderer.invoke("git:diff", wsId, relPath),
+  gitDiscard: (wsId: string, relPath: string) => ipcRenderer.invoke("git:discard", wsId, relPath),
+  gitSync: (wsId: string, paths: string[], message?: string) => ipcRenderer.invoke("git:sync", wsId, paths, message),
+  gitGetHistory: (wsId: string, relPath: string, opts?: { limit?: number; offset?: number }) => ipcRenderer.invoke("git:history", wsId, relPath, opts),
   getEntitySyncStatus: (wsId: string) => ipcRenderer.invoke("sync:getEntityStatus", wsId),
   onEntitySyncStatus: (cb: (data: { wsId: string; status: Record<string, string> }) => void) => {
     const handler = (_: unknown, data: unknown) => cb(data as any);

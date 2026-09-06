@@ -52,6 +52,14 @@ export interface RestTabProps {
   enabled?: boolean;
   /** Called when the enabled toggle is clicked */
   onToggleEnabled?: () => void;
+  /** Commit and push current state of entity */
+  onSync?: (savedId?: string) => Promise<void>;
+  /** Revert local changes to last synced version */
+  onRevert?: () => Promise<void>;
+  /** Git sync status of this entity */
+  syncStatus?: "clean" | "modified" | "new" | "deleted";
+  /** View git history for this entity */
+  onHistory?: () => void;
 }
 
 // -- Component --------------------------------------------------------------
@@ -60,7 +68,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
   {
     tabType, tabId, draftTabId, initial, folders = [], activeEnv = null,
     onSave, onClose, onCreateMock, onDirtyChange, showCurlImport = false, label,
-    enabled, onToggleEnabled,
+    enabled, onToggleEnabled, onSync, onRevert, syncStatus, onHistory,
   },
   ref,
 ) {
@@ -90,7 +98,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
   );
 
   // handleSave defined below - use a ref so the imperative handle below captures it without ordering issues
-  const handleSaveRef = useRef<() => void>(() => {});
+  const handleSaveRef = useRef<() => Promise<any>>(() => Promise.resolve());
 
   // -- cURL parsing ------------------------------------------------------
 
@@ -223,12 +231,14 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
     if (tabType === "mock" && (!state.url.trim() || (state.useRegex && !!state.regexError))) return;
     dispatch({ type: "SAVE_START" });
     try {
-      await onSave(stateToSavePayload(state, tabType));
+      const res = await onSave(stateToSavePayload(state, tabType));
       markSaved();
       savedSnapshot.current = JSON.stringify(stateToDraft(state, tabType));
       dispatch({ type: "SAVE_SUCCESS" });
+      return res;
     } catch (e) {
       dispatch({ type: "SAVE_ERROR", error: e instanceof Error ? e.message : strings.editor.saveFailed });
+      throw e;
     }
   }, [state, tabType, onSave, markSaved]);
 
@@ -242,9 +252,39 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
       savedSnapshot.current = JSON.stringify(stateToDraft(initState(entity, null, tabType), tabType));
     },
     save() {
-      handleSaveRef.current();
+      return handleSaveRef.current();
     },
   }), [tabType]);
+
+  const [syncing, setSyncing] = useState(false);
+  const [reverting, setReverting] = useState(false);
+
+  const handleSyncClick = useCallback(async () => {
+    if (syncing || !onSync) return;
+    setSyncing(true);
+    try {
+      let savedId: string | undefined = undefined;
+      if (isDirty || draftTabId) {
+        const res: any = await handleSave();
+        if (res && typeof res === "object" && res.id) {
+          savedId = res.id;
+        }
+      }
+      await onSync(savedId);
+    } finally {
+      setSyncing(false);
+    }
+  }, [syncing, onSync, isDirty, draftTabId, handleSave]);
+
+  const handleRevertClick = useCallback(async () => {
+    if (reverting || !onRevert) return;
+    setReverting(true);
+    try {
+      await onRevert();
+    } finally {
+      setReverting(false);
+    }
+  }, [reverting, onRevert]);
 
   // -- Create mock from current request/response -------------------------
 
@@ -301,6 +341,12 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
   const urlPlaceholder = tabType === "request" ? strings.requests.urlPlaceholder : strings.mocks.urlPatternPlaceholder;
 
   const errorMsg = state.sendErr ?? state.saveErr ?? state.regexError ?? state.testError ?? null;
+
+  const hasDiff = !draftTabId && Boolean(isDirty || (syncStatus && syncStatus !== "clean"));
+  const syncDisabled = !hasDiff || (!canSaveBase && isDirty) || syncing;
+  const revertDisabled = !hasDiff || reverting;
+  const syncTitle = !hasDiff ? strings.common.noChangesToSync : strings.common.syncTooltip;
+  const revertTitle = !hasDiff ? strings.common.noChangesToRevert : strings.common.revertTooltip;
 
   // -- Render -------------------------------------------------------------
 
@@ -470,6 +516,16 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         saveDisabled={!canSave}
         saving={state.saving}
         savingLabel={strings.server.saving}
+        onSync={onSync ? handleSyncClick : undefined}
+        onRevert={onRevert ? handleRevertClick : undefined}
+        onHistory={onHistory}
+        historyDisabled={!onHistory || !!draftTabId}
+        syncDisabled={syncDisabled}
+        revertDisabled={revertDisabled}
+        syncing={syncing}
+        reverting={reverting}
+        syncTitle={syncTitle}
+        revertTitle={revertTitle}
         extraLeft={
           tabType === "mock" ? (
             !state.resBody.trim()

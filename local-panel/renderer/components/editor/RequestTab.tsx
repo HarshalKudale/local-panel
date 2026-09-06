@@ -5,6 +5,7 @@ import FolderPicker from "@/components/sidebar/FolderPicker";
 import { Environment, Folder } from "@/types";
 import { methodColor } from "@/lib/utils";
 import { strings } from "@/lib/strings";
+import { RefreshCw, RotateCcw, Loader2, History } from "@/lib/icons";
 
 // -- UrlBar -----------------------------------------------------------------
 // Method dropdown + URL input + EnvVarHint + action button in one row.
@@ -151,19 +152,79 @@ export interface BottomBarProps {
   saveDisabled?: boolean;
   saving?: boolean;
   savingLabel?: string;
+  /** Commit and push current state of entity */
+  onSync?: () => void | Promise<void>;
+  /** Revert local changes to last synced version */
+  onRevert?: () => void | Promise<void>;
+  /** View git commit history for this entity */
+  onHistory?: () => void;
+  syncDisabled?: boolean;
+  revertDisabled?: boolean;
+  historyDisabled?: boolean;
+  syncing?: boolean;
+  reverting?: boolean;
+  syncTitle?: string;
+  revertTitle?: string;
+  historyTitle?: string;
   /** Extra nodes after the folder picker */
   extraLeft?: React.ReactNode;
 }
 
 export function BottomBar({
   folders = [], folderId, onFolderChange, onCancel, onSave,
-  saveLabel, saveDisabled, saving, savingLabel, extraLeft,
+  saveLabel, saveDisabled, saving, savingLabel,
+  onSync, onRevert, onHistory, syncDisabled, revertDisabled, historyDisabled, syncing, reverting,
+  syncTitle, revertTitle, historyTitle, extraLeft,
 }: BottomBarProps) {
   return (
     <div className="flex items-center justify-between px-4 py-2.5 border-t border-border flex-shrink-0 bg-background/30">
       <div className="flex items-center gap-2">
         {folders.length > 0 && (
           <FolderPicker folders={folders} value={folderId} onChange={onFolderChange} />
+        )}
+        {onSync && (
+          <button
+            type="button"
+            onClick={onSync}
+            disabled={syncDisabled || syncing}
+            title={syncTitle ?? strings.common.syncTooltip}
+            className="px-2.5 py-1.5 rounded border border-border bg-card hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed text-foreground text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            {syncing ? (
+              <Loader2 size={12} className="animate-spin text-signal flex-shrink-0" />
+            ) : (
+              <RefreshCw size={12} className="text-signal flex-shrink-0" />
+            )}
+            <span>{syncing ? strings.common.syncing : strings.common.sync}</span>
+          </button>
+        )}
+        {onRevert && (
+          <button
+            type="button"
+            onClick={onRevert}
+            disabled={revertDisabled || reverting}
+            title={revertTitle ?? strings.common.revertTooltip}
+            className="px-2.5 py-1.5 rounded border border-border bg-card hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed text-foreground text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            {reverting ? (
+              <Loader2 size={12} className="animate-spin text-amber flex-shrink-0" />
+            ) : (
+              <RotateCcw size={12} className="text-amber flex-shrink-0" />
+            )}
+            <span>{reverting ? strings.common.reverting : strings.common.revert}</span>
+          </button>
+        )}
+        {onHistory && (
+          <button
+            type="button"
+            onClick={onHistory}
+            disabled={historyDisabled}
+            title={historyTitle ?? strings.folderTree.history}
+            className="px-2.5 py-1.5 rounded border border-border bg-card hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed text-foreground text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <History size={12} className="text-muted-foreground flex-shrink-0" />
+            <span>{strings.folderTree.history}</span>
+          </button>
         )}
         {extraLeft}
       </div>

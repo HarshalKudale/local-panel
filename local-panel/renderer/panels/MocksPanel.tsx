@@ -135,6 +135,7 @@ export default function MocksPanel({
     setPrefillData((prev) => { const next = { ...prev }; delete next[tabId]; return next; });
     setNewTabInitials((prev) => { const next = { ...prev }; delete next[tabId]; return next; });
     onAfterSave?.();
+    return created;
   }, [mocks.length, reloadMocks, replaceTab, onAfterSave]);
 
   const handleTabSave = useCallback(async (tabId: string, data: Omit<MockRule, "id" | "createdAt" | "workspaceId">) => {
@@ -145,6 +146,7 @@ export default function MocksPanel({
     await window.api.updateMock(updated);
     await reloadMocks();
     onAfterSave?.();
+    return updated;
   }, [loadedEntities, mocks, reloadMocks, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
@@ -367,12 +369,11 @@ export default function MocksPanel({
         ) : (
           openTabs.map((tabId) => {
             const isUnsaved = isDraft(tabId);
-            const isPrefill = tabId.startsWith("prefill-");
             const mock = isUnsaved ? null : (loadedEntities[tabId] ?? mocks.find((m) => m.id === tabId) ?? null);
+            const initialData = isUnsaved ? (prefillData[tabId] ?? newTabInitials[tabId] ?? null) : mock;
             if (!isUnsaved && !mock) return null;
-            const initialForTab: Partial<MockRule> | null = isPrefill
-              ? (prefillData[tabId] ?? null)
-              : isUnsaved ? (newTabInitials[tabId] ?? null) : mock;
+            const relPath = mock ? entityRelPath("mocks", mock, folders) : "";
+            const syncStatus = relPath ? entitySyncStatus?.[relPath] : undefined;
             return (
               <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
                 <RestTab
@@ -380,7 +381,7 @@ export default function MocksPanel({
                   tabType="mock"
                   tabId={tabId}
                   draftTabId={isUnsaved ? tabId : null}
-                  initial={initialForTab}
+                  initial={initialData}
                   folders={folders}
                   activeEnv={activeEnv}
                   onSave={(data) => isUnsaved
@@ -392,6 +393,24 @@ export default function MocksPanel({
                   showCurlImport={isUnsaved}
                   enabled={isUnsaved ? undefined : mocks.find((m) => m.id === tabId)?.enabled}
                   onToggleEnabled={isUnsaved ? undefined : () => { const m = mocks.find((x) => x.id === tabId); if (m) handleToggle(m); }}
+                  onSync={onPublishItem ? async (savedId?: string) => {
+                    const targetId = savedId ?? tabId;
+                    await onPublishItem(targetId);
+                  } : undefined}
+                  onRevert={onRestoreItem ? async () => {
+                    await onRestoreItem(tabId);
+                    const res = await window.api.loadEntity(config.activeWorkspaceId, "mocks", tabId);
+                    if (res.ok && res.entity) {
+                      const entity = res.entity as MockRule;
+                      setLoadedEntities((prev) => ({ ...prev, [tabId]: entity }));
+                      tabRefs.current[tabId]?.refresh?.(entity);
+                    } else if (!res.ok) {
+                      closeTab(tabId);
+                    }
+                    setDirtyTabs((prev) => ({ ...prev, [tabId]: false }));
+                  } : undefined}
+                  onHistory={onHistoryOpen && relPath && !isUnsaved ? () => onHistoryOpen(relPath) : undefined}
+                  syncStatus={syncStatus}
                 />
               </div>
             );

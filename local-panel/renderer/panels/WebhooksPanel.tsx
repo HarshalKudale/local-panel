@@ -38,23 +38,29 @@ interface WebhookEditorProps {
   initial: Partial<SavedWebhook> | null;
   isNew: boolean;
   webhookPort: number;
-  onSave(data: Omit<SavedWebhook, "id" | "createdAt" | "workspaceId">): Promise<void>;
+  onSave(data: Omit<SavedWebhook, "id" | "createdAt" | "workspaceId">): Promise<any>;
   onClose(): void;
   folders?: Folder[];
   payloads: WebhookPayload[];
   isActive: boolean;
   isAtLimit: boolean;
   onDirtyChange?: (dirty: boolean) => void;
+  onSync?: (savedId?: string) => Promise<void>;
+  onRevert?: () => Promise<void>;
+  syncStatus?: "clean" | "modified" | "new" | "deleted";
+  onHistory?: () => void;
 }
 
-interface WebhookEditorHandle {
-  save(): void;
+export interface WebhookEditorHandle {
+  save(): Promise<any> | void;
+  refresh?(hook: SavedWebhook): void;
 }
 
 const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(function WebhookEditor({
   tabId, webhookId, initial, isNew,
   webhookPort, onSave, onClose, folders = [],
   payloads, isActive, isAtLimit, onDirtyChange,
+  onSync, onRevert, syncStatus, onHistory,
 }: WebhookEditorProps, ref) {
   const draft = isDraftId(tabId) ? loadDraft<WebhookDraft>(tabId) : null;
   const src = draft ?? initial;
@@ -101,10 +107,12 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
   const handleSave = useCallback(async () => {
     setSaving(true); setSaveErr(null);
     try {
-      await onSave({ name: name.trim(), urlSuffix: urlSuffix.trim(), folderId: folderId ?? null });
+      const res = await onSave({ name: name.trim(), urlSuffix: urlSuffix.trim(), folderId: folderId ?? null });
       markSaved();
+      return res;
     } catch (e) {
       setSaveErr(e instanceof Error ? e.message : "Save failed");
+      throw e;
     } finally {
       setSaving(false);
     }
@@ -112,9 +120,51 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
 
   useImperativeHandle(ref, () => ({
     save() {
-      void handleSave();
+      return handleSave();
+    },
+    refresh(hook: SavedWebhook) {
+      setName(hook.name ?? "");
+      setUrlSuffix(hook.urlSuffix ?? "");
+      setFolderId(hook.folderId ?? null);
     },
   }), [handleSave]);
+
+  const [syncing, setSyncing] = useState(false);
+  const [reverting, setReverting] = useState(false);
+
+  const handleSyncClick = useCallback(async () => {
+    if (!onSync || syncing) return;
+    setSyncing(true);
+    try {
+      let targetId = tabId;
+      if (isDirtyWh || isNew) {
+        const saved: any = await handleSave();
+        if (saved && typeof saved === "object" && saved.id) {
+          targetId = saved.id;
+        }
+      }
+      await onSync(targetId);
+    } finally {
+      setSyncing(false);
+    }
+  }, [onSync, syncing, isDirtyWh, isNew, handleSave, tabId]);
+
+  const hasChanges = !isNew && Boolean(isDirtyWh || (syncStatus && syncStatus !== "clean"));
+
+  const handleRevertClick = useCallback(async () => {
+    if (!onRevert || reverting) return;
+    setReverting(true);
+    try {
+      await onRevert();
+    } finally {
+      setReverting(false);
+    }
+  }, [onRevert, reverting]);
+
+  const syncDisabled = !hasChanges || syncing;
+  const revertDisabled = !hasChanges || reverting;
+  const syncTitle = !hasChanges ? strings.common.noChangesToSync : strings.common.syncTooltip;
+  const revertTitle = !hasChanges ? strings.common.noChangesToRevert : strings.common.revertTooltip;
 
   const fullUrl = `http://localhost:${webhookPort}${BASE_URL_SEGMENT}${urlSuffix.replace(/^\/+/, "")}`;
 
@@ -268,6 +318,16 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
         saving={saving}
         savingLabel={strings.server.saving}
         extraLeft={saveErr ? <span className="text-xs text-destructive">{saveErr}</span> : undefined}
+        onSync={onSync ? handleSyncClick : undefined}
+        onRevert={onRevert ? handleRevertClick : undefined}
+        onHistory={onHistory}
+        historyDisabled={!onHistory || isNew}
+        syncDisabled={syncDisabled}
+        revertDisabled={revertDisabled}
+        syncing={syncing}
+        reverting={reverting}
+        syncTitle={syncTitle}
+        revertTitle={revertTitle}
       />
     </div>
   );
@@ -471,6 +531,7 @@ export default function WebhooksPanel({
     // Deregister draft (won't do anything, but clean state)
     if (isDraftId(tabId)) clearDraft(tabId);
     onAfterSave?.();
+    return created;
   }, [reloadWebhooks, onAfterSave]);
 
   const handleTabSave = useCallback(async (tabId: string, data: Omit<SavedWebhook, "id" | "createdAt" | "workspaceId">) => {
@@ -486,6 +547,7 @@ export default function WebhooksPanel({
     await window.api.updateWebhook(updated);
     await reloadWebhooks();
     onAfterSave?.();
+    return updated;
   }, [loadedEntities, webhooks, activeTabs, reloadWebhooks, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
@@ -698,6 +760,8 @@ export default function WebhooksPanel({
               const isActivated = !isDraft && activeTabs.has(tabId);
               const isAtLimit = activeTabs.size >= MAX_ACTIVE_WEBHOOKS;
               const tabPayloads = isDraft ? [] : (payloadMap[tabId] ?? []);
+              const relPath = hook ? entityRelPath("webhooks", hook, folders) : "";
+              const syncStatus = relPath ? entitySyncStatus?.[relPath] : undefined;
 
               return (
                 <div key={tabId} style={{ display: isTabActive ? "flex" : "none", flexDirection: "column", height: "100%" }}>
@@ -715,6 +779,24 @@ export default function WebhooksPanel({
                     isActive={isActivated}
                     isAtLimit={isAtLimit && !isActivated}
                     onDirtyChange={(dirty) => setDirtyTabs((prev) => ({ ...prev, [tabId]: dirty }))}
+                    onSync={onPublishItem ? async (savedId?: string) => {
+                      const targetId = savedId ?? tabId;
+                      await onPublishItem(targetId);
+                    } : undefined}
+                    onRevert={onRestoreItem ? async () => {
+                      await onRestoreItem(tabId);
+                      const res = await window.api.loadEntity(config.activeWorkspaceId, "webhooks", tabId);
+                      if (res.ok && res.entity) {
+                        const entity = res.entity as SavedWebhook;
+                        setLoadedEntities((prev) => ({ ...prev, [tabId]: entity }));
+                        tabRefs.current[tabId]?.refresh?.(entity);
+                      } else if (!res.ok) {
+                        closeTab(tabId);
+                      }
+                      setDirtyTabs((prev) => ({ ...prev, [tabId]: false }));
+                    } : undefined}
+                    onHistory={onHistoryOpen && relPath && !isDraft ? () => onHistoryOpen(relPath) : undefined}
+                    syncStatus={syncStatus}
                   />
                 </div>
               );

@@ -6,7 +6,7 @@ import GrpcTab from "@/components/grpc/GrpcTab";
 import DraftsFolder from "@/components/sidebar/DraftsFolder";
 import { loadDraft } from "@/lib/useDraftPersist";
 import { useEntityTabs } from "@/lib/useEntityTabs";
-import { calculateFolderStatus } from "@/lib/utils";
+import { calculateFolderStatus, entityRelPath } from "@/lib/utils";
 import { Network, Play, Square } from "@/lib/icons";
 import TabBar from "@/components/editor/TabBar";
 import { SidebarLayout, SidebarHeader } from "@/components/ui";
@@ -28,11 +28,15 @@ interface Props {
     config: AppConfig;
     onConfigChange: (cfg: AppConfig) => Promise<void>;
     activeEnv?: Environment | null;
+    onHistoryOpen?: (filePath: string) => void;
+    entitySyncStatus?: Record<string, "clean" | "modified" | "new" | "deleted">;
+    onPublishItem?: (id: string) => void;
+    onRestoreItem?: (id: string) => void;
 }
 
 // -- GrpcMocksPanel -----------------------------------------------------
 
-export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = null }: Props) {
+export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = null, onHistoryOpen, entitySyncStatus, onPublishItem, onRestoreItem }: Props) {
     const mocks = config.grpcMocks ?? [];
     const folders = config.grpcMockFolders ?? [];
 
@@ -88,6 +92,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
         const created = await window.api.addGrpcMock(data);
         await reloadConfig();
         replaceTab(tabId, created.id);
+        return created;
     }, [reloadConfig, replaceTab]);
 
     const handleTabSave = useCallback(async (tabId: string, data: Omit<SavedGrpcMock, "id" | "createdAt" | "workspaceId">) => {
@@ -97,6 +102,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
         setLoadedEntities((prev) => ({ ...prev, [tabId]: updated }));
         await window.api.updateGrpcMock(updated);
         await reloadConfig();
+        return updated;
     }, [loadedEntities, mocks, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
@@ -218,6 +224,9 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                     onMoveItems={handleMoveItems}
                     onOpenNewTab={openNewTab}
                     onBeforeCreateFolder={() => true}
+                    pathStatusMap={entitySyncStatus}
+                    onPublishItem={onPublishItem}
+                    onRestoreItem={onRestoreItem}
                 />
             </div>
         </>
@@ -253,7 +262,10 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                     openTabs.map((tabId) => {
                         const isUnsaved = isDraft(tabId);
                         const mock = isUnsaved ? null : (loadedEntities[tabId] ?? mocks.find((m) => m.id === tabId) ?? null);
+                        const initialData = isUnsaved ? null : mock;
                         if (!isUnsaved && !mock) return null;
+                        const relPath = mock ? entityRelPath("grpcMocks", mock, folders) : "";
+                        const syncStatus = relPath ? entitySyncStatus?.[relPath] : undefined;
                         return (
                             <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
                                 <GrpcTab
@@ -261,7 +273,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                                     tabType="mock"
                                     tabId={tabId}
                                     draftTabId={isUnsaved ? tabId : null}
-                                    initial={mock}
+                                    initial={initialData}
                                     folders={folders}
                                     activeEnv={activeEnv}
                                     onSave={(data) => isUnsaved
@@ -269,6 +281,23 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                                         : handleTabSave(tabId, data as Omit<SavedGrpcMock, "id" | "createdAt" | "workspaceId">)
                                     }
                                     onClose={() => closeTab(tabId)}
+                                    onSync={onPublishItem ? async (savedId?: string) => {
+                                        const targetId = savedId ?? tabId;
+                                        await onPublishItem(targetId);
+                                    } : undefined}
+                                    onRevert={onRestoreItem ? async () => {
+                                        await onRestoreItem(tabId);
+                                        const res = await window.api.loadEntity(config.activeWorkspaceId, "grpcMocks", tabId);
+                                        if (res.ok && res.entity) {
+                                            const entity = res.entity as SavedGrpcMock;
+                                            setLoadedEntities((prev) => ({ ...prev, [tabId]: entity }));
+                                            tabRefs.current[tabId]?.refresh?.(entity);
+                                        } else if (!res.ok) {
+                                            closeTab(tabId);
+                                        }
+                                    } : undefined}
+                                    onHistory={onHistoryOpen && relPath && !isUnsaved ? () => onHistoryOpen(relPath) : undefined}
+                                    syncStatus={syncStatus}
                                 />
                             </div>
                         );

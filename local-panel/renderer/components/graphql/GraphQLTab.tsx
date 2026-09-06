@@ -39,12 +39,20 @@ export interface GraphQLTabProps {
     onClose(): void;
     onDirtyChange?(dirty: boolean): void;
     label?: string;
+    /** Commit and push current state of entity */
+    onSync?: (savedId?: string) => Promise<void>;
+    /** Revert local changes to last synced version */
+    onRevert?: () => Promise<void>;
+    /** Git sync status of this entity */
+    syncStatus?: "clean" | "modified" | "new" | "deleted";
+    /** View git history for this entity */
+    onHistory?: () => void;
 }
 
 // -- Component --------------------------------------------------------------
 
 const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQLTab(
-    { tabType, tabId, draftTabId, initial, folders = [], activeEnv = null, onSave, onClose, onDirtyChange, label },
+    { tabType, tabId, draftTabId, initial, folders = [], activeEnv = null, onSave, onClose, onDirtyChange, label, onSync, onRevert, syncStatus, onHistory },
     ref,
 ) {
     const draft = draftTabId
@@ -59,7 +67,7 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
         () => initGraphQLState(initial ?? null, draft, tabType),
     );
 
-    const [initialSnapshot] = useState(() => JSON.stringify(stateToDraft(initGraphQLState(initial ?? null, draft, tabType), tabType)));
+    const [initialSnapshot, setInitialSnapshot] = useState(() => JSON.stringify(stateToDraft(initGraphQLState(initial ?? null, draft, tabType), tabType)));
     useEffect(() => {
         const current = JSON.stringify(stateToDraft(state, tabType));
         onDirtyChange?.(current !== initialSnapshot);
@@ -117,9 +125,11 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
         dispatch({ type: "SAVE_START" });
         try {
             const data = tabType === "request" ? stateToRequestPayload(state) : stateToMockPayload(state);
-            await onSave(data);
+            const res = await onSave(data);
             dispatch({ type: "SAVE_SUCCESS" });
             markSaved();
+            setInitialSnapshot(JSON.stringify(stateToDraft(state, tabType)));
+            return res;
         } catch {
             dispatch({ type: "SAVE_ERROR" });
         }
@@ -128,11 +138,50 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
     useImperativeHandle(ref, () => ({
         refresh(entity: SavedGraphQLRequest | SavedGraphQLMock) {
             dispatch({ type: "REFRESH", entity, tabType });
+            setInitialSnapshot(JSON.stringify(stateToDraft(initGraphQLState(entity, null, tabType), tabType)));
         },
         save() {
-            void handleSave();
+            return handleSave();
         },
     }), [tabType, handleSave]);
+
+    const [syncing, setSyncing] = useState(false);
+    const [reverting, setReverting] = useState(false);
+
+    const isDirty = JSON.stringify(stateToDraft(state, tabType)) !== initialSnapshot;
+    const canSave = tabType === "request" ? !!(state.name || state.endpointUrl) : !!state.name;
+    const hasLocalChanges = !draftTabId && Boolean(isDirty || (syncStatus && syncStatus !== "clean"));
+    const syncDisabled = !hasLocalChanges || (!canSave && isDirty) || syncing;
+    const revertDisabled = !hasLocalChanges || reverting;
+    const syncTitle = !hasLocalChanges ? strings.common.noChangesToSync : strings.common.syncTooltip;
+    const revertTitle = !hasLocalChanges ? strings.common.noChangesToRevert : strings.common.revertTooltip;
+
+    const handleSyncClick = useCallback(async () => {
+        if (syncing || !onSync) return;
+        setSyncing(true);
+        try {
+            let savedId: string | undefined = undefined;
+            if (isDirty || draftTabId) {
+                const res: any = await handleSave();
+                if (res && typeof res === "object" && res.id) {
+                    savedId = res.id;
+                }
+            }
+            await onSync(savedId);
+        } finally {
+            setSyncing(false);
+        }
+    }, [syncing, onSync, isDirty, draftTabId, handleSave]);
+
+    const handleRevertClick = useCallback(async () => {
+        if (reverting || !onRevert) return;
+        setReverting(true);
+        try {
+            await onRevert();
+        } finally {
+            setReverting(false);
+        }
+    }, [reverting, onRevert]);
 
     // -- Render: Request mode -----------------------------------------------
 
@@ -397,6 +446,16 @@ const GraphQLTab = forwardRef<GraphQLTabHandle, GraphQLTabProps>(function GraphQ
                 saveDisabled={tabType === "request" ? !state.name && !state.endpointUrl : !state.name}
                 saving={state.saving}
                 savingLabel={strings.server.saving}
+                onSync={onSync ? handleSyncClick : undefined}
+                onRevert={onRevert ? handleRevertClick : undefined}
+                onHistory={onHistory}
+                historyDisabled={!onHistory || !!draftTabId}
+                syncDisabled={syncDisabled}
+                revertDisabled={revertDisabled}
+                syncing={syncing}
+                reverting={reverting}
+                syncTitle={syncTitle}
+                revertTitle={revertTitle}
             />
         </div>
     );

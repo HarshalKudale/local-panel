@@ -43,6 +43,7 @@ import {
 } from "@/sync/syncManager";
 import { startAutoSync, stopAutoSync, updateLastKnownHead } from "@/sync/autoSync";
 import { publishEntities, restoreEntity } from "@/sync/publishService";
+import { getFileDiff, discardChanges, syncChanges, getFileHistory } from "@/sync/gitOps";
 import { getWorkspaceSyncStatus, invalidateCache } from "@/sync/statusTracker";
 
 /** Returns true if the relative path has ever been committed to the workspace git repo. */
@@ -1518,27 +1519,37 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle("sync:getEntityStatus", (_e, wsId: string) => getWorkspaceSyncStatus(wsId));
 
-  ipcMain.handle("entity:publish", async (_e, wsId: string, paths: string[]) => {
-    const result = await publishEntities({ wsId, paths });
-    if (result.ok) {
-      // Clean up pending deletions for the published paths
-      for (const p of paths) {
-        const base = p.split(/[/\\]/).pop();
-        if (base?.endsWith(".json")) {
-          const id = base.slice(0, -5);
-          for (const kind of ["requests", "mocks", "sockets", "webhooks"]) {
-            const pending = getPendingDeletions(wsId, kind);
-            if (pending.some((e) => e.id === id)) {
-              removePendingDeletion(wsId, kind, id);
-              removeNameEntry(wsId, kind, id);
-            }
-          }
-        }
-      }
-    }
-    invalidateCache(wsId);
+  // ── Generic Git Operations (file-centric) ───────────────────────────────────
+
+  ipcMain.handle("git:diff", (_e, wsId: string, relPath: string) => {
+    return getFileDiff(wsId, relPath);
+  });
+
+  ipcMain.handle("git:discard", async (_e, wsId: string, relPath: string) => {
+    const result = await discardChanges(wsId, relPath);
     broadcastEntityStatus(wsId);
-    // Update auto-sync poller's last-known head to prevent immediate re-pull of own commits
+    reloadConfig();
+    return result;
+  });
+
+  ipcMain.handle("git:sync", async (_e, wsId: string, paths: string[], message?: string) => {
+    const result = await syncChanges(wsId, paths, message);
+    broadcastEntityStatus(wsId);
+    try {
+      const sha = await getRemoteHead(wsId);
+      if (sha) updateLastKnownHead(wsId, sha);
+    } catch { }
+    return result;
+  });
+
+  ipcMain.handle("git:history", (_e, wsId: string, relPath: string, opts?: { limit?: number; offset?: number }) => {
+    return getFileHistory(wsId, relPath, opts);
+  });
+
+  // Backward-compatible entity / folder handlers delegating to generic git ops
+  ipcMain.handle("entity:publish", async (_e, wsId: string, paths: string[], message?: string) => {
+    const result = await syncChanges(wsId, paths, message);
+    broadcastEntityStatus(wsId);
     try {
       const sha = await getRemoteHead(wsId);
       if (sha) updateLastKnownHead(wsId, sha);
@@ -1548,52 +1559,20 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle("folder:publish", async (_e, wsId: string, kind: string, folderName: string | null) => {
     const folderPath = folderName ? `${kind}/${sanitizeDirName(folderName)}/` : `${kind}/`;
-    const result = await publishEntities({ wsId, paths: [folderPath] });
-    if (result.ok) {
-      // Clear pending deletions covered by this folder publish
-      const pending = getPendingDeletions(wsId, kind);
-      if (folderName) {
-        const cfg = loadConfig();
-        const allFolders = [...(cfg.requestFolders ?? []), ...(cfg.mockFolders ?? []), ...(cfg.wsFolders ?? []), ...(cfg.webhookFolders ?? [])];
-        const folder = allFolders.find((f) => f.name === folderName);
-        for (const p of pending) {
-          if (!folder || p.folderId === folder.id) {
-            removePendingDeletion(wsId, kind, p.id);
-            removeNameEntry(wsId, kind, p.id);
-          }
-        }
-      } else {
-        for (const p of pending) removeNameEntry(wsId, kind, p.id);
-        clearPendingDeletions(wsId, kind);
-      }
-    }
-    invalidateCache(wsId);
+    const result = await syncChanges(wsId, [folderPath]);
     broadcastEntityStatus(wsId);
+    try {
+      const sha = await getRemoteHead(wsId);
+      if (sha) updateLastKnownHead(wsId, sha);
+    } catch { }
     return result;
   });
 
   ipcMain.handle("entity:restore", async (_e, wsId: string, relPath: string) => {
-    const base = relPath.split(/[/\\]/).pop();
-    const entityId = base?.endsWith(".json") ? base.slice(0, -5) : null;
-
-    const result = await restoreEntity(wsId, relPath);
-    if (entityId) {
-      for (const kind of ["requests", "mocks", "sockets", "webhooks"]) {
-        const pending = getPendingDeletions(wsId, kind);
-        if (pending.some((e) => e.id === entityId)) {
-          removePendingDeletion(wsId, kind, entityId);
-          if (!result.ok) {
-            removeNameEntry(wsId, kind, entityId);
-          }
-        }
-      }
-      if (result.ok && relPath.startsWith("mocks/")) {
-        reloadConfig();
-      }
-    }
-    invalidateCache(wsId);
+    const result = await discardChanges(wsId, relPath);
     broadcastEntityStatus(wsId);
-    return { ok: true };
+    reloadConfig();
+    return result;
   });
 
   // ── Audit Log ──────────────────────────────────────────────────────────────

@@ -37,12 +37,21 @@ export interface SoapTabProps {
     onSave(data: Omit<SavedSoapRequest, "id" | "createdAt" | "workspaceId"> | Omit<SavedSoapMock, "id" | "createdAt" | "workspaceId">): Promise<void>;
     onClose(): void;
     label?: string;
+    onDirtyChange?(dirty: boolean): void;
+    /** Commit and push current state of entity */
+    onSync?: (savedId?: string) => Promise<void>;
+    /** Revert local changes to last synced version */
+    onRevert?: () => Promise<void>;
+    /** Git sync status of this entity */
+    syncStatus?: "clean" | "modified" | "new" | "deleted";
+    /** View git history for this entity */
+    onHistory?: () => void;
 }
 
 // -- Component --------------------------------------------------------------
 
 const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
-    { tabType, tabId, draftTabId, initial, folders = [], activeEnv = null, onSave, onClose, label },
+    { tabType, tabId, draftTabId, initial, folders = [], activeEnv = null, onSave, onClose, label, onDirtyChange, onSync, onRevert, syncStatus, onHistory },
     ref,
 ) {
     const draft = draftTabId
@@ -56,6 +65,10 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
         undefined,
         () => initSoapState(initial ?? null, draft, tabType),
     );
+
+    const [initialSnapshot, setInitialSnapshot] = useState(() => JSON.stringify(soapStateToDraft(initSoapState(initial ?? null, draft, tabType), tabType)));
+    const isDirty = JSON.stringify(soapStateToDraft(state, tabType)) !== initialSnapshot;
+    useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
 
     // Draft auto-save
     const { markSaved } = useDraftPersist(
@@ -77,19 +90,13 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
     // -- Send request -----------------------------------------------------
 
     const handleSend = useCallback(async () => {
-        if (!state.endpointUrl) return;
+        if (!state.endpointUrl.trim()) return;
         dispatch({ type: "SEND_START" });
         try {
             const url = resolveVars(state.endpointUrl, activeEnv);
-            const action = resolveVars(state.soapAction, activeEnv);
             const hdrs = resolveHeaders(state.headers, activeEnv);
             const body = resolveVars(state.body, activeEnv);
-            const result = await window.api.soapExecute(
-                url,
-                action,
-                hdrs,
-                body,
-            );
+            const result = await window.api.soapExecute(url, state.soapAction, hdrs, body);
             dispatch({
                 type: "SEND_SUCCESS",
                 status: result.status,
@@ -98,7 +105,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                 durationMs: result.durationMs,
             });
         } catch (err: any) {
-            dispatch({ type: "SEND_ERROR", error: err?.message ?? strings.soap.requestFailed });
+            dispatch({ type: "SEND_ERROR", error: err.message ?? String(err) });
         }
     }, [state.endpointUrl, state.soapAction, state.headers, state.body, activeEnv]);
 
@@ -108,9 +115,11 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
         dispatch({ type: "SAVE_START" });
         try {
             const payload = soapStateToSavePayload(state, tabType);
-            await onSave(payload);
+            const res = await onSave(payload);
             dispatch({ type: "SAVE_SUCCESS" });
             markSaved();
+            setInitialSnapshot(JSON.stringify(soapStateToDraft(state, tabType)));
+            return res;
         } catch {
             dispatch({ type: "SAVE_ERROR" });
         }
@@ -120,11 +129,49 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
     useImperativeHandle(ref, () => ({
         refresh(entity: SavedSoapRequest | SavedSoapMock) {
             dispatch({ type: "REFRESH", entity, tabType });
+            setInitialSnapshot(JSON.stringify(soapStateToDraft(initSoapState(entity, null, tabType), tabType)));
         },
         save() {
-            void handleSave();
+            return handleSave();
         },
     }), [tabType, handleSave]);
+
+    const [syncing, setSyncing] = useState(false);
+    const [reverting, setReverting] = useState(false);
+
+    const canSave = tabType === "request" ? !(!state.name && !state.endpointUrl) : !(!state.name && !state.endpointPattern);
+    const hasLocalChanges = !draftTabId && Boolean(isDirty || (syncStatus && syncStatus !== "clean"));
+    const syncDisabled = !hasLocalChanges || (!canSave && isDirty) || syncing;
+    const revertDisabled = !hasLocalChanges || reverting;
+    const syncTitle = !hasLocalChanges ? strings.common.noChangesToSync : strings.common.syncTooltip;
+    const revertTitle = !hasLocalChanges ? strings.common.noChangesToRevert : strings.common.revertTooltip;
+
+    const handleSyncClick = useCallback(async () => {
+        if (syncing || !onSync) return;
+        setSyncing(true);
+        try {
+            let savedId: string | undefined = undefined;
+            if (isDirty || draftTabId) {
+                const res: any = await handleSave();
+                if (res && typeof res === "object" && res.id) {
+                    savedId = res.id;
+                }
+            }
+            await onSync(savedId);
+        } finally {
+            setSyncing(false);
+        }
+    }, [syncing, onSync, isDirty, draftTabId, handleSave]);
+
+    const handleRevertClick = useCallback(async () => {
+        if (reverting || !onRevert) return;
+        setReverting(true);
+        try {
+            await onRevert();
+        } finally {
+            setReverting(false);
+        }
+    }, [reverting, onRevert]);
 
     // -- Request mode: left pane tabs -------------------------------------
 
@@ -382,6 +429,16 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                 saveDisabled={tabType === "request" ? !state.name && !state.endpointUrl : !state.name && !state.endpointPattern}
                 saving={state.saving}
                 savingLabel={strings.server.saving}
+                onSync={onSync ? handleSyncClick : undefined}
+                onRevert={onRevert ? handleRevertClick : undefined}
+                onHistory={onHistory}
+                historyDisabled={!onHistory || !!draftTabId}
+                syncDisabled={syncDisabled}
+                revertDisabled={revertDisabled}
+                syncing={syncing}
+                reverting={reverting}
+                syncTitle={syncTitle}
+                revertTitle={revertTitle}
             />
         </div>
     );

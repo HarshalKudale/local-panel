@@ -45,18 +45,23 @@ interface WsEditorProps {
   tabId: string;
   initial: Partial<SavedWsConnection> | null;
   isNew: boolean;
-  onSave(data: Omit<SavedWsConnection, "id" | "createdAt" | "workspaceId">): Promise<void>;
+  onSave(data: Omit<SavedWsConnection, "id" | "createdAt" | "workspaceId">): Promise<any>;
   onClose(): void;
   folders?: FolderType[];
   activeEnv?: Environment | null;
   onDirtyChange?: (dirty: boolean) => void;
+  onSync?: (savedId?: string) => Promise<void>;
+  onRevert?: () => Promise<void>;
+  syncStatus?: "clean" | "modified" | "new" | "deleted";
+  onHistory?: () => void;
 }
 
-interface WsEditorHandle {
-  save(): void;
+export interface WsEditorHandle {
+  save(): Promise<any> | void;
+  refresh?(conn: SavedWsConnection): void;
 }
 
-const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], activeEnv = null, onDirtyChange }: WsEditorProps, ref) {
+const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ tabId, initial, isNew, onSave, onClose, folders = [], activeEnv = null, onDirtyChange, onSync, onRevert, syncStatus, onHistory }: WsEditorProps, ref) {
   const draft = isDraft(tabId) ? loadDraft<WsDraft>(tabId) : null;
   const src = draft ?? initial;
 
@@ -133,10 +138,12 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
     if (!url.trim()) return;
     setSaving(true); setSaveErr(null);
     try {
-      await onSave({ name: name.trim(), url: url.trim(), headers: rowsToHeaders(headers), folderId: folderId ?? null });
+      const res = await onSave({ name: name.trim(), url: url.trim(), headers: rowsToHeaders(headers), folderId: folderId ?? null });
       markSaved();
+      return res;
     } catch (e) {
       setSaveErr(e instanceof Error ? e.message : "Save failed");
+      throw e;
     } finally {
       setSaving(false);
     }
@@ -144,9 +151,53 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
 
   useImperativeHandle(ref, () => ({
     save() {
-      void handleSave();
+      return handleSave();
+    },
+    refresh(conn: SavedWsConnection) {
+      setName(conn.name ?? "");
+      setUrl(conn.url ?? "");
+      setFolderId(conn.folderId ?? null);
+      setHeaders(headersToRows(conn.headers ?? {}));
     },
   }), [handleSave]);
+
+  const [syncing, setSyncing] = useState(false);
+  const [reverting, setReverting] = useState(false);
+
+  const handleSyncClick = useCallback(async () => {
+    if (!onSync || syncing) return;
+    setSyncing(true);
+    try {
+      let targetId = tabId;
+      if (isDirtyWs || isNew) {
+        const saved: any = await handleSave();
+        if (saved && typeof saved === "object" && saved.id) {
+          targetId = saved.id;
+        }
+      }
+      await onSync(targetId);
+    } finally {
+      setSyncing(false);
+    }
+  }, [onSync, syncing, isDirtyWs, isNew, handleSave, tabId]);
+
+  const hasChanges = !isNew && Boolean(isDirtyWs || (syncStatus && syncStatus !== "clean"));
+
+  const handleRevertClick = useCallback(async () => {
+    if (!onRevert || reverting) return;
+    setReverting(true);
+    try {
+      await onRevert();
+    } finally {
+      setReverting(false);
+    }
+  }, [onRevert, reverting]);
+
+  const canSave = Boolean(url.trim());
+  const syncDisabled = !hasChanges || (!canSave && isDirtyWs) || syncing;
+  const revertDisabled = !hasChanges || reverting;
+  const syncTitle = !hasChanges ? strings.common.noChangesToSync : strings.common.syncTooltip;
+  const revertTitle = !hasChanges ? strings.common.noChangesToRevert : strings.common.revertTooltip;
 
   const headerCount = headers.filter((r) => r.enabled && r.key.trim()).length;
 
@@ -399,6 +450,16 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
         saveDisabled={!url.trim() || (!isNew && !isDirtyWs)}
         saving={saving}
         savingLabel={strings.server.saving}
+        onSync={onSync ? handleSyncClick : undefined}
+        onRevert={onRevert ? handleRevertClick : undefined}
+        onHistory={onHistory}
+        historyDisabled={!onHistory || isNew}
+        syncDisabled={syncDisabled}
+        revertDisabled={revertDisabled}
+        syncing={syncing}
+        reverting={reverting}
+        syncTitle={syncTitle}
+        revertTitle={revertTitle}
       />
     </div>
   );
@@ -548,6 +609,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
     setOpenTabs((prev) => [...prev.filter((id) => id !== tabId), created.id]);
     setActiveTab(created.id);
     onAfterSave?.();
+    return created;
   }, [reloadConnections, onAfterSave]);
 
   const handleTabSave = useCallback(async (tabId: string, data: Omit<SavedWsConnection, "id" | "createdAt" | "workspaceId">) => {
@@ -558,6 +620,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
     await window.api.updateWsConnection(updated);
     await reloadConnections();
     onAfterSave?.();
+    return updated;
   }, [loadedEntities, connections, reloadConnections, onAfterSave]);
 
   const handleDelete = useCallback(async (id: string) => {
@@ -700,8 +763,11 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
           </div>
         ) : (
           openTabs.map((tabId) => {
-            const conn = isDraft(tabId) ? null : (loadedEntities[tabId] ?? connections.find((c) => c.id === tabId) ?? null);
-            if (!isDraft(tabId) && !conn) return null;
+            const isUnsaved = isDraft(tabId);
+            const conn = isUnsaved ? null : (loadedEntities[tabId] ?? connections.find((c) => c.id === tabId) ?? null);
+            if (!isUnsaved && !conn) return null;
+            const relPath = conn ? entityRelPath("sockets", conn, folders) : "";
+            const syncStatus = relPath ? entitySyncStatus?.[relPath] : undefined;
             return (
               <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
                 <WsEditor
@@ -709,12 +775,30 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
                   key={tabId}
                   tabId={tabId}
                   initial={conn}
-                  isNew={isDraft(tabId)}
-                  onSave={isDraft(tabId) ? (data) => handleNewSave(tabId, data) : (data) => handleTabSave(tabId, data)}
+                  isNew={isUnsaved}
+                  onSave={isUnsaved ? (data) => handleNewSave(tabId, data) : (data) => handleTabSave(tabId, data)}
                   onClose={() => closeTab(tabId)}
                   folders={folders}
                   activeEnv={activeEnv}
                   onDirtyChange={(dirty) => setDirtyTabs((prev) => ({ ...prev, [tabId]: dirty }))}
+                  onSync={onPublishItem ? async (savedId?: string) => {
+                    const targetId = savedId ?? tabId;
+                    await onPublishItem(targetId);
+                  } : undefined}
+                  onRevert={onRestoreItem ? async () => {
+                    await onRestoreItem(tabId);
+                    const res = await window.api.loadEntity(config.activeWorkspaceId, "sockets", tabId);
+                    if (res.ok && res.entity) {
+                      const entity = res.entity as SavedWsConnection;
+                      setLoadedEntities((prev) => ({ ...prev, [tabId]: entity }));
+                      tabRefs.current[tabId]?.refresh?.(entity);
+                    } else if (!res.ok) {
+                      closeTab(tabId);
+                    }
+                    setDirtyTabs((prev) => ({ ...prev, [tabId]: false }));
+                  } : undefined}
+                  onHistory={onHistoryOpen && relPath && !isUnsaved ? () => onHistoryOpen(relPath) : undefined}
+                  syncStatus={syncStatus}
                 />
               </div>
             );

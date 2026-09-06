@@ -99,9 +99,9 @@ function sanitizeDirName(name: string): string {
 type HasFolderId = { id: string; folderId?: string | null };
 type FolderLike = { id: string; name: string };
 
-/** Compute the relative git path for a folder-based entity (mocks, requests, sockets, rules). */
+/** Compute the relative git path for a folder-based entity (mocks, requests, sockets, rules, graphql, soap, grpc, etc.). */
 export function entityRelPath(
-  kind: "mocks" | "requests" | "sockets" | "webhooks" | "rules",
+  kind: "mocks" | "requests" | "sockets" | "webhooks" | "rules" | "graphqlRequests" | "graphqlMocks" | "soapRequests" | "soapMocks" | "grpcRequests" | "grpcMocks" | string,
   entity: HasFolderId,
   folders: FolderLike[],
 ): string {

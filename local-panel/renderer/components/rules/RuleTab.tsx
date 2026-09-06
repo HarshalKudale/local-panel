@@ -11,7 +11,7 @@ import { Input, Select, FormField } from "@/components/ui";
 
 export interface RuleTabHandle {
   refresh(rule: ProxyRule): void;
-  save(): void;
+  save(): Promise<any> | void;
 }
 
 interface RuleTabState {
@@ -44,10 +44,14 @@ interface Props {
   initial: Partial<ProxyRule> | null;
   folders: Folder[];
   config: AppConfig;
-  onSave(data: RuleSavePayload): Promise<void>;
+  onSave(data: RuleSavePayload): Promise<any>;
   onClose(): void;
   enabled?: boolean;
   onToggleEnabled?: () => void;
+  onSync?: (savedId?: string) => Promise<void>;
+  onRevert?: () => Promise<void>;
+  syncStatus?: "clean" | "modified" | "new" | "deleted";
+  onHistory?: () => void;
 }
 
 // -- RuleDraft type for localStorage ---------------------------------------
@@ -78,17 +82,17 @@ function stateFromRule(rule: Partial<ProxyRule> | null): RuleTabState {
   };
 }
 
-function stateFromDraft(draft: RuleDraft): RuleTabState {
+function stateFromDraft(d: RuleDraft): RuleTabState {
   return {
-    name: draft.name ?? "",
-    pattern: draft.pattern ?? "",
-    useRegex: draft.useRegex ?? true,
-    targetType: draft.targetType ?? "mapping",
-    targetMappingId: draft.targetMappingId ?? "",
-    targetExternal: draft.targetExternal ?? "",
-    requestScript: draft.requestScript ?? "",
-    responseScript: draft.responseScript ?? "",
-    folderId: draft.folderId ?? null,
+    name: d.name ?? "",
+    pattern: d.pattern ?? "",
+    useRegex: d.useRegex ?? true,
+    targetType: d.targetType ?? "mapping",
+    targetMappingId: d.targetMappingId ?? "",
+    targetExternal: d.targetExternal ?? "",
+    requestScript: d.requestScript ?? "",
+    responseScript: d.responseScript ?? "",
+    folderId: d.folderId ?? null,
   };
 }
 
@@ -99,7 +103,7 @@ function isDraftEmpty(s: RuleTabState): boolean {
 // -- RuleTab component ------------------------------------------------------
 
 export default forwardRef<RuleTabHandle, Props>(function RuleTab(
-  { tabId, draftTabId, initial, folders, config, onSave, onClose, enabled, onToggleEnabled },
+  { tabId, draftTabId, initial, folders, config, onSave, onClose, enabled, onToggleEnabled, onSync, onRevert, syncStatus, onHistory },
   ref,
 ) {
   const isDraft = draftTabId !== null;
@@ -134,6 +138,22 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
     () => isDraftEmpty(state),
   );
 
+  const isDirty = useMemo(() => {
+    if (isDraft) return !isDraftEmpty(state);
+    const init = stateFromRule(initial);
+    return (
+      state.name !== init.name ||
+      state.pattern !== init.pattern ||
+      state.useRegex !== init.useRegex ||
+      state.targetType !== init.targetType ||
+      state.targetMappingId !== init.targetMappingId ||
+      state.targetExternal !== init.targetExternal ||
+      state.requestScript !== init.requestScript ||
+      state.responseScript !== init.responseScript ||
+      state.folderId !== init.folderId
+    );
+  }, [state, initial, isDraft]);
+
   const validate = (): boolean => {
     const errs: Partial<Record<keyof RuleTabState, string>> = {};
     if (!state.pattern.trim()) errs.pattern = strings.proxyRules.patternRequired;
@@ -154,7 +174,7 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
     if (!validate()) return;
     setSaving(true);
     try {
-      await onSave({
+      const res = await onSave({
         name: state.name,
         pattern: state.pattern.trim(),
         useRegex: state.useRegex,
@@ -166,6 +186,7 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
         folderId: state.folderId,
       });
       markSaved();
+      return res;
     } finally {
       setSaving(false);
     }
@@ -177,9 +198,47 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
       setState(stateFromRule(rule));
     },
     save() {
-      void handleSave();
+      return handleSave();
     },
   }), [handleSave]);
+
+  const [syncing, setSyncing] = useState(false);
+  const [reverting, setReverting] = useState(false);
+
+  const handleSyncClick = useCallback(async () => {
+    if (!onSync || syncing) return;
+    setSyncing(true);
+    try {
+      let targetId = tabId;
+      if (isDirty || isDraft) {
+        const saved: any = await handleSave();
+        if (saved && typeof saved === "object" && saved.id) {
+          targetId = saved.id;
+        }
+      }
+      await onSync(targetId);
+    } finally {
+      setSyncing(false);
+    }
+  }, [onSync, syncing, isDirty, isDraft, handleSave, tabId]);
+
+  const hasChanges = !isDraft && Boolean(isDirty || (syncStatus && syncStatus !== "clean"));
+
+  const handleRevertClick = useCallback(async () => {
+    if (!onRevert || reverting) return;
+    setReverting(true);
+    try {
+      await onRevert();
+    } finally {
+      setReverting(false);
+    }
+  }, [onRevert, reverting]);
+
+  const canSave = Boolean(state.pattern.trim());
+  const syncDisabled = !hasChanges || (!canSave && isDirty) || syncing;
+  const revertDisabled = !hasChanges || reverting;
+  const syncTitle = !hasChanges ? strings.common.noChangesToSync : strings.common.syncTooltip;
+  const revertTitle = !hasChanges ? strings.common.noChangesToRevert : strings.common.revertTooltip;
 
   const s = strings.proxyRules;
 
@@ -324,6 +383,16 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
         saveLabel={isDraft ? s.saveRule : s.updateRule}
         saving={saving}
         savingLabel={strings.server.saving}
+        onSync={onSync ? handleSyncClick : undefined}
+        onRevert={onRevert ? handleRevertClick : undefined}
+        onHistory={onHistory}
+        historyDisabled={!onHistory || isDraft}
+        syncDisabled={syncDisabled}
+        revertDisabled={revertDisabled}
+        syncing={syncing}
+        reverting={reverting}
+        syncTitle={syncTitle}
+        revertTitle={revertTitle}
       />
     </div>
   );

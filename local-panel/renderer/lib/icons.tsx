@@ -85,4 +85,5 @@ export {
   TerminalSquare,// runner type icon (command)
   Loader2,       // spinner for starting/stopping state
   Hexagon,       // node.js
+  RotateCcw,     // revert changes
 } from "lucide-react";

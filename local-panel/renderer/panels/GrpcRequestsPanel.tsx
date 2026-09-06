@@ -13,6 +13,7 @@ import { strings } from "@/lib/strings";
 import { usePersistedState } from "@/lib/usePersistedState";
 import { useTabKeyBindings } from "@/hooks/useTabKeyBindings";
 import type { GrpcTabHandle } from "@/components/grpc/GrpcTab";
+import { entityRelPath } from "@/lib/utils";
 
 import { GrpcRequestDraft } from "@/components/grpc/grpcTabReducer";
 
@@ -27,11 +28,15 @@ interface Props {
     config: AppConfig;
     onConfigChange: (cfg: AppConfig) => Promise<void>;
     activeEnv?: Environment | null;
+    onHistoryOpen?: (filePath: string) => void;
+    entitySyncStatus?: Record<string, "clean" | "modified" | "new" | "deleted">;
+    onPublishItem?: (id: string) => void;
+    onRestoreItem?: (id: string) => void;
 }
 
 // -- GrpcRequestsPanel --------------------------------------------------
 
-export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = null }: Props) {
+export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = null, onHistoryOpen, entitySyncStatus, onPublishItem, onRestoreItem }: Props) {
     const requests = config.grpcRequests ?? [];
     const folders = config.grpcRequestFolders ?? [];
 
@@ -61,6 +66,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
         const created = await window.api.addGrpcRequest(data);
         await reloadConfig();
         replaceTab(tabId, created.id);
+        return created;
     }, [reloadConfig, replaceTab]);
 
     const handleTabSave = useCallback(async (tabId: string, data: Omit<SavedGrpcRequest, "id" | "createdAt" | "workspaceId">) => {
@@ -70,6 +76,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
         setLoadedEntities((prev) => ({ ...prev, [tabId]: updated }));
         await window.api.updateGrpcRequest(updated);
         await reloadConfig();
+        return updated;
     }, [loadedEntities, requests, reloadConfig]);
 
     const handleDelete = useCallback(async (id: string) => {
@@ -165,6 +172,9 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                     onMoveItems={handleMoveItems}
                     onOpenNewTab={openNewTab}
                     onBeforeCreateFolder={() => true}
+                    pathStatusMap={entitySyncStatus}
+                    onPublishItem={onPublishItem}
+                    onRestoreItem={onRestoreItem}
                 />
             </div>
         </>
@@ -200,7 +210,10 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                     openTabs.map((tabId) => {
                         const isUnsaved = isDraft(tabId);
                         const req = isUnsaved ? null : (loadedEntities[tabId] ?? requests.find((r) => r.id === tabId) ?? null);
+                        const initialData = isUnsaved ? null : req;
                         if (!isUnsaved && !req) return null;
+                        const relPath = req ? entityRelPath("grpcRequests", req, folders) : "";
+                        const syncStatus = relPath ? entitySyncStatus?.[relPath] : undefined;
                         return (
                             <div key={tabId} className="absolute inset-0 flex flex-col overflow-hidden" style={{ display: activeTab === tabId ? "flex" : "none" }}>
                                 <GrpcTab
@@ -208,7 +221,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                                     tabType="request"
                                     tabId={tabId}
                                     draftTabId={isUnsaved ? tabId : null}
-                                    initial={req}
+                                    initial={initialData}
                                     folders={folders}
                                     activeEnv={activeEnv}
                                     onSave={(data) => isUnsaved
@@ -216,6 +229,23 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                                         : handleTabSave(tabId, data as Omit<SavedGrpcRequest, "id" | "createdAt" | "workspaceId">)
                                     }
                                     onClose={() => closeTab(tabId)}
+                                    onSync={onPublishItem ? async (savedId?: string) => {
+                                        const targetId = savedId ?? tabId;
+                                        await onPublishItem(targetId);
+                                    } : undefined}
+                                    onRevert={onRestoreItem ? async () => {
+                                        await onRestoreItem(tabId);
+                                        const res = await window.api.loadEntity(config.activeWorkspaceId, "grpcRequests", tabId);
+                                        if (res.ok && res.entity) {
+                                            const entity = res.entity as SavedGrpcRequest;
+                                            setLoadedEntities((prev) => ({ ...prev, [tabId]: entity }));
+                                            tabRefs.current[tabId]?.refresh?.(entity);
+                                        } else if (!res.ok) {
+                                            closeTab(tabId);
+                                        }
+                                    } : undefined}
+                                    onHistory={onHistoryOpen && relPath && !isUnsaved ? () => onHistoryOpen(relPath) : undefined}
+                                    syncStatus={syncStatus}
                                 />
                             </div>
                         );
