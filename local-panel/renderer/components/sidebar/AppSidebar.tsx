@@ -3,7 +3,7 @@ import { Panel, PanelEntry } from "@/lib/panelRegistry";
 import { Workspace } from "@/types";
 import NavItem from "@/components/sidebar/NavItem";
 import NavSection from "@/components/sidebar/NavSection";
-import { MoreHorizontal, Plus, Pencil, Trash2, ClipboardList, Settings, Search } from "@/lib/icons";
+import { Plus, Pencil, Trash2, Settings, Search } from "@/lib/icons";
 import { strings } from "@/lib/strings";
 import { Button, Input } from "@/components/ui";
 import { usePersistedState } from "@/lib/usePersistedState";
@@ -34,14 +34,12 @@ export default function AppSidebar({
 }: Props) {
     const [search, setSearch] = usePersistedState("app-sidebar:search", "");
     const [wsSwitcherOpen, setWsSwitcherOpen] = useState(false);
-    const [wsMenuOpen, setWsMenuOpen] = useState(false);
     const [renamingId, setRenamingId] = useState<string | null>(null);
     const [renameValue, setRenameValue] = useState("");
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     const searchRef = useRef<HTMLInputElement>(null);
     const switcherRef = useRef<HTMLDivElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
     const renameRef = useRef<HTMLInputElement>(null);
 
     const activeWs = workspaces.find((w) => w.id === activeWorkspaceId);
@@ -60,22 +58,19 @@ export default function AppSidebar({
         return () => document.removeEventListener("keydown", handler);
     }, []);
 
-    // Close dropdowns on outside click
+    // Close dropdown on outside click
     useEffect(() => {
-        if (!wsSwitcherOpen && !wsMenuOpen) return;
+        if (!wsSwitcherOpen) return;
         const handler = (e: MouseEvent) => {
             if (wsSwitcherOpen && switcherRef.current && !switcherRef.current.contains(e.target as Node)) {
                 setWsSwitcherOpen(false);
                 setRenamingId(null);
                 setConfirmDeleteId(null);
             }
-            if (wsMenuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) {
-                setWsMenuOpen(false);
-            }
         };
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
-    }, [wsSwitcherOpen, wsMenuOpen]);
+    }, [wsSwitcherOpen]);
 
     // Focus rename input when rename mode activates
     useEffect(() => {
@@ -209,7 +204,7 @@ export default function AppSidebar({
                     <button
                         type="button"
                         className="flex min-h-10 items-center gap-2 flex-1 min-w-0 rounded-md hover:bg-card px-2 py-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-                        onClick={() => { setWsSwitcherOpen((v) => !v); setWsMenuOpen(false); }}
+                        onClick={() => setWsSwitcherOpen((v) => !v)}
                         aria-haspopup="menu"
                         aria-expanded={wsSwitcherOpen}
                         title={strings.sidebar.switchWorkspace}
@@ -226,39 +221,21 @@ export default function AppSidebar({
                         </span>
                     </button>
 
-                    {/* Three-dot menu */}
-                    <div ref={menuRef} className="relative flex-shrink-0">
-                        <button
-                            type="button"
-                            className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-card transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-                            onClick={() => { setWsMenuOpen((v) => !v); setWsSwitcherOpen(false); }}
-                            aria-haspopup="menu"
-                            aria-expanded={wsMenuOpen}
-                            title={strings.sidebar.workspaceOptions}
-                            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                        >
-                            <MoreHorizontal size={14} />
-                        </button>
-
-                        {wsMenuOpen && (
-                            <div className="absolute bottom-full right-0 mb-1 z-50 bg-card border border-border rounded-md shadow-2xl py-1 min-w-[170px] animate-scale-in">
-                                <button
-                                    className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-surface-2 cursor-pointer transition-colors flex items-center gap-2"
-                                    onClick={() => { onPanelSelect("workspace"); setWsMenuOpen(false); }}
-                                >
-                                    <Settings size={12} className="text-muted-foreground flex-shrink-0" />
-                                    {strings.sidebar.workspaceSettings}
-                                </button>
-                                <button
-                                    className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-surface-2 cursor-pointer transition-colors flex items-center gap-2"
-                                    onClick={() => { onPanelSelect("audit"); setWsMenuOpen(false); }}
-                                >
-                                    <ClipboardList size={12} className="text-muted-foreground flex-shrink-0" />
-                                    {strings.sidebar.auditLog}
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                    {/* Global Settings button */}
+                    <button
+                        type="button"
+                        className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface flex-shrink-0 ${
+                            activePanel === "settings"
+                                ? "text-signal bg-card"
+                                : "text-muted-foreground hover:text-foreground hover:bg-card"
+                        }`}
+                        onClick={() => onPanelSelect("settings")}
+                        title={strings.nav.settings}
+                        aria-label={strings.nav.settings}
+                        style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+                    >
+                        <Settings size={14} />
+                    </button>
                 </div>
 
                 {/* Workspace switcher dropdown - opens upward */}

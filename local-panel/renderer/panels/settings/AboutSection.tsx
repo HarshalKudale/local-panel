@@ -1,10 +1,34 @@
-import React from "react";
+import React, { useState } from "react";
 import iconUrl from "@/icon.png";
 import { strings } from "@/lib/strings";
 import { SectionLabel, SectionCard } from "@/components/ui";
-import { Star, Heart } from "@/lib/icons";
+import { Star, Heart, RefreshCw, Download, ExternalLink, CheckCircle2, AlertCircle, X } from "@/lib/icons";
+import { UpdateCheckResult } from "@/types";
 
 export default function AboutSection() {
+  const [checking, setChecking] = useState(false);
+  const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
+
+  const handleCheckUpdate = async () => {
+    setChecking(true);
+    try {
+      const res = await window.api.checkUpdate();
+      setUpdateResult(res);
+    } catch (err: any) {
+      setUpdateResult({
+        ok: false,
+        hasUpdate: false,
+        currentVersion: __APP_VERSION__,
+        latestVersion: __APP_VERSION__,
+        downloadUrl: "https://github.com/HarshalKudale/local-panel/releases",
+        releaseUrl: "https://github.com/HarshalKudale/local-panel/releases",
+        error: err?.message || "Failed to check for updates",
+      });
+    } finally {
+      setChecking(false);
+    }
+  };
+
   return (
     <section>
       <SectionLabel>{strings.settings.sectionAbout}</SectionLabel>
@@ -40,6 +64,89 @@ export default function AboutSection() {
             <span className="text-foreground">{strings.settings.licenseName}</span>
           </AboutRow>
         </div>
+
+        {/* Update checker status banner */}
+        {updateResult && (
+          <div className="px-5 pb-3">
+            {updateResult.hasUpdate ? (
+              <div className="p-4 rounded-lg bg-signal/10 border border-signal/30 flex flex-col gap-2.5 relative">
+                <button
+                  onClick={() => setUpdateResult(null)}
+                  className="absolute top-3 right-3 text-muted-foreground hover:text-foreground cursor-pointer p-0.5"
+                  title="Dismiss"
+                >
+                  <X size={13} />
+                </button>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-signal animate-pulse" />
+                  <span className="text-xs font-semibold text-signal">
+                    {strings.settings.updateAvailable}: {updateResult.latestVersion}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    (current: v{__APP_VERSION__.replace(/^v/, "")})
+                  </span>
+                </div>
+
+                <p className="text-xs text-foreground/90 pr-6">
+                  {updateResult.releaseName
+                    ? `${updateResult.releaseName} is available for download.`
+                    : strings.settings.updateAvailableDesc.replace("{version}", updateResult.latestVersion)}
+                </p>
+
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <button
+                    onClick={() => window.api.openExternal(updateResult.downloadUrl)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-signal text-background text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
+                  >
+                    <Download size={13} />
+                    {updateResult.assetName ? `Download ${updateResult.assetName}` : strings.settings.downloadUpdate}
+                  </button>
+
+                  {updateResult.releaseUrl && (
+                    <button
+                      onClick={() => window.api.openExternal(updateResult.releaseUrl)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors cursor-pointer"
+                    >
+                      <ExternalLink size={12} />
+                      {strings.settings.viewReleaseNotes}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : updateResult.ok ? (
+              <div className="p-3 rounded-lg bg-surface border border-border/80 flex items-center justify-between gap-2.5 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={15} className="text-signal flex-shrink-0" />
+                  <span>
+                    {strings.settings.upToDateDesc.replace("{version}", updateResult.latestVersion || `v${__APP_VERSION__}`)}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setUpdateResult(null)}
+                  className="text-muted-foreground hover:text-foreground cursor-pointer p-0.5"
+                  title="Dismiss"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center justify-between gap-2.5 text-xs text-destructive">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={15} className="flex-shrink-0" />
+                  <span>{updateResult.error || strings.settings.updateCheckFailed}</span>
+                </div>
+                <button
+                  onClick={() => setUpdateResult(null)}
+                  className="text-destructive/70 hover:text-destructive cursor-pointer p-0.5"
+                  title="Dismiss"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="px-5 py-4 border-t border-border flex flex-wrap gap-3">
           <button
             onClick={() => window.api.openExternal("https://github.com/HarshalKudale/local-panel")}
@@ -57,6 +164,14 @@ export default function AboutSection() {
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface-2 border border-border text-xs font-medium text-foreground hover:border-signal/50 hover:text-signal transition-colors cursor-pointer"
           >
             <Heart size={14} /> {strings.settings.supportProject}
+          </button>
+          <button
+            onClick={handleCheckUpdate}
+            disabled={checking}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface-2 border border-border text-xs font-medium text-foreground hover:border-signal/50 hover:text-signal transition-colors cursor-pointer disabled:opacity-60"
+          >
+            <RefreshCw size={14} className={checking ? "animate-spin text-signal" : ""} />
+            {checking ? strings.settings.checkingForUpdates : strings.settings.checkForUpdates}
           </button>
         </div>
       </SectionCard>

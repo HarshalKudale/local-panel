@@ -34,6 +34,8 @@ export default function SettingsPanel({
   return (
     <PanelLayout title={strings.settings.title} subtitle={strings.settings.subtitle}>
       <div className="flex flex-col gap-6">
+        <AboutSection />
+
         <ServerSettingsSection
           config={config}
           serverRunning={serverRunning}
@@ -53,8 +55,6 @@ export default function SettingsPanel({
           sidebarVisibility={sidebarVisibility}
           onSidebarVisibilityChange={onSidebarVisibilityChange}
         />
-
-        <AboutSection />
       </div>
     </PanelLayout>
   );

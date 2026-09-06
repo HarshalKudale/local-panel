@@ -419,9 +419,24 @@ export interface SubscriptionState {
 
 declare const __APP_VERSION__: string;
 
+export interface UpdateCheckResult {
+  ok: boolean;
+  hasUpdate: boolean;
+  currentVersion: string;
+  latestVersion: string;
+  releaseName?: string;
+  releaseNotes?: string;
+  publishedAt?: string;
+  downloadUrl: string;
+  releaseUrl: string;
+  assetName?: string;
+  error?: string;
+}
+
 declare global {
   interface Window {
     api: {
+      checkUpdate(): Promise<UpdateCheckResult>;
       getConfig(): Promise<AppConfig>;
       loadEntity(wsId: string, kind: string, id: string): Promise<{ ok: boolean; entity?: unknown }>;
       setEntityEnabled(wsId: string, kind: string, id: string, enabled: boolean): Promise<{ ok: boolean; error?: string }>;

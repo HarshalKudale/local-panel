@@ -246,7 +246,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
         section: strings.nav.config,
         sectionType: "flat",
         enabled: true,
-        alwaysVisible: true,
+        showInSidebar: false,
         helpText: strings.settings.helpText,
     },
 ];

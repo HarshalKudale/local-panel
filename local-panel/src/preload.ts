@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("api", {
+  checkUpdate: () => ipcRenderer.invoke("app:checkUpdate"),
   getConfig: () => ipcRenderer.invoke("config:get"),
   loadEntity: (wsId: string, kind: string, id: string) => ipcRenderer.invoke("entity:load", wsId, kind, id),
   setEntityEnabled: (wsId: string, kind: string, id: string, enabled: boolean) => ipcRenderer.invoke("entity:setEnabled", wsId, kind, id, enabled),

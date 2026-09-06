@@ -351,6 +351,15 @@ export const strings = {
     alwaysVisible: "Always visible",
     starOnGitHub: "Star on GitHub",
     supportProject: "Support Project",
+    checkForUpdates: "Check for Updates",
+    checkingForUpdates: "Checking for updates…",
+    updateAvailable: "Update available",
+    updateAvailableDesc: "A new version of Local Panel ({version}) is available.",
+    upToDate: "You're up to date",
+    upToDateDesc: "Local Panel is running the latest version ({version}).",
+    downloadUpdate: "Download Update",
+    viewReleaseNotes: "Release Notes",
+    updateCheckFailed: "Failed to check for updates",
   },
 
   // Services panel

@@ -226,6 +226,7 @@ describe("src/ipc/handlers.ts", () => {
       "history:list", "history:diff",
       "request:replay", "server:status", "proxy:status",
       "server:restart", "server:stop", "server:start",
+      "app:checkUpdate",
       "shell:openExternal", "shell:setTitleBarOverlay",
     ];
 
@@ -1363,6 +1364,68 @@ describe("src/ipc/handlers.ts", () => {
 
       expect(result.before).toBeNull();
       expect(result.after).toBeNull();
+    });
+  });
+
+  // ── app:checkUpdate ───────────────────────────────────────────────────
+
+  describe("app:checkUpdate handler", () => {
+    it("detects when an update is available from GitHub releases", async () => {
+      const mockRelease = {
+        tag_name: "v0.2.0",
+        name: "Local Panel v0.2.0",
+        body: "Bug fixes and improvements",
+        html_url: "https://github.com/HarshalKudale/local-panel/releases/tag/v0.2.0",
+        published_at: "2026-09-01T00:00:00Z",
+        assets: [
+          {
+            name: "Local.Panel.Setup.0.2.0.exe",
+            browser_download_url: "https://github.com/HarshalKudale/local-panel/releases/download/v0.2.0/Local.Panel.Setup.0.2.0.exe",
+          },
+        ],
+      };
+
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockRelease,
+      }) as any;
+
+      try {
+        const result = await getHandler("app:checkUpdate")(EVENT);
+        expect(result.ok).toBe(true);
+        expect(result.hasUpdate).toBe(true);
+        expect(result.latestVersion).toBe("v0.2.0");
+        expect(result.downloadUrl).toContain("Local.Panel.Setup.0.2.0.exe");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("returns hasUpdate = false when version matches", async () => {
+      const mockRelease = {
+        tag_name: "v0.1.0",
+        name: "Local Panel v0.1.0",
+        body: "Initial release",
+        html_url: "https://github.com/HarshalKudale/local-panel/releases/tag/v0.1.0",
+        published_at: "2026-09-01T00:00:00Z",
+        assets: [],
+      };
+
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockRelease,
+      }) as any;
+
+      try {
+        const result = await getHandler("app:checkUpdate")(EVENT);
+        expect(result.ok).toBe(true);
+        expect(result.hasUpdate).toBe(false);
+        expect(result.latestVersion).toBe("v0.1.0");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
     });
   });
 });
