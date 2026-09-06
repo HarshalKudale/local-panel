@@ -59,7 +59,7 @@ const EMPTY_CONFIG: AppConfig = {
 export default function App() {
   const [colorMode, setColorMode] = useColorMode();
   const [panel, setPanel] = usePersistedState<Panel>("app:active-panel", "services");
-  const [sidebarOpen, setSidebarOpen] = usePersistedState("app:sidebar-open", true);
+  const [sidebarOpen, setSidebarOpen] = usePersistedState("app:sidebar-open", false);
   const [config, setConfig] = useState<AppConfig>(EMPTY_CONFIG);
   const { visibility, setPanelVisible, isPanelVisible } = useSidebarVisibility();
   const [wsLoading, setWsLoading] = useState<string | null>("Loading workspace…");
@@ -549,7 +549,7 @@ export default function App() {
         {/* Left Sidebar */}
         <nav
           className="bg-surface border-r border-border flex flex-col flex-shrink-0 overflow-hidden sidebar-collapse"
-          style={{ width: sidebarOpen ? "192px" : "0px", opacity: sidebarOpen ? 1 : 0 }}
+          style={{ width: sidebarOpen ? "192px" : "48px" }}
         >
           <AppSidebar
             entries={visiblePanels}
@@ -558,6 +558,7 @@ export default function App() {
             badges={navBadges}
             workspaces={config.workspaces ?? []}
             activeWorkspaceId={config.activeWorkspaceId}
+            collapsed={!sidebarOpen}
             onWorkspaceChange={async (id) => {
               clearWorkspaceContext("Switching workspace…");
               try {

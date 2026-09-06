@@ -6,12 +6,37 @@ interface Props {
   icon: React.ReactNode;
   active: boolean;
   badge?: number;
+  collapsed?: boolean;
   onClick: () => void;
 }
 
-export default function NavItem({ id, label, icon, active, badge, onClick }: Props) {
+export default function NavItem({ id, label, icon, active, badge, collapsed, onClick }: Props) {
   // Support both ID and normalized label for data-testid
   const testId = `nav-${id ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        data-testid={testId}
+        onClick={onClick}
+        title={label}
+        className={`relative flex items-center justify-center w-8 h-8 rounded-md transition-all duration-150 cursor-pointer ${
+          active
+            ? "bg-signal/15 text-signal border border-signal/35 shadow-[var(--glow-signal-sm)]"
+            : "text-muted-foreground hover:bg-surface-2 hover:text-foreground border border-transparent"
+        }`}
+      >
+        <span
+          className={`w-4 flex items-center justify-center flex-shrink-0 transition-colors ${
+            active ? "text-signal" : "text-muted-foreground group-hover:text-foreground"
+          }`}
+        >
+          {icon}
+        </span>
+      </button>
+    );
+  }
 
   return (
     <button
