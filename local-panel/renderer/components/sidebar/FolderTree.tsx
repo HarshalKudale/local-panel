@@ -45,7 +45,7 @@ function InlineInput({ value, onCommit, onCancel }: { value: string; onCommit(v:
   return (
     <input
       ref={ref}
-      className="flex-1 bg-bg3 border border-accent rounded px-1.5 py-0.5 text-xs text-text-bright outline-none min-w-0"
+      className="flex-1 bg-surface-2 border border-signal rounded px-1.5 py-0.5 text-xs text-foreground outline-none min-w-0"
       value={val}
       onChange={(e) => setVal(e.target.value)}
       onKeyDown={(e) => {
@@ -82,30 +82,30 @@ function RenameDialog({ currentName, onSave, onCancel }: {
       onClick={onCancel}
     >
       <div
-        className="bg-bg2 border border-border rounded-lg shadow-2xl p-4 w-72"
+        className="bg-card border border-border rounded-lg shadow-2xl p-4 w-72"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Enter") { e.preventDefault(); handleSave(); }
           if (e.key === "Escape") { e.preventDefault(); onCancel(); }
         }}
       >
-        <div className="text-xs font-semibold text-text-base mb-3">{strings.folderTree.renameFolder}</div>
+        <div className="text-xs font-semibold text-foreground mb-3">{strings.folderTree.renameFolder}</div>
         <input
           ref={ref}
-          className="w-full bg-bg3 border border-border focus:border-accent rounded px-2 py-1.5 text-xs text-text-bright outline-none mb-4"
+          className="w-full bg-surface-2 border border-border focus:border-signal rounded px-2 py-1.5 text-xs text-foreground outline-none mb-4"
           value={val}
           onChange={(e) => setVal(e.target.value)}
         />
         <div className="flex justify-end gap-2">
           <button
-            className="px-3 py-1.5 text-xs rounded border border-border hover:bg-bg3 text-text-dim cursor-pointer"
+            className="px-3 py-1.5 text-xs rounded border border-border hover:bg-surface-2 text-muted-foreground cursor-pointer"
             onClick={onCancel}
           >
             {strings.common.cancel}
           </button>
           <button
             className="px-3 py-1.5 text-xs rounded font-semibold cursor-pointer"
-            style={{ background: "var(--c-accent)", color: "#fff", opacity: val.trim() ? 1 : 0.5 }}
+            style={{ background: "var(--c-signal)", color: "#fff", opacity: val.trim() ? 1 : 0.5 }}
             disabled={!val.trim()}
             onClick={handleSave}
           >
@@ -134,36 +134,36 @@ function MoveDialog({ folders, onMove, onCancel }: {
       onClick={onCancel}
     >
       <div
-        className="bg-bg2 border border-border rounded-lg shadow-2xl w-56"
+        className="bg-card border border-border rounded-lg shadow-2xl w-56"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Escape") { e.preventDefault(); onCancel(); }
         }}
       >
-        <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-b border-border">
+        <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b border-border">
           {strings.folderTree.moveToFolder}
         </div>
         <div className="max-h-64 overflow-y-auto py-1">
           <button
             ref={firstRef}
-            className="w-full text-left px-3 py-1.5 text-xs hover:bg-bg3 text-text-dim cursor-pointer"
+            className="w-full text-left px-3 py-1.5 text-xs hover:bg-surface-2 text-muted-foreground cursor-pointer"
             onClick={() => onMove(null)}
           >
-            {strings.folderTree.slashRoot}
+            {strings.folderTree.root}
           </button>
-          {folders.map((f) => (
+          {folders.map((f, i) => (
             <button
               key={f.id}
-              className="w-full text-left px-3 py-1.5 text-xs hover:bg-bg3 text-text-base cursor-pointer"
+              className="w-full text-left px-3 py-1.5 text-xs hover:bg-surface-2 text-foreground cursor-pointer"
               onClick={() => onMove(f.id)}
             >
               {f.name}
             </button>
           ))}
         </div>
-        <div className="border-t border-border px-3 py-2">
+        <div className="p-2 border-t border-border">
           <button
-            className="w-full text-center text-xs text-text-dim hover:text-text-base cursor-pointer py-0.5"
+            className="w-full text-center text-xs text-muted-foreground hover:text-foreground cursor-pointer py-0.5"
             onClick={onCancel}
           >
             {strings.common.cancel}
@@ -607,11 +607,11 @@ export default function FolderTree({
           gap: 4, borderRadius: 4, marginLeft: 2, marginRight: 4,
           cursor: "pointer", userSelect: "none", whiteSpace: "nowrap",
           background: isDragOverThis
-            ? "rgba(var(--color-accent-rgb) / 0.15)"
-            : isSel ? "rgba(var(--color-accent-rgb) / 0.1)" : undefined,
+            ? "oklch(var(--signal) / 0.15)"
+            : isSel ? "oklch(var(--signal) / 0.1)" : undefined,
           outline: isDragOverThis
-            ? "1px solid rgba(var(--color-accent-rgb) / 0.5)"
-            : isSel ? "1px solid rgba(var(--color-accent-rgb) / 0.25)" : undefined,
+            ? "1px solid oklch(var(--signal) / 0.5)"
+            : isSel ? "1px solid oklch(var(--signal) / 0.25)" : undefined,
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -647,7 +647,7 @@ export default function FolderTree({
             openFolderMenu(e.clientX, e.clientY, isRoot ? null : node.folder!.id);
           }
         }}
-        onMouseEnter={(e) => { if (!isSel && !isDragOverThis) (e.currentTarget as HTMLDivElement).style.background = "var(--c-bg2)"; }}
+        onMouseEnter={(e) => { if (!isSel && !isDragOverThis) (e.currentTarget as HTMLDivElement).style.background = "var(--c-card)"; }}
         onMouseLeave={(e) => { if (!isSel && !isDragOverThis) (e.currentTarget as HTMLDivElement).style.background = ""; }}
         onDragStart={!isRoot ? (e) => {
           e.dataTransfer.setData("text/x-folder-id", node.folder!.id);
@@ -684,7 +684,7 @@ export default function FolderTree({
         {depth > 0 && (
           <div style={{ position: "absolute", left: -CONNECTOR_W, top: "50%", width: CONNECTOR_W - 2, height: 1, background: LINE_COLOR, transform: "translateY(-50%)", pointerEvents: "none" }} />
         )}
-        <span style={{ flexShrink: 0, width: 14, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--c-text-dim)", transition: "transform 0.15s ease", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}>
+        <span style={{ flexShrink: 0, width: 14, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--c-muted-foreground)", transition: "transform 0.15s ease", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}>
           <ChevronDown size={12} />
         </span>
         {/* Folder status dot (only for folders with enableable items) */}
@@ -698,20 +698,20 @@ export default function FolderTree({
             />
           );
         })()}
-        <span style={{ display: "flex", alignItems: "center", flexShrink: 0, color: "var(--c-text-dim)" }}>
+        <span style={{ display: "flex", alignItems: "center", flexShrink: 0, color: "var(--c-muted-foreground)" }}>
           {isExpanded ? <FolderOpen size={13} /> : <Folder size={13} />}
         </span>
         {renaming === nodeKey ? (
-          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-accent)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", fontStyle: "italic" }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-signal)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", fontStyle: "italic" }}>
             {node.folder!.name}
           </span>
         ) : (
-          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-text-bright)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--c-foreground)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
             {isRoot ? strings.folderTree.root : node.folder!.name}
           </span>
         )}
         {(node.items.length > 0 || node.children.length > 0) && (
-          <span style={{ fontSize: 9, color: "var(--c-text-dim)", flexShrink: 0, fontFamily: "monospace" }}>
+          <span style={{ fontSize: 9, color: "var(--c-muted-foreground)", flexShrink: 0, fontFamily: "monospace" }}>
             {node.items.length + node.children.reduce((a, c) => a + countItems(c), 0)}
           </span>
         )}
@@ -720,7 +720,7 @@ export default function FolderTree({
 
     const newFolderRow = newFolderParent !== undefined && newFolderParent === (isRoot ? null : node.folder?.id) && (
       <div key="new-folder-input" style={{ display: "flex", alignItems: "center", gap: 6, height: 28, paddingLeft: depth > 0 ? CONNECTOR_W + 4 : 4, paddingRight: 8, marginLeft: 2, marginRight: 4 }}>
-        <Folder size={11} style={{ color: "var(--c-text-dim)", flexShrink: 0 }} />
+        <Folder size={11} style={{ color: "var(--c-muted-foreground)", flexShrink: 0 }} />
         <InlineInput
           value=""
           onCommit={(v) => handleNewFolder(v, isRoot ? null : node.folder!.id)}
@@ -770,8 +770,8 @@ export default function FolderTree({
           position: "relative", display: "flex", alignItems: "center",
           height: 32, paddingLeft: 4, paddingRight: 8, gap: 5, borderRadius: 4, marginLeft: 2, marginRight: 4,
           cursor: "pointer", userSelect: "none", whiteSpace: "nowrap",
-          background: isActive ? "var(--c-bg3)" : isSel ? "rgba(202,238,122,0.1)" : undefined,
-          outline: isSel && !isActive ? "1px solid rgba(202,238,122,0.25)" : undefined,
+          background: isActive ? "var(--c-surface-2)" : isSel ? "oklch(var(--signal) / 0.1)" : undefined,
+          outline: isSel && !isActive ? "1px solid oklch(var(--signal) / 0.25)" : undefined,
           transition: "background 0.1s ease",
         }}
         onDragStart={!item.isRunner && !item.isBlock ? (e) => {
@@ -827,7 +827,7 @@ export default function FolderTree({
           }
         }}
         onMouseEnter={(e) => {
-          if (!isActive && !isSel) (e.currentTarget as HTMLDivElement).style.background = "var(--c-bg2)";
+          if (!isActive && !isSel) (e.currentTarget as HTMLDivElement).style.background = "var(--c-card)";
           setHoveredItemId(item.id);
         }}
         onMouseLeave={(e) => {
@@ -841,10 +841,10 @@ export default function FolderTree({
         {item.isRunner ? (
           // Runner item: play icon + label, no dot/method badge
           <>
-            <span style={{ flexShrink: 0, display: "flex", alignItems: "center", color: "var(--c-accent)", opacity: 0.8 }}>
+            <span style={{ flexShrink: 0, display: "flex", alignItems: "center", color: "var(--c-signal)", opacity: 0.8 }}>
               <Play size={11} fill="currentColor" />
             </span>
-            <span style={{ fontSize: 12, lineHeight: 1, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", color: "var(--c-accent)", fontStyle: "italic", opacity: 0.85 }}>
+            <span style={{ fontSize: 12, lineHeight: 1, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", color: "var(--c-signal)", fontStyle: "italic", opacity: 0.85 }}>
               {item.name}
             </span>
           </>
@@ -853,7 +853,7 @@ export default function FolderTree({
             {/* Block items show a ban marker; normal items show enabled/sync dots */}
             <span style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 2 }}>
               {item.isBlock ? (
-                <Ban size={12} style={{ color: "var(--c-red)" }} />
+                <Ban size={12} style={{ color: "var(--c-destructive)" }} />
               ) : (
                 <>
                   {!item.hideDot && <ActiveDot active={isEnabled} color="green" size="sm" />}
@@ -870,7 +870,7 @@ export default function FolderTree({
             {/* Name - theme color, strikethrough = pending delete or block, dim = disabled/block */}
             <span style={{
               fontSize: 13, lineHeight: 1, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis",
-              color: "var(--c-text-bright)",
+              color: "var(--c-foreground)",
               textDecoration: isDeleted || item.isBlock ? "line-through" : "none",
               opacity: !isEnabled || item.isBlock ? 0.6 : 1,
             }}>
@@ -933,27 +933,27 @@ export default function FolderTree({
           onClick={() => setDeletedItemPopup(null)}
         >
           <div
-            className="bg-bg2 border border-border rounded-lg shadow-2xl p-5 flex flex-col gap-4"
+            className="bg-card border border-border rounded-lg shadow-2xl p-5 flex flex-col gap-4"
             style={{ minWidth: 300, maxWidth: 380 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--c-sync-modified)" }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--c-amber)" }}>
               {strings.folderTree.pendingDeletion}
             </div>
-            <div style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.5 }}>
-              <span style={{ color: "var(--c-text-bright)", fontWeight: 500 }}>{deletedItemPopup.name}</span>
+            <div style={{ fontSize: 12, color: "var(--c-muted-foreground)", lineHeight: 1.5 }}>
+              <span style={{ color: "var(--c-foreground)", fontWeight: 500 }}>{deletedItemPopup.name}</span>
               {" "}{strings.folderTree.pendingDeletionBody}
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
-                className="px-3 py-1.5 text-xs rounded border border-border hover:bg-bg3 text-text-base cursor-pointer"
+                className="px-3 py-1.5 text-xs rounded border border-border hover:bg-surface-2 text-foreground cursor-pointer"
                 onClick={() => setDeletedItemPopup(null)}
               >
                 {strings.common.cancel}
               </button>
               {onRestoreItem && (
                 <button
-                  className="px-3 py-1.5 text-xs rounded border border-accent text-accent hover:bg-accent/10 cursor-pointer"
+                  className="px-3 py-1.5 text-xs rounded border border-signal text-signal hover:bg-signal/10 cursor-pointer"
                   onClick={() => { onRestoreItem(deletedItemPopup.id); setDeletedItemPopup(null); }}
                 >
                   {strings.folderTree.restore}
@@ -961,7 +961,7 @@ export default function FolderTree({
               )}
               {onPublishItem && (
                 <button
-                  className="px-3 py-1.5 text-xs rounded bg-red/80 hover:bg-red text-white cursor-pointer"
+                  className="px-3 py-1.5 text-xs rounded bg-destructive/80 hover:bg-destructive text-white cursor-pointer"
                   onClick={() => { onPublishItem(deletedItemPopup.id); setDeletedItemPopup(null); }}
                 >
                   {strings.folderTree.commitDelete}

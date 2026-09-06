@@ -122,8 +122,8 @@ export default function AppSidebar({
 
             {/* -- Search ---------------------------------------------------- */}
             <div className="px-2 pt-2 pb-1 flex-shrink-0">
-                <div className="flex items-center gap-1.5 rounded bg-bg2 border border-border/60 px-2 py-1.5">
-                    <Search size={11} className="flex-shrink-0 text-text-dim opacity-60" />
+                <div className="flex items-center gap-1.5 rounded bg-card border border-border/60 px-2 py-1.5">
+                    <Search size={11} className="flex-shrink-0 text-muted-foreground opacity-60" />
                     <Input
                         ref={searchRef}
                         value={search}
@@ -137,7 +137,7 @@ export default function AppSidebar({
                         className="min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none focus:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                     {!search && (
-                        <span className="text-[9px] font-mono text-text-dim opacity-40 flex-shrink-0">⌘K</span>
+                        <span className="text-[9px] font-mono text-muted-foreground opacity-40 flex-shrink-0">⌘K</span>
                     )}
                 </div>
             </div>
@@ -146,7 +146,7 @@ export default function AppSidebar({
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1">
                 {isSearching ? (
                     filteredEntries.length === 0 ? (
-                        <div className="px-2.5 py-4 text-xs text-text-dim opacity-50 text-center">
+                        <div className="px-2.5 py-4 text-xs text-muted-foreground opacity-50 text-center">
                             {strings.sidebar.noPanelsFound}
                         </div>
                     ) : (
@@ -181,7 +181,7 @@ export default function AppSidebar({
                         }
                         return (
                             <React.Fragment key={section.label}>
-                                <div className="text-[10px] font-semibold uppercase tracking-widest text-text-dim px-2.5 pt-3 pb-1 whitespace-nowrap">
+                                <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-2.5 pt-3 pb-1 whitespace-nowrap">
                                     {section.label}
                                 </div>
                                 {section.items.map((n) => (
@@ -202,13 +202,13 @@ export default function AppSidebar({
             </div>
 
             {/* -- Sticky workspace footer --------------------------------- */}
-            <div className="flex-shrink-0 border-t border-border bg-bg1 relative">
+            <div className="flex-shrink-0 border-t border-border bg-surface relative">
                 <div className="flex items-center gap-1.5 px-2 py-2">
 
                     {/* Avatar + name -> opens workspace switcher */}
                     <button
                         type="button"
-                        className="flex min-h-10 items-center gap-2 flex-1 min-w-0 rounded-md hover:bg-bg2 px-2 py-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 focus-visible:ring-offset-2 focus-visible:ring-offset-bg1"
+                        className="flex min-h-10 items-center gap-2 flex-1 min-w-0 rounded-md hover:bg-card px-2 py-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
                         onClick={() => { setWsSwitcherOpen((v) => !v); setWsMenuOpen(false); }}
                         aria-haspopup="menu"
                         aria-expanded={wsSwitcherOpen}
@@ -217,11 +217,11 @@ export default function AppSidebar({
                     >
                         <span
                             className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 select-none"
-                            style={{ background: "var(--c-accent)", color: "var(--c-bg0)" }}
+                            style={{ background: "var(--c-signal)", color: "var(--c-background)" }}
                         >
                             {wsInitials(activeWs?.name ?? "")}
                         </span>
-                        <span className="text-xs text-text-base font-medium truncate flex-1 text-left">
+                        <span className="text-xs text-foreground font-medium truncate flex-1 text-left">
                             {activeWs?.name ?? strings.sidebar.workspace}
                         </span>
                     </button>
@@ -230,7 +230,7 @@ export default function AppSidebar({
                     <div ref={menuRef} className="relative flex-shrink-0">
                         <button
                             type="button"
-                            className="w-8 h-8 flex items-center justify-center rounded-md text-text-dim hover:text-text-base hover:bg-bg2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 focus-visible:ring-offset-2 focus-visible:ring-offset-bg1"
+                            className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-card transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/35 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
                             onClick={() => { setWsMenuOpen((v) => !v); setWsSwitcherOpen(false); }}
                             aria-haspopup="menu"
                             aria-expanded={wsMenuOpen}
@@ -241,19 +241,19 @@ export default function AppSidebar({
                         </button>
 
                         {wsMenuOpen && (
-                            <div className="absolute bottom-full right-0 mb-1 z-50 bg-bg2 border border-border rounded-md shadow-2xl py-1 min-w-[170px] animate-scale-in">
+                            <div className="absolute bottom-full right-0 mb-1 z-50 bg-card border border-border rounded-md shadow-2xl py-1 min-w-[170px] animate-scale-in">
                                 <button
-                                    className="w-full text-left px-3 py-1.5 text-xs text-text-base hover:bg-bg3 cursor-pointer transition-colors flex items-center gap-2"
+                                    className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-surface-2 cursor-pointer transition-colors flex items-center gap-2"
                                     onClick={() => { onPanelSelect("workspace"); setWsMenuOpen(false); }}
                                 >
-                                    <Settings size={12} className="text-text-dim flex-shrink-0" />
+                                    <Settings size={12} className="text-muted-foreground flex-shrink-0" />
                                     {strings.sidebar.workspaceSettings}
                                 </button>
                                 <button
-                                    className="w-full text-left px-3 py-1.5 text-xs text-text-base hover:bg-bg3 cursor-pointer transition-colors flex items-center gap-2"
+                                    className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-surface-2 cursor-pointer transition-colors flex items-center gap-2"
                                     onClick={() => { onPanelSelect("audit"); setWsMenuOpen(false); }}
                                 >
-                                    <ClipboardList size={12} className="text-text-dim flex-shrink-0" />
+                                    <ClipboardList size={12} className="text-muted-foreground flex-shrink-0" />
                                     {strings.sidebar.auditLog}
                                 </button>
                             </div>
@@ -270,19 +270,19 @@ export default function AppSidebar({
                         />
                         <div
                             ref={switcherRef}
-                            className="absolute bottom-full left-0 right-0 z-50 bg-bg2 border border-border rounded-md shadow-2xl py-1 animate-scale-in"
+                            className="absolute bottom-full left-0 right-0 z-50 bg-card border border-border rounded-md shadow-2xl py-1 animate-scale-in"
                         >
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => { onWorkspaceCreate(); setWsSwitcherOpen(false); }}
-                                className="w-full justify-start rounded-none border-b border-border/60 px-3 text-sm text-accent hover:bg-bg3"
+                                className="w-full justify-start rounded-none border-b border-border/60 px-3 text-sm text-signal hover:bg-surface-2"
                             >
                                 <Plus size={12} />
                                 {strings.sidebar.createWorkspace}
                             </Button>
 
-                            <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-dim">
+                            <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                                 {strings.sidebar.workspaces}
                             </div>
 
@@ -291,7 +291,7 @@ export default function AppSidebar({
                                 return (
                                     <div key={ws.id}>
                                         <div
-                                            className={`group flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-bg3 ${activeWorkspaceId === ws.id ? "text-accent font-semibold" : "text-text-base"}`}
+                                            className={`group flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-surface-2 ${activeWorkspaceId === ws.id ? "text-signal font-semibold" : "text-foreground"}`}
                                             onClick={() => {
                                                 if (renamingId !== ws.id && !isConfirming) {
                                                     onWorkspaceChange(ws.id);
@@ -302,14 +302,14 @@ export default function AppSidebar({
                                             }}
                                         >
                                             <span
-                                                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeWorkspaceId === ws.id ? "bg-accent" : "bg-text-dim/30"}`}
-                                                style={{ boxShadow: activeWorkspaceId === ws.id ? "0 0 4px var(--c-accent)" : "none" }}
+                                                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeWorkspaceId === ws.id ? "bg-signal" : "bg-muted-foreground/30"}`}
+                                                style={{ boxShadow: activeWorkspaceId === ws.id ? "0 0 4px var(--c-signal)" : "none" }}
                                             />
                                             {renamingId === ws.id ? (
                                                 <Input
                                                     ref={renameRef}
                                                     inputSize="sm"
-                                                    className="flex-1 min-w-0 bg-bg3 border-accent/40"
+                                                    className="flex-1 min-w-0 bg-surface-2 border-signal/40"
                                                     value={renameValue}
                                                     onChange={(e) => setRenameValue(e.target.value)}
                                                     onClick={(e) => e.stopPropagation()}
@@ -327,7 +327,7 @@ export default function AppSidebar({
                                                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
                                                     <button
                                                         type="button"
-                                                        className="text-text-dim hover:text-accent text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
+                                                        className="text-muted-foreground hover:text-signal text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/35"
                                                         title={strings.sidebar.renameWorkspace}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -341,7 +341,7 @@ export default function AppSidebar({
                                                     {canDelete && (
                                                         <button
                                                             type="button"
-                                                            className="text-text-dim hover:text-red text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red/35"
+                                                            className="text-muted-foreground hover:text-destructive text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/35"
                                                             title={strings.sidebar.deleteWorkspace}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -358,18 +358,18 @@ export default function AppSidebar({
 
                                         {isConfirming && (
                                             <div
-                                                className="mx-3 mb-1.5 px-2.5 py-2 rounded border border-red/30 bg-red/5"
+                                                className="mx-3 mb-1.5 px-2.5 py-2 rounded border border-destructive/30 bg-destructive/5"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
-                                                <p className="text-[10px] text-text-dim leading-snug mb-2">
-                                                    {strings.sidebar.deleteWorkspacePrefix} <span className="font-semibold text-text-base">"{ws.name}"</span>{strings.sidebar.deleteWorkspaceSuffix}
+                                                <p className="text-[10px] text-muted-foreground leading-snug mb-2">
+                                                    {strings.sidebar.deleteWorkspacePrefix} <span className="font-semibold text-foreground">"{ws.name}"</span>{strings.sidebar.deleteWorkspaceSuffix}
                                                 </p>
                                                 <div className="flex gap-1.5">
                                                     <Button
                                                         variant="danger"
                                                         size="sm"
                                                         onClick={() => handleDeleteConfirm(ws.id)}
-                                                        className="flex-1 border border-red/40 bg-red/15 justify-center text-[10px] hover:bg-red/25"
+                                                        className="flex-1 border border-destructive/40 bg-destructive/15 justify-center text-[10px] hover:bg-destructive/25"
                                                     >
                                                         {strings.common.delete}
                                                     </Button>

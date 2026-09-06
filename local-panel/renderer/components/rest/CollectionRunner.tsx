@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CollectionRunner -- split-panel runner tab.
  * Left: request list (always visible, drag-to-reorder).
  * Right: live results panel with per-request cards.
@@ -170,12 +170,12 @@ export default function CollectionRunner({
     return (
         <div className="flex flex-col h-full overflow-hidden">
             {/* Top toolbar */}
-            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-bg0/60 flex-shrink-0">
+            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-background/60 flex-shrink-0">
                 <div className="flex-1 min-w-0">
-                    <span className="text-xs font-semibold text-text-bright">{folderName}</span>
-                    <span className="text-[10px] text-text-dim ml-2">{strings.collectionRunner.requestCount.replace("{count}", String(orderedRequests.length)).replace("{s}", orderedRequests.length !== 1 ? "s" : "")}</span>
+                    <span className="text-xs font-semibold text-foreground">{folderName}</span>
+                    <span className="text-[10px] text-muted-foreground ml-2">{strings.collectionRunner.requestCount.replace("{count}", String(orderedRequests.length)).replace("{s}", orderedRequests.length !== 1 ? "s" : "")}</span>
                 </div>
-                <label className="flex items-center gap-1.5 text-[10px] text-text-dim">
+                <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     {strings.collectionRunner.delay}
                     <input
                         type="number"
@@ -184,14 +184,14 @@ export default function CollectionRunner({
                         value={delayMs}
                         onChange={(e) => handleDelayChange(Math.max(0, Number(e.target.value)))}
                         disabled={running}
-                        className="w-16 px-1.5 py-0.5 rounded bg-bg2 border border-border/60 text-text-bright text-[10px] font-mono text-center focus:outline-none focus:border-accent/60"
+                        className="w-16 px-1.5 py-0.5 rounded bg-card border border-border/60 text-foreground text-[10px] font-mono text-center focus:outline-none focus:border-signal/60"
                     />
                     <span>{strings.collectionRunner.ms}</span>
                 </label>
                 {report && !running && (
                     <button
                         onClick={handleExport}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-border/60 hover:border-accent/50 text-text-dim hover:text-text-bright text-xs cursor-pointer transition-colors"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-border/60 hover:border-signal/50 text-muted-foreground hover:text-foreground text-xs cursor-pointer transition-colors"
                         title={strings.collectionRunner.exportTitle}
                     >
                         <Download size={12} /> {strings.common.export}
@@ -201,7 +201,7 @@ export default function CollectionRunner({
                     <button
                         onClick={handleRun}
                         disabled={orderedRequests.length === 0}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-accent hover:bg-accent/80 text-white text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-signal hover:bg-signal/80 text-background text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                         <Play size={12} />
                         {report ? strings.collectionRunner.runAgain : strings.collectionRunner.run}
@@ -209,7 +209,7 @@ export default function CollectionRunner({
                 ) : (
                     <button
                         onClick={handleCancel}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-red/15 hover:bg-red/25 text-red text-xs font-semibold cursor-pointer border border-red/30 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-destructive/15 hover:bg-destructive/25 text-destructive text-xs font-semibold cursor-pointer border border-destructive/30 transition-colors"
                     >
                         <Square size={12} /> {strings.common.cancel}
                     </button>
@@ -218,15 +218,15 @@ export default function CollectionRunner({
 
             {/* Progress bar (while running) */}
             {running && (
-                <div className="px-4 py-1.5 border-b border-border/40 bg-bg0/30 flex-shrink-0">
+                <div className="px-4 py-1.5 border-b border-border/40 bg-background/30 flex-shrink-0">
                     <div className="flex items-center gap-2 mb-1">
-                        <Loader2 size={10} className="animate-spin text-accent" />
-                        <span className="text-[10px] text-text-dim">{strings.collectionRunner.running}</span>
-                        <span className="text-[10px] text-text-bright font-mono">{progress}/{orderedRequests.length}</span>
+                        <Loader2 size={10} className="animate-spin text-signal" />
+                        <span className="text-[10px] text-muted-foreground">{strings.collectionRunner.running}</span>
+                        <span className="text-[10px] text-foreground font-mono">{progress}/{orderedRequests.length}</span>
                     </div>
-                    <div className="w-full h-1 bg-bg2 rounded overflow-hidden">
+                    <div className="w-full h-1 bg-card rounded overflow-hidden">
                         <div
-                            className="h-full bg-accent transition-all duration-300"
+                            className="h-full bg-signal transition-all duration-300"
                             style={{ width: `${(progress / Math.max(orderedRequests.length, 1)) * 100}%` }}
                         />
                     </div>
@@ -235,27 +235,27 @@ export default function CollectionRunner({
 
             {/* Summary bar (after run) */}
             {report && !running && (
-                <div className="flex items-center gap-5 px-4 py-1.5 border-b border-border/40 bg-bg0/30 flex-shrink-0">
+                <div className="flex items-center gap-5 px-4 py-1.5 border-b border-border/40 bg-background/30 flex-shrink-0">
                     {allGood ? (
-                        <span className="flex items-center gap-1.5 text-[11px] font-semibold text-green">
+                        <span className="flex items-center gap-1.5 text-[11px] font-semibold text-signal">
                             <CheckCircle2 size={13} /> {strings.collectionRunner.allPassed}
                         </span>
                     ) : (
-                        <span className="flex items-center gap-1.5 text-[11px] font-semibold text-red">
+                        <span className="flex items-center gap-1.5 text-[11px] font-semibold text-destructive">
                             <XCircle size={13} /> {strings.collectionRunner.someFailed}
                         </span>
                     )}
-                    <span className="text-[11px] text-text-dim">
-                        <span className="text-text-bright font-mono">{results.length}</span> {strings.collectionRunner.requests}
+                    <span className="text-[11px] text-muted-foreground">
+                        <span className="text-foreground font-mono">{results.length}</span> {strings.collectionRunner.requests}
                     </span>
                     {totalTests > 0 && (
-                        <span className="text-[11px] text-text-dim">
-                            <span className="text-green font-mono">{passedTests}</span>
-                            {failedTests > 0 && <><span className="text-text-dim mx-1">/</span><span className="text-red font-mono">{failedTests} {strings.collectionRunner.failed}</span></>}
+                        <span className="text-[11px] text-muted-foreground">
+                            <span className="text-signal font-mono">{passedTests}</span>
+                            {failedTests > 0 && <><span className="text-muted-foreground mx-1">/</span><span className="text-destructive font-mono">{failedTests} {strings.collectionRunner.failed}</span></>}
                             {" "}{strings.collectionRunner.tests}
                         </span>
                     )}
-                    <span className="text-[11px] text-text-dim ml-auto font-mono">
+                    <span className="text-[11px] text-muted-foreground ml-auto font-mono">
                         {((report.completedAt - report.startedAt) / 1000).toFixed(2)}s
                     </span>
                 </div>
@@ -264,15 +264,15 @@ export default function CollectionRunner({
             {/* Split body */}
             <div className="flex flex-1 overflow-hidden">
                 {/* Left panel -- request list */}
-                <div className="w-72 flex-shrink-0 border-r border-border/60 flex flex-col overflow-hidden bg-bg0/20">
+                <div className="w-72 flex-shrink-0 border-r border-border/60 flex flex-col overflow-hidden bg-background/20">
                     <div className="px-3 py-2 border-b border-border/30 flex-shrink-0">
-                        <span className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">{strings.collectionRunner.requestsHeader}</span>
-                        <span className="text-[10px] text-text-dim ml-1">{strings.collectionRunner.dragToReorder}</span>
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{strings.collectionRunner.requestsHeader}</span>
+                        <span className="text-[10px] text-muted-foreground ml-1">{strings.collectionRunner.dragToReorder}</span>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2 space-y-1">
                         {orderedRequests.length === 0 && (
                             <div className="flex items-center justify-center h-20">
-                                <p className="text-[11px] text-text-dim">{strings.collectionRunner.noRequests}</p>
+                                <p className="text-[11px] text-muted-foreground">{strings.collectionRunner.noRequests}</p>
                             </div>
                         )}
                         {orderedRequests.map((req, idx) => {
@@ -285,26 +285,26 @@ export default function CollectionRunner({
                                     onDragStart={() => handleDragStart(idx)}
                                     onDragOver={(e) => handleDragOver(e, idx)}
                                     onDrop={() => handleDrop(idx)}
-                                    className="flex items-center gap-2 px-2 py-1.5 rounded border border-border/30 bg-bg1/20 hover:bg-bg1/50 cursor-grab active:cursor-grabbing group select-none"
+                                    className="flex items-center gap-2 px-2 py-1.5 rounded border border-border/30 bg-surface/20 hover:bg-surface/50 cursor-grab active:cursor-grabbing group select-none"
                                 >
-                                    <GripVertical size={12} className="text-text-dim/40 flex-shrink-0" />
-                                    <span className="text-[10px] text-text-dim/60 w-4 text-right font-mono flex-shrink-0">{idx + 1}</span>
+                                    <GripVertical size={12} className="text-muted-foreground/40 flex-shrink-0" />
+                                    <span className="text-[10px] text-muted-foreground/60 w-4 text-right font-mono flex-shrink-0">{idx + 1}</span>
                                     <span className={`text-[10px] font-bold font-mono w-11 flex-shrink-0 ${methodColor(req.method)}`}>
                                         {req.method}
                                     </span>
-                                    <span className="text-[11px] text-text-bright truncate flex-1" title={req.name || req.url}>
+                                    <span className="text-[11px] text-foreground truncate flex-1" title={req.name || req.url}>
                                         {req.name || strings.collectionRunner.untitled}
                                     </span>
                                     {isRunning && (
-                                        <Loader2 size={11} className="animate-spin text-accent flex-shrink-0" />
+                                        <Loader2 size={11} className="animate-spin text-signal flex-shrink-0" />
                                     )}
                                     {result && <StatusDot result={result} />}
                                     {!result && !isRunning && (
                                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 flex-shrink-0">
-                                            <button onClick={() => moveUp(idx)} disabled={idx === 0} className="text-text-dim hover:text-text-bright disabled:opacity-20 cursor-pointer p-0.5">
+                                            <button onClick={() => moveUp(idx)} disabled={idx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer p-0.5">
                                                 <ChevronUp size={11} />
                                             </button>
-                                            <button onClick={() => moveDown(idx)} disabled={idx === orderedRequests.length - 1} className="text-text-dim hover:text-text-bright disabled:opacity-20 cursor-pointer p-0.5">
+                                            <button onClick={() => moveDown(idx)} disabled={idx === orderedRequests.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer p-0.5">
                                                 <ChevronDown size={11} />
                                             </button>
                                         </div>
@@ -319,9 +319,9 @@ export default function CollectionRunner({
                 <div className="flex-1 flex flex-col overflow-hidden">
                     {results.length === 0 && !running ? (
                         <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-8">
-                            <Play size={36} className="opacity-10 text-text-bright" />
-                            <p className="text-xs text-text-dim max-w-48">
-                                {strings.collectionRunner.pressRunPrefix} <span className="font-semibold text-text-bright">{strings.collectionRunner.run}</span> {strings.collectionRunner.pressRunSuffix}
+                            <Play size={36} className="opacity-10 text-foreground" />
+                            <p className="text-xs text-muted-foreground max-w-48">
+                                {strings.collectionRunner.pressRunPrefix} <span className="font-semibold text-foreground">{strings.collectionRunner.run}</span> {strings.collectionRunner.pressRunSuffix}
                             </p>
                         </div>
                     ) : (
@@ -344,18 +344,18 @@ function StatusDot({ result }: { result: RunnerRequestResult }) {
     const allPassed = result.tests.every((t) => t.passed);
     const isGood = !hasError && (!hasTests ? (result.status !== null && result.status >= 200 && result.status < 300) : allPassed);
     return isGood
-        ? <CheckCircle2 size={13} className="text-green flex-shrink-0" />
-        : <XCircle size={13} className="text-red flex-shrink-0" />;
+        ? <CheckCircle2 size={13} className="text-signal flex-shrink-0" />
+        : <XCircle size={13} className="text-destructive flex-shrink-0" />;
 }
 
 function methodColor(method: string): string {
     switch (method.toUpperCase()) {
-        case "GET": return "text-green";
-        case "POST": return "text-yellow";
+        case "GET": return "text-signal";
+        case "POST": return "text-amber";
         case "PUT": return "text-blue";
         case "PATCH": return "text-orange";
-        case "DELETE": return "text-red";
-        default: return "text-accent";
+        case "DELETE": return "text-destructive";
+        default: return "text-signal";
     }
 }
 
@@ -363,11 +363,11 @@ function getResultCardStyle(result: RunnerRequestResult): { border: string; bg: 
     const hasError = !!result.error;
     const hasTests = result.tests.length > 0;
     const allPassed = result.tests.every((t) => t.passed);
-    if (hasError || (hasTests && !allPassed)) return { border: "border-red/25", bg: "bg-red/5", indicator: "bg-red" };
-    if (hasTests && allPassed) return { border: "border-green/25", bg: "bg-green/5", indicator: "bg-green" };
-    if (result.status !== null && result.status >= 200 && result.status < 300) return { border: "border-green/25", bg: "bg-green/5", indicator: "bg-green" };
-    if (result.status !== null && result.status >= 400) return { border: "border-red/25", bg: "bg-red/5", indicator: "bg-red" };
-    return { border: "border-border/40", bg: "bg-bg1/20", indicator: "bg-yellow" };
+    if (hasError || (hasTests && !allPassed)) return { border: "border-destructive/25", bg: "bg-destructive/5", indicator: "bg-destructive" };
+    if (hasTests && allPassed) return { border: "border-signal/25", bg: "bg-signal/5", indicator: "bg-signal" };
+    if (result.status !== null && result.status >= 200 && result.status < 300) return { border: "border-signal/25", bg: "bg-signal/5", indicator: "bg-signal" };
+    if (result.status !== null && result.status >= 400) return { border: "border-destructive/25", bg: "bg-destructive/5", indicator: "bg-destructive" };
+    return { border: "border-border/40", bg: "bg-surface/20", indicator: "bg-amber" };
 }
 
 function RequestResultCard({ result, index }: { result: RunnerRequestResult; index: number }) {
@@ -387,12 +387,12 @@ function RequestResultCard({ result, index }: { result: RunnerRequestResult; ind
                 {/* Status indicator bar */}
                 <span className={`w-0.5 h-5 rounded-full flex-shrink-0 ${style.indicator}`} />
 
-                <span className="text-[10px] font-mono text-text-dim w-4 text-right flex-shrink-0">{index + 1}</span>
+                <span className="text-[10px] font-mono text-muted-foreground w-4 text-right flex-shrink-0">{index + 1}</span>
                 <span className={`text-[10px] font-bold font-mono w-12 flex-shrink-0 ${methodColor(result.method)}`}>{result.method}</span>
 
                 <div className="flex-1 min-w-0">
-                    <div className="text-[12px] text-text-bright font-medium truncate">{result.requestName}</div>
-                    <div className="text-[10px] text-text-dim/70 truncate font-mono">{result.url}</div>
+                    <div className="text-[12px] text-foreground font-medium truncate">{result.requestName}</div>
+                    <div className="text-[10px] text-muted-foreground/70 truncate font-mono">{result.url}</div>
                 </div>
 
                 {/* Status code */}
@@ -401,21 +401,21 @@ function RequestResultCard({ result, index }: { result: RunnerRequestResult; ind
                         {result.status}
                     </span>
                 ) : (
-                    result.error && <span className="text-[10px] text-red flex-shrink-0">{strings.collectionRunner.error}</span>
+                    result.error && <span className="text-[10px] text-destructive flex-shrink-0">{strings.collectionRunner.error}</span>
                 )}
 
                 {/* Response time */}
-                <span className="text-[10px] text-text-dim/70 font-mono flex-shrink-0">{result.responseTime}ms</span>
+                <span className="text-[10px] text-muted-foreground/70 font-mono flex-shrink-0">{result.responseTime}ms</span>
 
                 {/* Test summary badge */}
                 {hasTests && (
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${allPassed ? "bg-green/15 text-green" : "bg-red/15 text-red"}`}>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${allPassed ? "bg-signal/15 text-signal" : "bg-destructive/15 text-destructive"}`}>
                         {result.tests.filter((t) => t.passed).length}/{result.tests.length}
                     </span>
                 )}
 
                 {hasExpandable && (
-                    expanded ? <ChevronUp size={13} className="text-text-dim/50 flex-shrink-0" /> : <ChevronDown size={13} className="text-text-dim/50 flex-shrink-0" />
+                    expanded ? <ChevronUp size={13} className="text-muted-foreground/50 flex-shrink-0" /> : <ChevronDown size={13} className="text-muted-foreground/50 flex-shrink-0" />
                 )}
             </div>
 
@@ -424,19 +424,19 @@ function RequestResultCard({ result, index }: { result: RunnerRequestResult; ind
                 <div className="border-t border-border/25 px-3 py-2 space-y-2">
                     {/* Errors */}
                     {result.error && (
-                        <div className="flex items-start gap-1.5 text-[11px] text-red font-mono bg-red/5 rounded px-2 py-1">
+                        <div className="flex items-start gap-1.5 text-[11px] text-destructive font-mono bg-destructive/5 rounded px-2 py-1">
                             <AlertTriangle size={11} className="mt-0.5 flex-shrink-0" />
                             {result.error}
                         </div>
                     )}
                     {result.preScriptError && (
-                        <div className="text-[11px] text-yellow font-mono bg-yellow/5 rounded px-2 py-1">
-                            <span className="text-text-dim mr-1">{strings.collectionRunner.preScriptLabel}</span>{result.preScriptError}
+                        <div className="text-[11px] text-amber font-mono bg-amber/5 rounded px-2 py-1">
+                            <span className="text-muted-foreground mr-1">{strings.collectionRunner.preScriptLabel}</span>{result.preScriptError}
                         </div>
                     )}
                     {result.postScriptError && (
-                        <div className="text-[11px] text-yellow font-mono bg-yellow/5 rounded px-2 py-1">
-                            <span className="text-text-dim mr-1">{strings.collectionRunner.postScriptLabel}</span>{result.postScriptError}
+                        <div className="text-[11px] text-amber font-mono bg-amber/5 rounded px-2 py-1">
+                            <span className="text-muted-foreground mr-1">{strings.collectionRunner.postScriptLabel}</span>{result.postScriptError}
                         </div>
                     )}
 
@@ -444,7 +444,7 @@ function RequestResultCard({ result, index }: { result: RunnerRequestResult; ind
                     {result.tests.length > 0 && (
                         <div className="space-y-0.5">
                             {result.tests.map((t, ti) => (
-                                <div key={ti} className={`flex items-start gap-2 text-[11px] font-mono py-0.5 ${t.passed ? "text-green" : "text-red"}`}>
+                                <div key={ti} className={`flex items-start gap-2 text-[11px] font-mono py-0.5 ${t.passed ? "text-signal" : "text-destructive"}`}>
                                     {t.passed
                                         ? <CheckCircle2 size={12} className="flex-shrink-0 mt-px" />
                                         : <XCircle size={12} className="flex-shrink-0 mt-px" />
@@ -459,11 +459,11 @@ function RequestResultCard({ result, index }: { result: RunnerRequestResult; ind
                     {/* Console logs */}
                     {result.testLogs.length > 0 && (
                         <div className="border-t border-border/20 pt-2 space-y-0.5">
-                            <div className="flex items-center gap-1 text-[9px] text-text-dim uppercase tracking-wider mb-1">
+                            <div className="flex items-center gap-1 text-[9px] text-muted-foreground uppercase tracking-wider mb-1">
                                 <Terminal size={9} /> {strings.collectionRunner.console}
                             </div>
                             {result.testLogs.map((log, li) => (
-                                <div key={li} className="text-[10px] text-text-dim font-mono">{log}</div>
+                                <div key={li} className="text-[10px] text-muted-foreground font-mono">{log}</div>
                             ))}
                         </div>
                     )}

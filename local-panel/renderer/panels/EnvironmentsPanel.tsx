@@ -32,11 +32,11 @@ function VarRow({
   onDelete: () => void;
 }) {
   return (
-    <div className="flex items-stretch border-b border-border/25 last:border-0 group hover:bg-bg2/30">
+    <div className="flex items-stretch border-b border-border/25 last:border-0 group hover:bg-card/30">
       <div className="flex-1 border-r border-border/25 min-w-0">
         <input
-          className="w-full h-full bg-transparent font-mono text-xs px-3 py-2 outline-none focus:bg-bg2/60"
-          style={{ color: "var(--c-accent)" }}
+          className="w-full h-full bg-transparent font-mono text-xs px-3 py-2 outline-none focus:bg-card/60"
+          style={{ color: "var(--c-signal)" }}
           placeholder="VARIABLE_NAME"
           value={row.key}
           onChange={(e) => onUpdate({ key: e.target.value })}
@@ -44,7 +44,7 @@ function VarRow({
       </div>
       <div className="flex-1 min-w-0">
         <input
-          className="w-full h-full bg-transparent font-mono text-xs text-text-bright px-3 py-2 outline-none focus:bg-bg2/60"
+          className="w-full h-full bg-transparent font-mono text-xs text-foreground px-3 py-2 outline-none focus:bg-card/60"
           placeholder="value"
           value={row.value}
           onChange={(e) => onUpdate({ value: e.target.value })}
@@ -52,7 +52,7 @@ function VarRow({
       </div>
       <button
         onClick={onDelete}
-        className="w-9 flex-shrink-0 flex items-center justify-center text-text-dim hover:text-red opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+        className="w-9 flex-shrink-0 flex items-center justify-center text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
       >
         <X size={13} />
       </button>
@@ -116,15 +116,15 @@ function VariableEditor({
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-3 border-b border-border flex-shrink-0">
         {isGlobal ? (
-          <Globe size={15} className="text-accent flex-shrink-0" />
+          <Globe size={15} className="text-signal flex-shrink-0" />
         ) : (
           <ActiveDot active={isActive} color="accent" size="sm" />
         )}
         {isGlobal ? (
-          <span className="flex-1 text-sm font-semibold text-text-bright">Global</span>
+          <span className="flex-1 text-sm font-semibold text-foreground">Global</span>
         ) : (
           <input
-            className="flex-1 bg-transparent text-sm font-semibold text-text-bright outline-none placeholder:text-text-dim min-w-0"
+            className="flex-1 bg-transparent text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground min-w-0"
             value={name}
             onChange={(e) => { setName(e.target.value); markDirty(); }}
             placeholder={strings.environments.environmentName}
@@ -132,20 +132,20 @@ function VariableEditor({
         )}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {isGlobal && (
-            <span className="px-2.5 py-1 rounded border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
+            <span className="px-2.5 py-1 rounded border border-signal/40 bg-signal/10 text-signal text-xs font-semibold">
               {strings.environments.alwaysActive}
             </span>
           )}
           {!isGlobal && !isActive && (
             <button
               onClick={onActivate}
-              className="px-2.5 py-1 rounded border border-border bg-bg2 hover:border-accent/50 hover:bg-accent/10 hover:text-accent text-text-dim text-xs font-medium transition-all cursor-pointer"
+              className="px-2.5 py-1 rounded border border-border bg-card hover:border-signal/50 hover:bg-signal/10 hover:text-signal text-muted-foreground text-xs font-medium transition-all cursor-pointer"
             >
               {strings.environments.setActive}
             </button>
           )}
           {!isGlobal && isActive && (
-            <span className="px-2.5 py-1 rounded border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
+            <span className="px-2.5 py-1 rounded border border-signal/40 bg-signal/10 text-signal text-xs font-semibold">
               {strings.environments.active}
             </span>
           )}
@@ -153,7 +153,7 @@ function VariableEditor({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-2.5 py-1 rounded border border-green/40 bg-green/10 hover:bg-green/20 text-green text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+              className="px-2.5 py-1 rounded border border-signal/40 bg-signal/10 hover:bg-signal/20 text-signal text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
             >
               {saving ? strings.server.saving : strings.common.save}
             </button>
@@ -163,13 +163,13 @@ function VariableEditor({
               icon={<History size={12} />}
               title={strings.environments.viewHistory}
               onClick={onHistory}
-              className="hover:text-accent"
+              className="hover:text-signal"
             />
           )}
           {!isGlobal && (
             <button
               onClick={onDelete}
-              className="px-2.5 py-1 rounded border border-border bg-bg2 hover:border-red/40 hover:bg-red/10 hover:text-red text-text-dim text-xs font-medium transition-all cursor-pointer"
+              className="px-2.5 py-1 rounded border border-border bg-card hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive text-muted-foreground text-xs font-medium transition-all cursor-pointer"
             >
               {strings.common.delete}
             </button>
@@ -179,18 +179,18 @@ function VariableEditor({
 
       {/* Variables table */}
       <div className="flex flex-col flex-1 overflow-y-auto">
-        <div className="flex items-center border-b border-border/60 bg-bg0/20 flex-shrink-0">
-          <div className="flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim border-r border-border/40">
+        <div className="flex items-center border-b border-border/60 bg-background/20 flex-shrink-0">
+          <div className="flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-r border-border/40">
             Variable
           </div>
-          <div className="flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim">
+          <div className="flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Value
           </div>
           <div className="w-9 flex-shrink-0" />
         </div>
 
         {vars.length === 0 && (
-          <p className="px-4 py-4 text-xs text-text-dim italic">{strings.environments.noVariables}</p>
+          <p className="px-4 py-4 text-xs text-muted-foreground italic">{strings.environments.noVariables}</p>
         )}
 
         {vars.map((v) => (
@@ -199,9 +199,9 @@ function VariableEditor({
 
         <button
           onClick={addVar}
-          className="flex items-center gap-2 px-4 py-2.5 text-xs text-text-dim hover:text-text-base hover:bg-bg2/30 transition-colors cursor-pointer w-full text-left border-t border-border/20"
+          className="flex items-center gap-2 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-card/30 transition-colors cursor-pointer w-full text-left border-t border-border/20"
         >
-          <span className="text-accent font-semibold text-sm leading-none">+</span>{strings.environments.addVariable}
+          <span className="text-signal font-semibold text-sm leading-none">+</span>{strings.environments.addVariable}
         </button>
       </div>
     </div>
@@ -227,17 +227,17 @@ function EnvItem({
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors cursor-pointer ${
-        isSelected ? "bg-accent/15 text-text-bright" : "hover:bg-bg2/50 text-text-base"
+        isSelected ? "bg-signal/15 text-foreground" : "hover:bg-card/50 text-foreground"
       }`}
     >
       {isGlobal ? (
-        <Globe size={13} className={isSelected ? "text-accent" : "text-text-dim"} />
+        <Globe size={13} className={isSelected ? "text-signal" : "text-muted-foreground"} />
       ) : (
         <ActiveDot active={isActive} color="accent" size="sm" />
       )}
       <span className="flex-1 text-xs truncate">{env.name}</span>
       {isGlobal && (
-        <span className="text-[9px] font-semibold uppercase tracking-wide text-accent opacity-70 flex-shrink-0">
+        <span className="text-[9px] font-semibold uppercase tracking-wide text-signal opacity-70 flex-shrink-0">
           {strings.environments.alwaysActive}
         </span>
       )}
@@ -293,7 +293,7 @@ export default function EnvironmentsPanel({ config, onConfigChange, onHistoryOpe
   const sidebar = (
     <div className="flex flex-col flex-1 overflow-hidden">
       <SidebarHeader onCollapse={() => setSidebarOpen(false)}>
-        <span className="text-xs font-semibold text-text-dim uppercase tracking-wider px-1">{strings.environments.title}</span>
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">{strings.environments.title}</span>
       </SidebarHeader>
 
       <div className="flex flex-col flex-1 overflow-y-auto">
@@ -353,7 +353,7 @@ export default function EnvironmentsPanel({ config, onConfigChange, onHistoryOpe
         description={
           <>
             {strings.environments.noEnvironmentsDesc}{" "}
-            {strings.environments.useVarPrefix} <code className="font-mono bg-bg3 px-1 rounded">{"{{VAR}}"}</code> {strings.environments.useVarSuffix}
+            {strings.environments.useVarPrefix} <code className="font-mono bg-surface-2 px-1 rounded">{"{{VAR}}"}</code> {strings.environments.useVarSuffix}
           </>
         }
       />

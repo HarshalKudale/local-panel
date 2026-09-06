@@ -204,8 +204,8 @@ export default function ImportExportModal({ open, mode, wsId, onClose, onImportD
         )}
         {state.step.name === "working" && (
           <div className="flex items-center gap-3 py-6">
-            <span className="inline-block w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin flex-shrink-0" />
-            <span className="text-sm text-text-dim">{mode === "export" ? strings.importExport.exporting : strings.importExport.importing}</span>
+            <span className="inline-block w-5 h-5 border-2 border-signal border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <span className="text-sm text-muted-foreground">{mode === "export" ? strings.importExport.exporting : strings.importExport.importing}</span>
           </div>
         )}
         {state.step.name === "done" && (
@@ -220,16 +220,16 @@ export default function ImportExportModal({ open, mode, wsId, onClose, onImportD
 function StepSelectKind({ kinds, onSelect }: { kinds: ImportExportEntityKind[]; onSelect(k: ImportExportEntityKind): void }) {
   return (
     <div>
-      <p className="text-xs text-text-dim mb-3">{strings.importExport.whatToWorkWith}</p>
+      <p className="text-xs text-muted-foreground mb-3">{strings.importExport.whatToWorkWith}</p>
       <div className="grid grid-cols-2 gap-2">
         {kinds.map((k) => (
           <button
             key={k}
             onClick={() => onSelect(k)}
-            className="text-left px-4 py-3 rounded border border-border bg-bg2 hover:bg-bg3 hover:border-accent/40 transition-colors"
+            className="text-left px-4 py-3 rounded border border-border bg-card hover:bg-surface-2 hover:border-signal/40 transition-colors"
           >
-            <div className="text-sm font-medium text-text-base">{KIND_LABELS[k]}</div>
-            <div className="text-xs text-text-dim mt-0.5 line-clamp-1">{KIND_DESC[k]}</div>
+            <div className="text-sm font-medium text-foreground">{KIND_LABELS[k]}</div>
+            <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{KIND_DESC[k]}</div>
           </button>
         ))}
       </div>
@@ -250,20 +250,20 @@ function StepSelectFormat({
 }) {
   return (
     <div>
-      <p className="text-xs text-text-dim mb-3">
+      <p className="text-xs text-muted-foreground mb-3">
         {mode === "export" ? strings.importExport.chooseExportFormatFor : strings.importExport.chooseImportFormatFor}{" "}
-        <span className="text-text-base font-medium">{KIND_LABELS[kind]}</span>
+        <span className="text-foreground font-medium">{KIND_LABELS[kind]}</span>
       </p>
       {formats.length === 0 ? (
-        <p className="text-sm text-text-dim py-4 text-center">{strings.importExport.noFormatsAvailable}</p>
+        <p className="text-sm text-muted-foreground py-4 text-center">{strings.importExport.noFormatsAvailable}</p>
       ) : (
         <div className="space-y-1.5">
           {formats.map((f) => (
             <label
               key={f.id}
               className={`flex items-center gap-3 px-4 py-3 rounded border cursor-pointer transition-colors ${selected === f.id
-                ? "border-accent/50 bg-accent/10"
-                : "border-border bg-bg2 hover:bg-bg3"
+                ? "border-signal/50 bg-signal/10"
+                : "border-border bg-card hover:bg-surface-2"
                 }`}
             >
               <input
@@ -272,11 +272,11 @@ function StepSelectFormat({
                 value={f.id}
                 checked={selected === f.id}
                 onChange={() => onSelect(f.id)}
-                className="accent-accent"
+                className="accent-signal"
               />
               <div>
-                <div className="text-sm font-medium text-text-base">{f.label}</div>
-                <div className="text-xs text-text-dim">.{f.extensions.join(", .")}</div>
+                <div className="text-sm font-medium text-foreground">{f.label}</div>
+                <div className="text-xs text-muted-foreground">.{f.extensions.join(", .")}</div>
               </div>
             </label>
           ))}
@@ -307,15 +307,15 @@ function StepCollision({
 }) {
   return (
     <div>
-      <div className="bg-yellow/10 border border-yellow/30 rounded px-4 py-3 mb-4">
-        <p className="text-sm text-yellow font-medium">
+      <div className="bg-amber/10 border border-amber/30 rounded px-4 py-3 mb-4">
+        <p className="text-sm text-amber font-medium">
           {strings.importExport.collisionSummary.replace("{count}", String(step.collisionCount)).replace("{total}", String(step.itemCount))}
         </p>
       </div>
-      <p className="text-xs text-text-dim mb-3">{strings.importExport.howConflictsHandled}</p>
+      <p className="text-xs text-muted-foreground mb-3">{strings.importExport.howConflictsHandled}</p>
       <div className="space-y-2">
         {(["keep", "override", "new"] as CollisionStrategy[]).map((s) => (
-          <label key={s} className={`flex items-start gap-3 px-4 py-3 rounded border cursor-pointer transition-colors ${strategy === s ? "border-accent/50 bg-accent/10" : "border-border bg-bg2 hover:bg-bg3"
+          <label key={s} className={`flex items-start gap-3 px-4 py-3 rounded border cursor-pointer transition-colors ${strategy === s ? "border-signal/50 bg-signal/10" : "border-border bg-card hover:bg-surface-2"
             }`}>
             <input
               type="radio"
@@ -323,11 +323,11 @@ function StepCollision({
               value={s}
               checked={strategy === s}
               onChange={() => onSetStrategy(s)}
-              className="mt-0.5 accent-accent"
+              className="mt-0.5 accent-signal"
             />
             <div>
-              <div className="text-sm font-medium text-text-base">{COLLISION_LABELS[s]}</div>
-              <div className="text-xs text-text-dim">{COLLISION_DESC[s]}</div>
+              <div className="text-sm font-medium text-foreground">{COLLISION_LABELS[s]}</div>
+              <div className="text-xs text-muted-foreground">{COLLISION_DESC[s]}</div>
             </div>
           </label>
         ))}
@@ -354,7 +354,7 @@ const COLLISION_DESC: Record<CollisionStrategy, string> = {
 function StepDone({ step, onClose }: { step: Extract<Step, { name: "done" }>; onClose(): void }) {
   return (
     <div>
-      <div className={`px-4 py-3 rounded border text-sm mb-5 ${step.ok ? "border-green/30 bg-green/10 text-green" : "border-red/30 bg-red/10 text-red"
+      <div className={`px-4 py-3 rounded border text-sm mb-5 ${step.ok ? "border-signal/30 bg-signal/10 text-signal" : "border-destructive/30 bg-destructive/10 text-destructive"
         }`}>
         {step.message}
       </div>

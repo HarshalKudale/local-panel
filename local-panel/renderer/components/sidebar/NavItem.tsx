@@ -9,22 +9,37 @@ interface Props {
   onClick: () => void;
 }
 
-export default function NavItem({ label, icon, active, badge, onClick }: Props) {
+export default function NavItem({ id, label, icon, active, badge, onClick }: Props) {
+  // Support both ID and normalized label for data-testid
+  const testId = `nav-${id ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+
   return (
     <button
       type="button"
-      data-testid={`nav-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
+      data-testid={testId}
       onClick={onClick}
-      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded text-sm font-medium w-full text-left transition-all duration-150 cursor-pointer whitespace-nowrap ${
+      className={`group relative flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium w-full text-left transition-all duration-150 cursor-pointer whitespace-nowrap ${
         active
-          ? "bg-bg3 text-accent"
-          : "text-text-dim hover:bg-bg2 hover:text-text-base"
+          ? "bg-signal/15 text-signal font-semibold border border-signal/35 shadow-[var(--glow-signal-sm)]"
+          : "text-muted-foreground hover:bg-surface-2 hover:text-foreground border border-transparent"
       }`}
     >
-      <span className="w-4 flex items-center justify-center flex-shrink-0">{icon}</span>
-      <span className="flex-1">{label}</span>
+      <span
+        className={`w-4 flex items-center justify-center flex-shrink-0 transition-colors ${
+          active ? "text-signal" : "text-muted-foreground group-hover:text-foreground"
+        }`}
+      >
+        {icon}
+      </span>
+      <span className="flex-1 truncate">{label}</span>
       {badge !== undefined && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent/20 text-accent font-semibold leading-none">
+        <span
+          className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold leading-none transition-colors ${
+            active
+              ? "bg-signal/25 text-signal border border-signal/40"
+              : "bg-surface-2 text-muted-foreground"
+          }`}
+        >
           {badge}
         </span>
       )}

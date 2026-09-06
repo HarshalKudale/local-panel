@@ -54,7 +54,7 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
     >
       <button
         onClick={() => { setOpen((v) => !v); setRenamingId(null); setConfirmDeleteId(null); }}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-border bg-bg2 text-text-dim hover:bg-bg3 hover:text-text-base text-xs font-medium transition-colors cursor-pointer"
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-border bg-card text-muted-foreground hover:bg-surface-2 hover:text-foreground text-xs font-medium transition-colors cursor-pointer"
         title={strings.sidebar.switchWorkspace}
       >
         <Layers size={11} />
@@ -65,17 +65,17 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={close} />
-          <div className="absolute top-full mt-1 left-0 z-50 bg-bg2 border border-border rounded-md shadow-2xl py-1 min-w-[230px] animate-scale-in">
+          <div className="absolute top-full mt-1 left-0 z-50 bg-card border border-border rounded-md shadow-2xl py-1 min-w-[230px] animate-scale-in">
             {/* Create workspace button */}
             <button
               onClick={() => { onCreate(); close(); }}
-              className="w-full text-left px-3 py-1.5 text-xs text-accent hover:bg-bg3 cursor-pointer transition-colors flex items-center gap-1.5 border-b border-border/60"
+              className="w-full text-left px-3 py-1.5 text-xs text-signal hover:bg-surface-2 cursor-pointer transition-colors flex items-center gap-1.5 border-b border-border/60"
             >
               <Plus size={12} />
               {strings.sidebar.createWorkspace}
             </button>
 
-            <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-dim">
+            <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               {strings.sidebar.workspaces}
             </div>
 
@@ -84,7 +84,7 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
               return (
                 <div key={ws.id}>
                   <div
-                    className={`group flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-bg3 ${activeId === ws.id ? "text-accent font-semibold" : "text-text-base"}`}
+                    className={`group flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-surface-2 ${activeId === ws.id ? "text-signal font-semibold" : "text-foreground"}`}
                     onClick={() => {
                       if (renamingId !== ws.id && !isConfirming) {
                         onSelect(ws.id);
@@ -95,13 +95,13 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
                     }}
                   >
                     <span
-                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeId === ws.id ? "bg-accent" : "bg-text-dim/30"}`}
-                      style={{ boxShadow: activeId === ws.id ? "0 0 4px var(--c-accent)" : "none" }}
+                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeId === ws.id ? "bg-signal" : "bg-muted-foreground/30"}`}
+                      style={{ boxShadow: activeId === ws.id ? "0 0 4px var(--c-signal)" : "none" }}
                     />
                     {renamingId === ws.id ? (
                       <input
                         ref={renameRef}
-                        className="flex-1 min-w-0 bg-bg3 border border-accent/40 rounded px-1.5 py-0.5 text-xs text-text-bright outline-none"
+                        className="flex-1 min-w-0 bg-surface-2 border border-signal/40 rounded px-1.5 py-0.5 text-xs text-foreground outline-none"
                         value={renameValue}
                         onChange={(e) => setRenameValue(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
@@ -118,7 +118,7 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
                     {renamingId !== ws.id && (
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
                         <button
-                          className="text-text-dim hover:text-accent text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer"
+                          className="text-muted-foreground hover:text-signal text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer"
                           title={strings.sidebar.renameWorkspace}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -131,7 +131,7 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
                         </button>
                         {canDelete && (
                           <button
-                            className="text-text-dim hover:text-red text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer"
+                            className="text-muted-foreground hover:text-destructive text-[10px] px-1 py-0.5 rounded transition-colors cursor-pointer"
                             title={strings.sidebar.deleteWorkspace}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -149,22 +149,22 @@ export default function WorkspaceSelector({ workspaces, activeId, onSelect, onCr
                   {/* Inline delete confirmation */}
                   {isConfirming && (
                     <div
-                      className="mx-3 mb-1.5 px-2.5 py-2 rounded border border-red/30 bg-red/5"
+                      className="mx-3 mb-1.5 px-2.5 py-2 rounded border border-destructive/30 bg-destructive/5"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <p className="text-[10px] text-text-dim leading-snug mb-2">
-                        {strings.sidebar.deleteWorkspacePrefix} <span className="font-semibold text-text-base">"{ws.name}"</span>{strings.sidebar.deleteWorkspaceSuffix}
+                      <p className="text-[10px] text-muted-foreground leading-snug mb-2">
+                        {strings.sidebar.deleteWorkspacePrefix} <span className="font-semibold text-foreground">"{ws.name}"</span>{strings.sidebar.deleteWorkspaceSuffix}
                       </p>
                       <div className="flex gap-1.5">
                         <button
                           onClick={() => handleDeleteConfirm(ws.id)}
-                          className="flex-1 px-2 py-1 rounded bg-red/15 border border-red/40 text-red text-[10px] font-semibold hover:bg-red/25 cursor-pointer transition-colors"
+                          className="flex-1 px-2 py-1 rounded bg-destructive/15 border border-destructive/40 text-destructive text-[10px] font-semibold hover:bg-destructive/25 cursor-pointer transition-colors"
                         >
                           {strings.common.delete}
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="flex-1 px-2 py-1 rounded bg-bg3 border border-border text-text-dim text-[10px] hover:text-text-base cursor-pointer transition-colors"
+                          className="flex-1 px-2 py-1 rounded bg-surface-2 border border-border text-muted-foreground text-[10px] hover:text-foreground cursor-pointer transition-colors"
                         >
                           {strings.common.cancel}
                         </button>

@@ -194,9 +194,9 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
                 {openTabs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center gap-2">
                         <div className="opacity-10 mb-1"><Braces size={48} /></div>
-                        <div className="text-sm font-medium text-text-base">{strings.graphql.noMocksOpen}</div>
-                        <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-                            {strings.graphql.noMocksOpenHintBefore} <span className="text-accent font-semibold">+</span> {strings.graphql.noMocksOpenHintAfter}
+                        <div className="text-sm font-medium text-foreground">{strings.graphql.noMocksOpen}</div>
+                        <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+                            {strings.graphql.noMocksOpenHintBefore} <span className="text-signal font-semibold">+</span> {strings.graphql.noMocksOpenHintAfter}
                         </p>
                     </div>
                 ) : (
@@ -239,7 +239,7 @@ export default function GraphQLMocksPanel({ config, onConfigChange, activeEnv = 
                 expandTitle={strings.graphql.expandSidebar}
                 storageKey="graphql-mocks-panel-sidebar"
                 collapsedBadge={mocks.length > 0 ? (
-                    <span className="text-[9px] text-text-dim font-mono" title={strings.graphql.mockCount.replace("{count}", String(mocks.length))}
+                    <span className="text-[9px] text-muted-foreground font-mono" title={strings.graphql.mockCount.replace("{count}", String(mocks.length))}
                         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{mocks.length}</span>
                 ) : undefined}
             >

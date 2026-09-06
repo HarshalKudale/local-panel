@@ -177,13 +177,13 @@ export default function EditorTab({
         active={reqTab}
         onChange={onReqTabChange}
         prefix={
-          <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-r border-border whitespace-nowrap">
+          <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-r border-border whitespace-nowrap">
             {strings.editor.request}
           </span>
         }
         suffix={
           reqReadOnly
-            ? <span className="px-3 text-[9px] text-text-dim italic opacity-60">{strings.editor.readOnly}</span>
+            ? <span className="px-3 text-[9px] text-muted-foreground italic opacity-60">{strings.editor.readOnly}</span>
             : undefined
         }
       />
@@ -261,19 +261,19 @@ export default function EditorTab({
           active={resTab}
           onChange={onResTabChange}
           prefix={
-            <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-r border-border whitespace-nowrap">
+            <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-r border-border whitespace-nowrap">
               {strings.editor.response}
             </span>
           }
           suffix={
             <div className="flex items-center gap-2 pr-3">
-              <span className="text-[10px] text-text-dim flex-shrink-0">{strings.editor.delay}</span>
-              <label className="flex items-center gap-1 text-[10px] text-text-dim cursor-pointer">
+              <span className="text-[10px] text-muted-foreground flex-shrink-0">{strings.editor.delay}</span>
+              <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer">
                 <input
                   type="checkbox"
                   checked={resDelayMocked ?? true}
                   onChange={(e) => onResDelayMockedChange?.(e.target.checked)}
-                  className="accent-accent"
+                  className="accent-signal"
                 />
                 <span>Mock</span>
               </label>
@@ -283,16 +283,16 @@ export default function EditorTab({
                 step={100}
                 value={resDelay ?? 0}
                 onChange={(e) => onResDelayChange?.(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                className="bg-bg2 border border-border rounded px-2 py-1 text-xs font-mono text-text-bright outline-none focus:border-accent w-16 text-center"
+                className="bg-card border border-border rounded px-2 py-1 text-xs font-mono text-foreground outline-none focus:border-signal w-16 text-center"
                 placeholder="0"
                 title={strings.editor.responseDelayTitle}
               />
-              <span className="text-[10px] text-text-dim flex-shrink-0">{strings.editor.ms}</span>
+              <span className="text-[10px] text-muted-foreground flex-shrink-0">{strings.editor.ms}</span>
               {/* Streaming mode selector */}
               <select
                 value={streamingMode ?? "none"}
                 onChange={(e) => onStreamingModeChange?.(e.target.value as "none" | "sse" | "chunked")}
-                className="bg-bg2 border border-border rounded px-1.5 py-1 text-[10px] font-mono text-text-bright outline-none focus:border-accent cursor-pointer"
+                className="bg-card border border-border rounded px-1.5 py-1 text-[10px] font-mono text-foreground outline-none focus:border-signal cursor-pointer"
                 title={strings.editor.streamingModeTitle}
               >
                 <option value="none">{strings.editor.streamNone}</option>
@@ -307,18 +307,18 @@ export default function EditorTab({
                     step={50}
                     value={streamingChunkDelay ?? 100}
                     onChange={(e) => onStreamingChunkDelayChange?.(Math.max(10, parseInt(e.target.value, 10) || 100))}
-                    className="bg-bg2 border border-border rounded px-2 py-1 text-xs font-mono text-text-bright outline-none focus:border-accent w-14 text-center"
+                    className="bg-card border border-border rounded px-2 py-1 text-xs font-mono text-foreground outline-none focus:border-signal w-14 text-center"
                     title={strings.editor.chunkDelayTitle}
                   />
-                  <span className="text-[10px] text-text-dim flex-shrink-0">{strings.editor.msPerChunk}</span>
+                  <span className="text-[10px] text-muted-foreground flex-shrink-0">{strings.editor.msPerChunk}</span>
                 </>
               )}
-              <label className="flex items-center gap-1 text-[10px] text-text-dim cursor-pointer">
+              <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer">
                 <input
                   type="checkbox"
                   checked={resStatusMocked ?? true}
                   onChange={(e) => onResStatusMockedChange?.(e.target.checked)}
-                  className="accent-accent"
+                  className="accent-signal"
                 />
                 <span>Mock</span>
               </label>
@@ -328,7 +328,7 @@ export default function EditorTab({
                 max={599}
                 value={resStatus ?? 200}
                 onChange={(e) => onResStatusChange?.(parseInt(e.target.value, 10) || 200)}
-                className="bg-bg2 border border-border rounded px-2 py-1 text-sm font-bold font-mono outline-none focus:border-accent w-16 text-center"
+                className="bg-card border border-border rounded px-2 py-1 text-sm font-bold font-mono outline-none focus:border-signal w-16 text-center"
                 style={{ color: statusColor(resStatus ?? 200) }}
                 title={strings.editor.responseStatusTitle}
               />
@@ -340,13 +340,13 @@ export default function EditorTab({
             <>
               {(resMode !== "binary" && resMode !== "image") && (
                 <div>
-                  <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/20 bg-bg0/20">
-                    <label className="flex items-center gap-2 text-[10px] text-text-dim cursor-pointer">
+                  <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/20 bg-background/20">
+                    <label className="flex items-center gap-2 text-[10px] text-muted-foreground cursor-pointer">
                       <input
                         type="checkbox"
                         checked={resBodyMocked ?? true}
                         onChange={(e) => onResBodyMockedChange?.(e.target.checked)}
-                        className="accent-accent"
+                        className="accent-signal"
                       />
                       <span className="font-semibold uppercase tracking-wider">Mock body</span>
                     </label>
@@ -416,7 +416,7 @@ export default function EditorTab({
           active={resTab}
           onChange={onResTabChange}
           prefix={
-            <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-r border-border whitespace-nowrap">
+            <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-r border-border whitespace-nowrap">
               {strings.editor.response}
             </span>
           }
@@ -431,7 +431,7 @@ export default function EditorTab({
                 <button
                   onClick={onCreateMock}
                   title={strings.requests.createMockTitle}
-                  className="px-2.5 py-1 rounded border border-yellow/30 bg-yellow/10 hover:bg-yellow/20 text-yellow text-[10px] font-semibold cursor-pointer whitespace-nowrap flex-shrink-0"
+                  className="px-2.5 py-1 rounded border border-amber/30 bg-amber/10 hover:bg-amber/20 text-amber text-[10px] font-semibold cursor-pointer whitespace-nowrap flex-shrink-0"
                 >
                   {strings.requests.createMock}
                 </button>
@@ -459,22 +459,22 @@ export default function EditorTab({
             <>
               {loading && (
                 <div className="flex items-center justify-center h-full">
-                  <div className="flex flex-col items-center gap-2 text-text-dim">
-                    <span className="inline-block w-5 h-5 border-2 border-text-dim/30 border-t-accent rounded-full animate-spin" />
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <span className="inline-block w-5 h-5 border-2 border-muted-foreground/30 border-t-signal rounded-full animate-spin" />
                     <span className="text-xs">{strings.server.sending}</span>
                   </div>
                 </div>
               )}
               {!loading && sendErr && (
                 <div className="p-4">
-                  <div className="px-3 py-2 rounded border border-red/30 bg-red/5 text-xs text-red font-mono">{sendErr}</div>
+                  <div className="px-3 py-2 rounded border border-destructive/30 bg-destructive/5 text-xs text-destructive font-mono">{sendErr}</div>
                 </div>
               )}
               {!loading && !sendErr && !result && (
                 <div className="flex items-center justify-center h-full text-center">
                   <div>
                     <div className="text-3xl opacity-20 mb-2">→</div>
-                    <p className="text-xs text-text-dim">{strings.requests.hitSendPrompt}</p>
+                    <p className="text-xs text-muted-foreground">{strings.requests.hitSendPrompt}</p>
                   </div>
                 </div>
               )}
@@ -525,7 +525,7 @@ export default function EditorTab({
       <Panel defaultSize={50} minSize={20} className="flex flex-col overflow-hidden">
         {leftPane}
       </Panel>
-      <ResizeHandle className="w-1 bg-border hover:bg-accent/40 active:bg-accent/60 transition-colors cursor-col-resize flex-shrink-0" />
+      <ResizeHandle className="w-1 bg-border hover:bg-signal/40 active:bg-signal/60 transition-colors cursor-col-resize flex-shrink-0" />
       <Panel defaultSize={50} minSize={20} className="flex flex-col overflow-hidden">
         {rightPane}
       </Panel>
@@ -544,8 +544,8 @@ function ScriptEditor({ value, onChange, placeholder, error }: {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {error && (
-        <div className="px-3 py-1.5 border-b border-red/30 bg-red/5 flex-shrink-0">
-          <span className="text-[11px] text-red font-mono">{strings.editor.scriptError}: {error}</span>
+        <div className="px-3 py-1.5 border-b border-destructive/30 bg-destructive/5 flex-shrink-0">
+          <span className="text-[11px] text-destructive font-mono">{strings.editor.scriptError}: {error}</span>
         </div>
       )}
       <CodeEditor
@@ -567,8 +567,8 @@ function ScriptEditor({ value, onChange, placeholder, error }: {
  */
 function TokenToolbar({ env, onInsert }: { env: Environment | null; onInsert(token: string): void }) {
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/40 bg-bg0/10 flex-shrink-0 justify-end">
-      <span className="text-[9px] text-text-dim/60 uppercase tracking-wider mr-1">{strings.editor.insert}</span>
+    <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/40 bg-background/10 flex-shrink-0 justify-end">
+      <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wider mr-1">{strings.editor.insert}</span>
       <EnvVarHint env={env} onInsert={onInsert} />
       <RandomizerHint onInsert={onInsert} />
     </div>
@@ -643,27 +643,27 @@ function TestsPanel({ testScript, onTestScriptChange, testResults, testLogs, tes
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Sub-tabs: Script / Results */}
-      <div className="flex items-center border-b border-border/40 bg-bg0/30 flex-shrink-0">
+      <div className="flex items-center border-b border-border/40 bg-background/30 flex-shrink-0">
         <button
           onClick={() => setView("script")}
-          className={`px-3 py-1.5 text-[11px] font-medium cursor-pointer ${view === "script" ? "text-text-bright border-b-2 border-accent" : "text-text-dim hover:text-text-bright"}`}
+          className={`px-3 py-1.5 text-[11px] font-medium cursor-pointer ${view === "script" ? "text-foreground border-b-2 border-signal" : "text-muted-foreground hover:text-foreground"}`}
         >
           {strings.editor.script}
         </button>
         <button
           onClick={() => setView("results")}
-          className={`px-3 py-1.5 text-[11px] font-medium cursor-pointer ${view === "results" ? "text-text-bright border-b-2 border-accent" : "text-text-dim hover:text-text-bright"}`}
+          className={`px-3 py-1.5 text-[11px] font-medium cursor-pointer ${view === "results" ? "text-foreground border-b-2 border-signal" : "text-muted-foreground hover:text-foreground"}`}
         >
           {strings.editor.results}
           {testResults && testResults.length > 0 && (
             <span className="ml-1.5 text-[10px]">
-              <span className="text-green">{passCount}</span>
-              {failCount > 0 && <span className="text-red ml-1">{failCount}</span>}
+              <span className="text-signal">{passCount}</span>
+              {failCount > 0 && <span className="text-destructive ml-1">{failCount}</span>}
             </span>
           )}
         </button>
         {testRunning && (
-          <span className="ml-2 inline-block w-3 h-3 border-2 border-text-dim/30 border-t-accent rounded-full animate-spin" />
+          <span className="ml-2 inline-block w-3 h-3 border-2 border-muted-foreground/30 border-t-signal rounded-full animate-spin" />
         )}
       </div>
 
@@ -680,26 +680,26 @@ function TestsPanel({ testScript, onTestScriptChange, testResults, testLogs, tes
         <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
           {(!testResults || testResults.length === 0) && !testRunning && (
             <div className="flex items-center justify-center h-full text-center">
-              <p className="text-xs text-text-dim">{strings.editor.noTestResults}</p>
+              <p className="text-xs text-muted-foreground">{strings.editor.noTestResults}</p>
             </div>
           )}
           {testResults && testResults.map((t, i) => (
-            <div key={i} className={`flex items-start gap-2 px-2.5 py-1.5 rounded text-xs font-mono ${t.passed ? "bg-green/5 border border-green/20" : "bg-red/5 border border-red/20"}`}>
-              <span className={`flex-shrink-0 mt-0.5 text-[10px] font-bold ${t.passed ? "text-green" : "text-red"}`}>
+            <div key={i} className={`flex items-start gap-2 px-2.5 py-1.5 rounded text-xs font-mono ${t.passed ? "bg-signal/5 border border-signal/20" : "bg-destructive/5 border border-destructive/20"}`}>
+              <span className={`flex-shrink-0 mt-0.5 text-[10px] font-bold ${t.passed ? "text-signal" : "text-destructive"}`}>
                 {t.passed ? strings.editor.pass : strings.editor.fail}
               </span>
               <div className="flex-1 min-w-0">
-                <span className="text-text-bright">{t.name}</span>
-                {t.error && <div className="text-red/80 mt-0.5 break-words">{t.error}</div>}
+                <span className="text-foreground">{t.name}</span>
+                {t.error && <div className="text-destructive/80 mt-0.5 break-words">{t.error}</div>}
               </div>
-              <span className="text-text-dim text-[10px] flex-shrink-0">{t.durationMs}ms</span>
+              <span className="text-muted-foreground text-[10px] flex-shrink-0">{t.durationMs}ms</span>
             </div>
           ))}
           {testLogs && testLogs.length > 0 && (
             <div className="mt-3 pt-2 border-t border-border/40">
-              <div className="text-[10px] text-text-dim uppercase tracking-wider mb-1">{strings.editor.console}</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{strings.editor.console}</div>
               {testLogs.map((log, i) => (
-                <div key={i} className="text-[11px] font-mono text-text-dim px-2 py-0.5">{log}</div>
+                <div key={i} className="text-[11px] font-mono text-muted-foreground px-2 py-0.5">{log}</div>
               ))}
             </div>
           )}

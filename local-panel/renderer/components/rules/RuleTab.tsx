@@ -211,28 +211,28 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
               type="button"
               onClick={() => set("useRegex", !state.useRegex)}
               className={`px-3 py-1.5 rounded border text-xs font-semibold transition-colors cursor-pointer flex-shrink-0 ${state.useRegex
-                ? "border-accent bg-accent/10 text-accent"
-                : "border-border bg-bg2 text-text-dim hover:text-text-base"
+                ? "border-signal bg-signal/10 text-signal"
+                : "border-border bg-card text-muted-foreground hover:text-foreground"
                 }`}
               title={state.useRegex ? s.switchToExact : s.switchToRegex}
             >
               {state.useRegex ? s.regexToggle : s.exactToggle}
             </button>
           </div>
-          <p className="text-xs text-text-dim mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {state.useRegex ? s.regexHelp : s.exactHelp}
           </p>
         </FormField>
 
         {/* Target */}
         <div>
-          <div className="text-xs text-text-dim font-medium mb-2 uppercase tracking-wider">{s.forwardTo}</div>
+          <div className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-wider">{s.forwardTo}</div>
           <div className="flex items-center gap-3 mb-3">
             {(["mapping", "external"] as const).map((type) => (
-              <label key={type} className="flex items-center gap-1.5 cursor-pointer text-sm text-text-base">
+              <label key={type} className="flex items-center gap-1.5 cursor-pointer text-sm text-foreground">
                 <input
                   type="radio"
-                  className="accent-accent"
+                  className="accent-signal"
                   checked={state.targetType === type}
                   onChange={() => set("targetType", type)}
                 />
@@ -255,7 +255,7 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
                 ))}
               </Select>
               {config.mappings.length === 0 && (
-                <p className="text-xs text-text-dim mt-1">{s.noMappingsDefined}</p>
+                <p className="text-xs text-muted-foreground mt-1">{s.noMappingsDefined}</p>
               )}
             </FormField>
           ) : (
@@ -267,7 +267,7 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("targetExternal", e.target.value)}
                 error={!!errors.targetExternal}
               />
-              <p className="text-xs text-text-dim mt-1">host:port (e.g. api.example.com:8080 or 127.0.0.1:3000)</p>
+              <p className="text-xs text-muted-foreground mt-1">host:port (e.g. api.example.com:8080 or 127.0.0.1:3000)</p>
             </FormField>
           )}
         </div>
@@ -281,8 +281,8 @@ export default forwardRef<RuleTabHandle, Props>(function RuleTab(
                 type="button"
                 onClick={() => setScriptTab(tab)}
                 className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors cursor-pointer -mb-px ${scriptTab === tab
-                  ? "border-accent text-accent"
-                  : "border-transparent text-text-dim hover:text-text-base"
+                  ? "border-signal text-signal"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
               >
                 {tab === "request" ? s.requestScript : s.responseScript}

@@ -55,9 +55,9 @@ export function tryFormat(text: string): string {
 }
 
 export function statusColor(code: number): string {
-  if (code < 300) return "var(--c-green)";
-  if (code < 400) return "var(--c-yellow)";
-  return "var(--c-red)";
+  if (code < 300) return "var(--c-signal)";
+  if (code < 400) return "var(--c-amber)";
+  return "var(--c-destructive)";
 }
 
 export const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
@@ -65,30 +65,30 @@ export const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTION
 export const MOCK_METHODS = ["*", ...METHODS];
 
 export const METHOD_HEX: Record<string, string> = {
-  "*": "var(--c-text-dim)",
-  GET: "var(--c-green)",
-  POST: "var(--c-yellow)",
-  PUT: "var(--c-accent)",
-  PATCH: "var(--c-yellow)",
-  DELETE: "var(--c-red)",
-  HEAD: "var(--c-method-head)",
-  OPTIONS: "var(--c-method-head)",
+  "*": "var(--c-muted-foreground)",
+  GET: "var(--c-signal)",
+  POST: "var(--c-amber)",
+  PUT: "var(--c-blue)",
+  PATCH: "var(--c-amber)",
+  DELETE: "var(--c-destructive)",
+  HEAD: "var(--c-violet)",
+  OPTIONS: "var(--c-violet)",
 };
 
-// Semi-transparent backgrounds for method badges (can't use hex+22 with CSS vars)
+// Semi-transparent backgrounds for method badges
 const METHOD_BG: Record<string, string> = {
-  "*": "rgba(113,115,109,0.13)",
-  GET: "rgba(34,148,110,0.13)",
-  POST: "rgba(168,122,42,0.13)",
-  PUT: "rgba(202,238,122,0.13)",
-  PATCH: "rgba(168,122,42,0.13)",
-  DELETE: "rgba(156,33,33,0.13)",
-  HEAD: "var(--c-method-head-bg)",
-  OPTIONS: "var(--c-method-head-bg)",
+  "*": "oklch(var(--muted-foreground) / 0.13)",
+  GET: "oklch(var(--signal) / 0.13)",
+  POST: "oklch(var(--amber) / 0.13)",
+  PUT: "oklch(var(--blue) / 0.13)",
+  PATCH: "oklch(var(--amber) / 0.13)",
+  DELETE: "oklch(var(--destructive) / 0.13)",
+  HEAD: "oklch(var(--violet) / 0.13)",
+  OPTIONS: "oklch(var(--violet) / 0.13)",
 };
 
-export const methodColor = (m: string) => METHOD_HEX[m.toUpperCase()] ?? "var(--c-text-dim)";
-export const methodBg = (m: string) => METHOD_BG[m.toUpperCase()] ?? "rgba(113,115,109,0.13)";
+export const methodColor = (m: string) => METHOD_HEX[m.toUpperCase()] ?? "var(--c-muted-foreground)";
+export const methodBg = (m: string) => METHOD_BG[m.toUpperCase()] ?? "oklch(var(--muted-foreground) / 0.13)";
 
 // -- Entity file path helpers (mirrors workspaceFs.ts logic, renderer-side) -----
 

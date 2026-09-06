@@ -9,7 +9,7 @@ import HistorySidebar from "@/components/sidebar/HistorySidebar";
 import AppSidebar from "@/components/sidebar/AppSidebar";
 import TitleBar from "@/components/layout/TitleBar";
 import GlobalFooter from "@/components/layout/GlobalFooter";
-import { useTheme } from "@/lib/useTheme";
+import { useColorMode } from "@/lib/useTheme";
 import { Panel, enabledPanels, PANEL_HELP } from "@/lib/panelRegistry";
 import { renderPanel, PanelRenderContext } from "@/lib/panelFactory";
 import { useSidebarVisibility } from "@/lib/useSidebarVisibility";
@@ -57,7 +57,7 @@ const EMPTY_CONFIG: AppConfig = {
 };
 
 export default function App() {
-  const [theme, setTheme] = useTheme();
+  const [colorMode, setColorMode] = useColorMode();
   const [panel, setPanel] = usePersistedState<Panel>("app:active-panel", "services");
   const [sidebarOpen, setSidebarOpen] = usePersistedState("app:sidebar-open", true);
   const [config, setConfig] = useState<AppConfig>(EMPTY_CONFIG);
@@ -440,8 +440,8 @@ export default function App() {
     services,
     serverRunning,
     serverError,
-    theme,
-    setTheme,
+    colorMode,
+    setColorMode,
     activeEnv,
     openHistory,
     handleEntityPathChange,
@@ -491,7 +491,7 @@ export default function App() {
     sidebarVisibility: visibility,
     setSidebarPanelVisible: setPanelVisible,
   }), [
-    wsConfig, config, wsId, services, serverRunning, serverError, theme, setTheme,
+    wsConfig, config, wsId, services, serverRunning, serverError, colorMode, setColorMode,
     activeEnv, openHistory, handleEntityPathChange, historyOpen, bumpHistoryReload,
     entitySyncStatus, refreshEntitySyncStatus, handleConfigChange, handleWsConfigChange,
     refreshServices, mappingPrefill, pendingOpenRequest, pendingMockInitial,
@@ -502,14 +502,14 @@ export default function App() {
 
   if (wsLoading) {
     return (
-      <div className="flex flex-col h-screen bg-bg0 text-text-base overflow-hidden items-center justify-center gap-3">
-        <div className="text-text-dim text-sm animate-pulse">{wsLoading}</div>
+      <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden items-center justify-center gap-3">
+        <div className="text-muted-foreground text-sm animate-pulse">{wsLoading}</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-bg0 text-text-base overflow-hidden">
+    <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
       <TitleBar
         sidebarOpen={sidebarOpen}
         onSidebarToggle={() => setSidebarOpen((v) => !v)}
@@ -539,7 +539,7 @@ export default function App() {
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left Sidebar */}
         <nav
-          className="bg-bg1 border-r border-border flex flex-col flex-shrink-0 overflow-hidden sidebar-collapse"
+          className="bg-surface border-r border-border flex flex-col flex-shrink-0 overflow-hidden sidebar-collapse"
           style={{ width: sidebarOpen ? "192px" : "0px", opacity: sidebarOpen ? 1 : 0 }}
         >
           <AppSidebar

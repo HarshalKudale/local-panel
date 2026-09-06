@@ -327,8 +327,8 @@ export default function CapturePanel({ activeWorkspaceId, wsConfig, onConfigChan
       {visible.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center py-16">
           <div className="opacity-15 mb-3"><Clipboard size={36} /></div>
-          <div className="text-sm font-medium text-text-base font-sans mb-1">{strings.capture.emptyTitle}</div>
-          <p className="text-xs text-text-dim font-sans">
+          <div className="text-sm font-medium text-foreground font-sans mb-1">{strings.capture.emptyTitle}</div>
+          <p className="text-xs text-muted-foreground font-sans">
             {entries.length === 0
               ? paused ? strings.capture.emptyPausedHint : strings.capture.emptyLiveHint
               : strings.capture.emptyNoMatch}
@@ -357,7 +357,7 @@ export default function CapturePanel({ activeWorkspaceId, wsConfig, onConfigChan
         actions={
           <>
             {selectedIds.size > 0 && (
-              <span className="text-xs text-text-dim whitespace-nowrap">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
                 {strings.capture.selectedCount.replace("{count}", String(selectedIds.size))}
               </span>
             )}
@@ -365,8 +365,8 @@ export default function CapturePanel({ activeWorkspaceId, wsConfig, onConfigChan
             <button
               onClick={() => setPaused((v) => !v)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${paused
-                ? "border-yellow bg-yellow/10 text-yellow"
-                : "border-green/40 bg-green/10 text-green hover:bg-green/20"
+                ? "border-amber bg-amber/10 text-amber"
+                : "border-signal/40 bg-signal/10 text-signal hover:bg-signal/20"
                 }`}
             >
               {paused ? <><Play size={10} fill="currentColor" /> {strings.capture.start}</> : <><Pause size={10} fill="currentColor" /> {strings.capture.pause}</>}
@@ -389,7 +389,7 @@ export default function CapturePanel({ activeWorkspaceId, wsConfig, onConfigChan
           <Panel defaultSize={60} minSize={30} className="flex flex-col overflow-hidden">
             {list}
           </Panel>
-          <ResizeHandle className="w-1 bg-border hover:bg-accent/40 active:bg-accent/60 transition-colors cursor-col-resize flex-shrink-0" />
+          <ResizeHandle className="w-1 bg-border hover:bg-signal/40 active:bg-signal/60 transition-colors cursor-col-resize flex-shrink-0" />
           <Panel defaultSize={40} minSize={25} className="flex flex-col overflow-hidden">
             <CaptureDetail key={activeEntry.id} entry={activeEntry} onClose={() => setActiveId(null)} />
           </Panel>

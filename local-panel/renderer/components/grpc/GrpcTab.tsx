@@ -208,10 +208,10 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
             />
 
             {/* Connection bar */}
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-border flex-shrink-0 bg-bg0/30">
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-border flex-shrink-0 bg-background/30">
                 {tabType === "request" && (
                     <input
-                        className="flex-1 bg-bg2 border border-border focus:border-accent rounded px-3 py-1.5 text-sm text-text-bright outline-none font-mono placeholder:text-text-dim"
+                        className="flex-1 bg-card border border-border focus:border-signal rounded px-3 py-1.5 text-sm text-foreground outline-none font-mono placeholder:text-muted-foreground"
                         placeholder="localhost:50051"
                         value={state.serverAddress}
                         onChange={(e) => set("serverAddress")(e.target.value)}
@@ -219,7 +219,7 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
                 )}
                 <input
                     className={cn(
-                        "bg-bg2 border border-border focus:border-accent rounded px-3 py-1.5 text-sm text-text-bright outline-none font-mono placeholder:text-text-dim",
+                        "bg-card border border-border focus:border-signal rounded px-3 py-1.5 text-sm text-foreground outline-none font-mono placeholder:text-muted-foreground",
                         tabType === "request" ? "w-48" : "flex-1"
                     )}
                     placeholder="ServiceName"
@@ -228,21 +228,21 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
                 />
                 <input
                     className={cn(
-                        "bg-bg2 border border-border focus:border-accent rounded px-3 py-1.5 text-sm text-text-bright outline-none font-mono placeholder:text-text-dim",
+                        "bg-card border border-border focus:border-signal rounded px-3 py-1.5 text-sm text-foreground outline-none font-mono placeholder:text-muted-foreground",
                         tabType === "request" ? "w-48" : "flex-1"
                     )}
                     placeholder="MethodName"
                     value={state.methodName}
                     onChange={(e) => set("methodName")(e.target.value)}
                 />
-                <span className="text-[10px] font-semibold px-2 py-1 rounded bg-bg3 text-text-dim whitespace-nowrap">
+                <span className="text-[10px] font-semibold px-2 py-1 rounded bg-surface-2 text-muted-foreground whitespace-nowrap">
                     {STREAMING_BADGES[state.streamingType] ?? strings.grpc.streamUnary}
                 </span>
                 {tabType === "request" && (
                     <button
                         onClick={handleSend}
                         disabled={state.sending || !state.serverAddress || !state.serviceName || !state.methodName}
-                        className="px-4 py-1.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                        className="px-4 py-1.5 rounded bg-signal hover:bg-signal/80 disabled:opacity-40 disabled:cursor-not-allowed text-background text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
                     >
                         {state.sending ? (
                             <span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -253,10 +253,10 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
 
             {/* Streaming type + reflection toggle */}
             <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border flex-shrink-0">
-                <label className="flex items-center gap-2 text-xs text-text-dim">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{strings.grpc.type}</span>
                     <select
-                        className="bg-bg2 border border-border rounded px-2 py-1 text-xs text-text-bright outline-none"
+                        className="bg-card border border-border rounded px-2 py-1 text-xs text-foreground outline-none"
                         value={state.streamingType}
                         onChange={(e) => set("streamingType")(e.target.value)}
                     >
@@ -267,23 +267,23 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
                     </select>
                 </label>
                 {tabType === "request" && (
-                    <label className="flex items-center gap-1.5 text-xs text-text-dim cursor-pointer">
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
                         <input
                             type="checkbox"
                             checked={state.useReflection}
                             onChange={(e) => set("useReflection")(e.target.checked)}
-                            className="accent-accent"
+                            className="accent-signal"
                         />
                         {strings.grpc.useReflection}
                     </label>
                 )}
                 {tabType === "mock" && (
-                    <label className="flex items-center gap-1.5 text-xs text-text-dim cursor-pointer">
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
                         <input
                             type="checkbox"
                             checked={state.enabled}
                             onChange={(e) => set("enabled")(e.target.checked)}
-                            className="accent-accent"
+                            className="accent-signal"
                         />
                         {strings.grpc.enabled}
                     </label>
@@ -339,30 +339,30 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
                                         {mockTab === "settings" && (
                                             <div className="p-4 space-y-4 overflow-y-auto">
                                                 <div className="space-y-1">
-                                                    <label className="text-xs font-medium text-text-dim">{strings.grpc.responseDelay}</label>
+                                                    <label className="text-xs font-medium text-muted-foreground">{strings.grpc.responseDelay}</label>
                                                     <input
                                                         type="number"
                                                         min={0}
-                                                        className="w-32 bg-bg2 border border-border focus:border-accent rounded px-3 py-1.5 text-sm text-text-bright outline-none"
+                                                        className="w-32 bg-card border border-border focus:border-signal rounded px-3 py-1.5 text-sm text-foreground outline-none"
                                                         value={state.responseDelay}
                                                         onChange={(e) => set("responseDelay")(Number(e.target.value))}
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-xs font-medium text-text-dim">{strings.grpc.errorCode}</label>
+                                                    <label className="text-xs font-medium text-muted-foreground">{strings.grpc.errorCode}</label>
                                                     <input
                                                         type="number"
                                                         min={0}
                                                         max={16}
-                                                        className="w-32 bg-bg2 border border-border focus:border-accent rounded px-3 py-1.5 text-sm text-text-bright outline-none"
+                                                        className="w-32 bg-card border border-border focus:border-signal rounded px-3 py-1.5 text-sm text-foreground outline-none"
                                                         value={state.errorCode}
                                                         onChange={(e) => set("errorCode")(Number(e.target.value))}
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-xs font-medium text-text-dim">{strings.grpc.errorMessage}</label>
+                                                    <label className="text-xs font-medium text-muted-foreground">{strings.grpc.errorMessage}</label>
                                                     <input
-                                                        className="w-full bg-bg2 border border-border focus:border-accent rounded px-3 py-1.5 text-sm text-text-bright outline-none placeholder:text-text-dim"
+                                                        className="w-full bg-card border border-border focus:border-signal rounded px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground"
                                                         placeholder={strings.grpc.errorMessagePlaceholder}
                                                         value={state.errorMessage}
                                                         onChange={(e) => set("errorMessage")(e.target.value)}
@@ -391,29 +391,29 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
                     {/* Only show right panel for request mode */}
                     {tabType === "request" && (
                         <>
-                            <PanelResizeHandle className="w-px bg-border hover:bg-accent/50 transition-colors cursor-col-resize" />
+                            <PanelResizeHandle className="w-px bg-border hover:bg-signal/50 transition-colors cursor-col-resize" />
                             <Panel defaultSize={50} minSize={25}>
                                 <div className="flex flex-col h-full overflow-hidden">
                                     {/* Status bar */}
                                     {state.resStatus !== null && (
-                                        <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-bg0/30 flex-shrink-0">
+                                        <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-background/30 flex-shrink-0">
                                             <span className={cn(
                                                 "text-xs font-semibold",
-                                                state.resStatus === 0 ? "text-green" : "text-red"
+                                                state.resStatus === 0 ? "text-signal" : "text-destructive"
                                             )}>
                                                 {strings.grpc.status} {state.resStatus}
                                             </span>
                                             {state.resStatusMessage && (
-                                                <span className="text-xs text-text-dim">{state.resStatusMessage}</span>
+                                                <span className="text-xs text-muted-foreground">{state.resStatusMessage}</span>
                                             )}
                                             {state.resDuration !== null && (
-                                                <span className="text-xs text-text-dim ml-auto">{state.resDuration}ms</span>
+                                                <span className="text-xs text-muted-foreground ml-auto">{state.resDuration}ms</span>
                                             )}
                                         </div>
                                     )}
                                     {state.resError && (
-                                        <div className="px-4 py-2 border-b border-border bg-red/5 flex-shrink-0">
-                                            <p className="text-xs text-red">{state.resError}</p>
+                                        <div className="px-4 py-2 border-b border-border bg-destructive/5 flex-shrink-0">
+                                            <p className="text-xs text-destructive">{state.resError}</p>
                                         </div>
                                     )}
 
@@ -421,7 +421,7 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
                                     <div className="flex-1 overflow-hidden">
                                         {resTab === "response" && (
                                             state.responses.length === 0 ? (
-                                                <div className="flex items-center justify-center h-full text-xs text-text-dim">
+                                                <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
                                                     {state.sending ? strings.grpc.sending : strings.grpc.noResponseYet}
                                                 </div>
                                             ) : state.responses.length === 1 ? (
@@ -430,8 +430,8 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
                                                 <div className="flex flex-col h-full overflow-y-auto p-2 gap-1">
                                                     {state.responses.map((r, i) => (
                                                         <div key={i} className="border border-border rounded p-2">
-                                                            <div className="text-[10px] text-text-dim font-semibold mb-1">{strings.grpc.responseNumber.replace("{n}", String(i + 1))}</div>
-                                                            <pre className="text-xs text-text-bright font-mono whitespace-pre-wrap break-all">{r}</pre>
+                                                            <div className="text-[10px] text-muted-foreground font-semibold mb-1">{strings.grpc.responseNumber.replace("{n}", String(i + 1))}</div>
+                                                            <pre className="text-xs text-foreground font-mono whitespace-pre-wrap break-all">{r}</pre>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -440,14 +440,14 @@ const GrpcTab = forwardRef<GrpcTabHandle, Props>(function GrpcTab(
                                         {resTab === "res-metadata" && (
                                             <div className="p-4 overflow-y-auto">
                                                 {Object.keys(state.resMetadata).length === 0 ? (
-                                                    <p className="text-xs text-text-dim italic">{strings.grpc.noTrailingMetadata}</p>
+                                                    <p className="text-xs text-muted-foreground italic">{strings.grpc.noTrailingMetadata}</p>
                                                 ) : (
                                                     <table className="w-full text-xs">
                                                         <tbody>
                                                             {Object.entries(state.resMetadata).map(([k, v]) => (
                                                                 <tr key={k} className="border-b border-border/30">
-                                                                    <td className="py-1.5 pr-4 text-accent font-mono">{k}</td>
-                                                                    <td className="py-1.5 text-text-bright font-mono">{v}</td>
+                                                                    <td className="py-1.5 pr-4 text-signal font-mono">{k}</td>
+                                                                    <td className="py-1.5 text-foreground font-mono">{v}</td>
                                                                 </tr>
                                                             ))}
                                                         </tbody>

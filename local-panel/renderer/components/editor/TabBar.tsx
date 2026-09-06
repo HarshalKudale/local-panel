@@ -59,12 +59,12 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
   }, [activeTab]);
 
   return (
-    <div className="flex items-stretch border-b border-border bg-bg1 flex-shrink-0 min-h-[34px]">
+    <div className="flex items-stretch border-b border-border bg-surface flex-shrink-0 min-h-[34px]">
       {/* Sticky add button */}
       <button
         onClick={onNewTab}
         title={newTabTitle}
-        className="flex items-center justify-center w-8 flex-shrink-0 border-r border-border text-text-dim hover:text-accent hover:bg-bg2 transition-colors cursor-pointer"
+        className="flex items-center justify-center w-8 flex-shrink-0 border-r border-border text-muted-foreground hover:text-signal hover:bg-card transition-colors cursor-pointer"
       >
         <Plus size={14} />
       </button>
@@ -72,7 +72,7 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
       {/* Left chevron */}
       {canLeft && (
         <button
-          className="flex items-center justify-center w-6 flex-shrink-0 border-r border-border text-text-dim hover:text-text-base hover:bg-bg2 transition-colors cursor-pointer"
+          className="flex items-center justify-center w-6 flex-shrink-0 border-r border-border text-muted-foreground hover:text-foreground hover:bg-card transition-colors cursor-pointer"
           onClick={() => scrollRef.current?.scrollBy({ left: -120, behavior: "smooth" })}
         >
           <ChevronLeft size={12} />
@@ -93,7 +93,7 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
           const baseClass = `flex items-center gap-1 px-3 py-2 text-xs font-medium cursor-pointer border-r border-border whitespace-nowrap flex-shrink-0 transition-colors ${
-            isActive ? "bg-bg0 text-text-bright border-b-2 border-b-accent -mb-px" : "text-text-dim hover:bg-bg2 hover:text-text-base"
+            isActive ? "bg-background text-foreground border-b-2 border-b-signal -mb-px" : "text-muted-foreground hover:bg-card hover:text-foreground"
           }`;
           const handleCtxMenu = (e: React.MouseEvent) => {
             e.preventDefault();
@@ -110,12 +110,12 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
           }
           return (
             <div key={tab.id} data-tab-id={tab.id} className={baseClass} onClick={() => onTabClick(tab.id)} onContextMenu={handleCtxMenu}>
-              {tab.isModified && <span className="text-[10px] text-accent opacity-80 flex-shrink-0 leading-none">*</span>}
-              {tab.isDraft && <span className="text-[8px] text-yellow opacity-70 flex-shrink-0">●</span>}
+              {tab.isModified && <span className="text-[10px] text-signal opacity-80 flex-shrink-0 leading-none">*</span>}
+              {tab.isDraft && <span className="text-[8px] text-amber opacity-70 flex-shrink-0">●</span>}
               <span className="max-w-[160px] truncate">{tab.label}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); onTabClose(tab.id); }}
-                className="w-4 h-4 flex items-center justify-center rounded hover:bg-bg3 text-text-dim hover:text-text-base transition-colors ml-0.5 flex-shrink-0 cursor-pointer"
+                className="w-4 h-4 flex items-center justify-center rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground transition-colors ml-0.5 flex-shrink-0 cursor-pointer"
                 title={closeTabTitle}
               >
                 <X size={10} />
@@ -128,7 +128,7 @@ export default function TabBar({ tabs, activeTab, onTabClick, onTabClose, onNewT
       {/* Right chevron */}
       {canRight && (
         <button
-          className="flex items-center justify-center w-6 flex-shrink-0 border-l border-border text-text-dim hover:text-text-base hover:bg-bg2 transition-colors cursor-pointer"
+          className="flex items-center justify-center w-6 flex-shrink-0 border-l border-border text-muted-foreground hover:text-foreground hover:bg-card transition-colors cursor-pointer"
           onClick={() => scrollRef.current?.scrollBy({ left: 120, behavior: "smooth" })}
         >
           <ChevronRight size={12} />

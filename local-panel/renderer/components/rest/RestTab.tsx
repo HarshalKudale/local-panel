@@ -305,7 +305,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
   // -- Render -------------------------------------------------------------
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-bg1">
+    <div className="flex flex-col h-full overflow-hidden bg-surface">
       {/* Title bar */}
       <EditorTitleBar
         label={titleLabel}
@@ -320,10 +320,10 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
       {/* cURL import - collapsible for request, always open for mock */}
       {showCurlImport && (
         tabType === "request" ? (
-          <div className="px-4 flex-shrink-0 border-b border-border bg-bg0/30">
+          <div className="px-4 flex-shrink-0 border-b border-border bg-background/30">
             <button
               onClick={() => dispatch({ type: "SET_FIELD", field: "showCurl", value: !state.showCurl })}
-              className="flex items-center gap-1.5 py-2 text-[10px] font-semibold uppercase tracking-widest text-text-dim hover:text-text-base cursor-pointer transition-colors"
+              className="flex items-center gap-1.5 py-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
             >
               <span style={{ display: "flex", alignItems: "center", transition: "transform 0.15s ease", transform: state.showCurl ? "rotate(0deg)" : "rotate(-90deg)" }}>
                 <ChevronDown size={10} />
@@ -332,7 +332,7 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
             </button>
             {state.showCurl && (
               <textarea
-                className="w-full bg-bg2 border border-border focus:border-accent rounded px-3 py-2 text-xs font-mono text-text-bright outline-none resize-none placeholder:text-text-dim/50 mb-2"
+                className="w-full bg-card border border-border focus:border-signal rounded px-3 py-2 text-xs font-mono text-foreground outline-none resize-none placeholder:text-muted-foreground/50 mb-2"
                 rows={3}
                 placeholder={strings.requests.curlPlaceholder}
                 value={state.curlInput}
@@ -342,13 +342,13 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
             )}
           </div>
         ) : (
-          <div className="px-4 py-3 border-b border-border flex-shrink-0 bg-bg0/30">
+          <div className="px-4 py-3 border-b border-border flex-shrink-0 bg-background/30">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-text-dim">{strings.mocks.importFromCurl}</span>
-              <span className="text-[10px] text-text-dim opacity-60">{strings.mocks.importFromCurlHint}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{strings.mocks.importFromCurl}</span>
+              <span className="text-[10px] text-muted-foreground opacity-60">{strings.mocks.importFromCurlHint}</span>
             </div>
             <textarea
-              className="w-full bg-bg2 border border-border focus:border-accent rounded px-3 py-2 text-xs font-mono text-text-bright outline-none resize-none placeholder:text-text-dim/50 transition-colors"
+              className="w-full bg-card border border-border focus:border-signal rounded px-3 py-2 text-xs font-mono text-foreground outline-none resize-none placeholder:text-muted-foreground/50 transition-colors"
               rows={3}
               placeholder={strings.mocks.curlPlaceholder}
               value={state.curlInput}
@@ -378,16 +378,16 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         inputSuffix={
           tabType === "mock" ? (
             <label
-              className="flex items-center gap-1.5 px-3 border-l border-border cursor-pointer select-none flex-shrink-0 hover:bg-bg2 transition-colors"
+              className="flex items-center gap-1.5 px-3 border-l border-border cursor-pointer select-none flex-shrink-0 hover:bg-card transition-colors"
               title={strings.editor.matchUrlAsRegex}
             >
               <input
                 type="checkbox"
                 checked={state.useRegex}
                 onChange={(e) => handleRegexToggle(e.target.checked)}
-                className="accent-accent"
+                className="accent-signal"
               />
-              <span className="font-mono text-[11px] text-text-dim">.*</span>
+              <span className="font-mono text-[11px] text-muted-foreground">.*</span>
             </label>
           ) : undefined
         }
@@ -395,8 +395,8 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
 
       {/* Error banner */}
       {errorMsg && (
-        <div className="px-4 py-2 border-b border-border bg-red/5 flex-shrink-0">
-          <span className="text-xs text-red font-mono">{errorMsg}</span>
+        <div className="px-4 py-2 border-b border-border bg-destructive/5 flex-shrink-0">
+          <span className="text-xs text-destructive font-mono">{errorMsg}</span>
         </div>
       )}
 
@@ -473,8 +473,8 @@ const RestTab = forwardRef<RestTabHandle, RestTabProps>(function RestTab(
         extraLeft={
           tabType === "mock" ? (
             !state.resBody.trim()
-              ? <span className="text-[10px] text-text-dim italic">{strings.mocks.addResponseBody}</span>
-              : <span className="text-[10px] text-text-dim">{strings.mocks.mocksNote}</span>
+              ? <span className="text-[10px] text-muted-foreground italic">{strings.mocks.addResponseBody}</span>
+              : <span className="text-[10px] text-muted-foreground">{strings.mocks.mocksNote}</span>
           ) : undefined
         }
       />

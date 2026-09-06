@@ -37,11 +37,11 @@ describe("renderer/lib/applicationUtils.ts", () => {
         });
 
         it("returns dim for exited", () => {
-            expect(statusColor("exited")).toBe("text-text-dim");
+            expect(statusColor("exited")).toBe("text-muted-foreground");
         });
 
         it("returns dim for idle (default)", () => {
-            expect(statusColor("idle")).toBe("text-text-dim");
+            expect(statusColor("idle")).toBe("text-muted-foreground");
         });
     });
 

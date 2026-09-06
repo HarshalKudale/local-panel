@@ -124,7 +124,7 @@ function createWindow(): void {
     minHeight: 720,
     title: "Local Panel",
     icon: getAppIcon(),
-    backgroundColor: "#121212",
+    backgroundColor: "#1c1e27",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -133,8 +133,8 @@ function createWindow(): void {
     show: false,
     titleBarStyle: "hidden",
     titleBarOverlay: {
-      color: "#121212",
-      symbolColor: "#71736d",
+      color: "#1c1e27",
+      symbolColor: "#47e8a0",
       height: BASE_TITLEBAR_HEIGHT,
     },
   });

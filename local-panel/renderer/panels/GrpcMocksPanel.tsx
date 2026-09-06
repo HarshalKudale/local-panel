@@ -178,8 +178,8 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                     onClick={toggleMockServer}
                     disabled={serverBusy}
                     className={`flex items-center justify-center w-6 h-6 rounded border transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 ${mockServerRunning
-                        ? "border-green/40 bg-green/10 hover:bg-red/15 hover:border-red/40 text-green hover:text-red"
-                        : "border-border bg-bg2 hover:bg-green/15 hover:border-green/40 text-text-dim hover:text-green"
+                        ? "border-signal/40 bg-signal/10 hover:bg-destructive/15 hover:border-destructive/40 text-signal hover:text-destructive"
+                        : "border-border bg-card hover:bg-signal/15 hover:border-signal/40 text-muted-foreground hover:text-signal"
                         }`}
                     title={mockServerRunning ? strings.grpc.stopMockServer : strings.grpc.startMockServer}
                 >
@@ -191,7 +191,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                         <Play size={8} fill="currentColor" />
                     )}
                 </button>
-                <span className="text-[10px] text-text-dim">
+                <span className="text-[10px] text-muted-foreground">
                     {mockServerRunning ? strings.grpc.mockServerRunning.replace("{port}", String(mockServerPort)) : strings.grpc.mockServerStopped}
                 </span>
             </div>
@@ -244,8 +244,8 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                 {openTabs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center gap-2">
                         <div className="opacity-10 mb-1"><Network size={48} /></div>
-                        <div className="text-sm font-medium text-text-base">{strings.grpc.noMocksOpen}</div>
-                        <p className="text-xs text-text-dim max-w-xs leading-relaxed">
+                        <div className="text-sm font-medium text-foreground">{strings.grpc.noMocksOpen}</div>
+                        <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
                             {strings.grpc.noMocksOpenHint}
                         </p>
                     </div>
@@ -288,7 +288,7 @@ export default function GrpcMocksPanel({ config, onConfigChange, activeEnv = nul
                 expandTitle={strings.grpc.expandSidebar}
                 storageKey="grpc-mocks-panel-sidebar"
                 collapsedBadge={mocks.length > 0 ? (
-                    <span className="text-[9px] text-text-dim font-mono" title={strings.grpc.mockCount.replace("{count}", String(mocks.length))}
+                    <span className="text-[9px] text-muted-foreground font-mono" title={strings.grpc.mockCount.replace("{count}", String(mocks.length))}
                         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{mocks.length}</span>
                 ) : undefined}
             >

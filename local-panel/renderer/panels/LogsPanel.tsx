@@ -11,10 +11,10 @@ import { strings } from "@/lib/strings";
 const MAX_ENTRIES = 100;
 
 function statusColor(s: number | null): string {
-  if (s === null) return "text-text-dim";
-  if (s < 300) return "text-green";
-  if (s < 400) return "text-yellow";
-  return "text-red";
+  if (s === null) return "text-muted-foreground";
+  if (s < 300) return "text-signal";
+  if (s < 400) return "text-amber";
+  return "text-destructive";
 }
 
 function fmtTime(ts: number): string {
@@ -127,8 +127,8 @@ export default function LogsPanel({ onMockAdded }: Props) {
     <div className="flex flex-col flex-1 overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center gap-3 flex-shrink-0">
         <div>
-          <h1 className="text-base font-semibold text-text-bright">{strings.logs.title}</h1>
-          <p className="text-xs text-text-dim mt-0.5">{strings.logs.subtitle}</p>
+          <h1 className="text-base font-semibold text-foreground">{strings.logs.title}</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">{strings.logs.subtitle}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <SearchInput value={search} onChange={setSearch} placeholder={strings.logs.searchPlaceholder} />
@@ -136,8 +136,8 @@ export default function LogsPanel({ onMockAdded }: Props) {
             onClick={() => setPaused((v) => !v)}
             className={`px-3 py-1.5 rounded border text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
               paused
-                ? "border-yellow bg-yellow/10 text-yellow"
-                : "border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-text-base"
+                ? "border-amber bg-amber/10 text-amber"
+                : "border-border bg-card hover:bg-surface-2 text-muted-foreground hover:text-foreground"
             }`}
           >
             {paused ? <><Play size={10} fill="currentColor" className="inline mr-1" /> {strings.logs.resume}</> : <><Pause size={10} fill="currentColor" className="inline mr-1" /> {strings.logs.pause}</>}
@@ -150,8 +150,8 @@ export default function LogsPanel({ onMockAdded }: Props) {
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-16">
             <div className="opacity-15 mb-3"><Clipboard size={36} /></div>
-            <div className="text-sm font-medium text-text-base font-sans mb-1">{strings.logs.noEntries}</div>
-            <p className="text-xs text-text-dim font-sans">
+            <div className="text-sm font-medium text-foreground font-sans mb-1">{strings.logs.noEntries}</div>
+            <p className="text-xs text-muted-foreground font-sans">
               {entries.length === 0
                 ? strings.logs.emptyHint
                 : strings.logs.noMatch}
@@ -159,14 +159,14 @@ export default function LogsPanel({ onMockAdded }: Props) {
           </div>
         ) : (
           <table className="w-full border-collapse">
-            <thead className="sticky top-0 bg-bg0 z-10">
+            <thead className="sticky top-0 bg-background z-10">
               <tr className="border-b border-border">
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim whitespace-nowrap">{strings.logs.colTime}</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-12">{strings.logs.colMethod}</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-10">{strings.logs.colStatus}</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim">{strings.logs.colUrl}</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-16">{strings.logs.colVia}</th>
-                <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-text-dim w-14">{strings.logs.colDur}</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{strings.logs.colTime}</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-12">{strings.logs.colMethod}</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-10">{strings.logs.colStatus}</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{strings.logs.colUrl}</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">{strings.logs.colVia}</th>
+                <th className="text-right px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-14">{strings.logs.colDur}</th>
                 <th className="px-3 py-2 w-28" />
               </tr>
             </thead>
@@ -174,35 +174,35 @@ export default function LogsPanel({ onMockAdded }: Props) {
               {filtered.map((e) => (
                 <tr
                   key={e.id}
-                  className="border-b border-border/30 hover:bg-bg1 transition-colors group"
+                  className="border-b border-border/30 hover:bg-surface transition-colors group"
                   title={e.url}
                 >
-                  <td className="px-3 py-1.5 text-text-dim whitespace-nowrap">{fmtTime(e.ts)}</td>
-                  <td className="px-3 py-1.5 text-accent whitespace-nowrap">{e.method}</td>
+                  <td className="px-3 py-1.5 text-muted-foreground whitespace-nowrap">{fmtTime(e.ts)}</td>
+                  <td className="px-3 py-1.5 text-signal whitespace-nowrap">{e.method}</td>
                   <td className={`px-3 py-1.5 whitespace-nowrap font-semibold ${statusColor(e.status)}`}>
                     {e.status ?? "—"}
                   </td>
-                  <td className="px-3 py-1.5 text-text-base max-w-0">
+                  <td className="px-3 py-1.5 text-foreground max-w-0">
                     <span className="block truncate">{e.url}</span>
                   </td>
                   <td className="px-3 py-1.5 whitespace-nowrap">
                     <ViaBadge via={e.via} />
                   </td>
-                  <td className="px-3 py-1.5 text-right text-text-dim whitespace-nowrap">
+                  <td className="px-3 py-1.5 text-right text-muted-foreground whitespace-nowrap">
                     {fmtDur(e.durationMs)}
                   </td>
                   <td className="px-3 py-1.5 text-right whitespace-nowrap">
                     <div className="flex gap-1 justify-end">
                       <button
                         onClick={() => handleReplay(e)}
-                        className="px-2 py-0.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-accent text-[10px] font-medium transition-all cursor-pointer"
+                        className="px-2 py-0.5 rounded border border-border bg-card hover:bg-surface-2 text-muted-foreground hover:text-signal text-[10px] font-medium transition-all cursor-pointer"
                         title={strings.logs.replayTitle}
                       >
                         <Play size={10} fill="currentColor" className="inline mr-0.5" /> {strings.logs.replay}
                       </button>
                       <button
                         onClick={() => setMockEntry(e)}
-                        className="px-2 py-0.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-yellow text-[10px] font-medium transition-all cursor-pointer"
+                        className="px-2 py-0.5 rounded border border-border bg-card hover:bg-surface-2 text-muted-foreground hover:text-amber text-[10px] font-medium transition-all cursor-pointer"
                         title={strings.logs.mockTitle}
                       >
                         <Zap size={10} className="inline mr-0.5" /> {strings.logs.mock}
@@ -216,10 +216,10 @@ export default function LogsPanel({ onMockAdded }: Props) {
         )}
       </div>
 
-      <div className="px-4 py-1.5 border-t border-border flex items-center gap-3 text-[10px] text-text-dim font-mono flex-shrink-0">
+      <div className="px-4 py-1.5 border-t border-border flex items-center gap-3 text-[10px] text-muted-foreground font-mono flex-shrink-0">
         <span>{entries.length} {strings.logs.entries}</span>
         {q && <span>· {filtered.length} {strings.logs.shown}</span>}
-        {paused && <span className="text-yellow">· {strings.logs.paused}</span>}
+        {paused && <span className="text-amber">· {strings.logs.paused}</span>}
         <span className="ml-auto">{strings.logs.footerNote.replace("{max}", String(MAX_ENTRIES))}</span>
       </div>
 

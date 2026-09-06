@@ -1,61 +1,49 @@
 import { useState, useEffect } from "react";
-import { ThemeDef, getThemeById, DEFAULT_THEME_ID } from "./themes";
 
-export type Theme = string; // theme id
+export type ColorMode = "dark" | "light";
 
-function applyTheme(themeDef: ThemeDef) {
+const DEFAULT_MODE: ColorMode = "dark";
+
+function applyMode(mode: ColorMode) {
   const html = document.documentElement;
-  // Set dark/light class for Tailwind darkMode: "class"
   html.classList.remove("dark", "light");
-  html.classList.add(themeDef.mode);
+  if (mode === "light") html.classList.add("light");
 
-  // Toggle the "Terminal CLI" chrome (monospace-everywhere, 0 radius, scanlines, glow)
-  html.classList.toggle("theme-terminal", !!themeDef.terminal);
-
-  // Apply all CSS custom properties
-  for (const [key, value] of Object.entries(themeDef.vars)) {
-    html.style.setProperty(`--${key}`, value);
-  }
-
-  // Sync Electron titlebar overlay - best-effort (no-op in browser/test env)
-  window.api?.setTitleBarOverlay?.(themeDef.overlay.color, themeDef.overlay.symbolColor);
+  // Sync Electron titlebar overlay
+  const bg = mode === "dark" ? "#1c1e27" : "#f2f3f8";
+  const fg = mode === "dark" ? "#47e8a0" : "#3a3c47";
+  window.api?.setTitleBarOverlay?.(bg, fg);
 }
 
 /**
- * Theme preference is persisted on disk (app.json, via the main-process settings
- * store) rather than in the renderer's localStorage. localStorage lives inside
- * Electron's Chromium userData/session partition, which is a separate, easy-to-lose
- * store (e.g. e2e/test profiles, "clear browsing data", per-profile isolation) — it
- * is not the single source of truth the rest of the app's settings use.
+ * Dark/light mode preference persisted via Electron's main-process
+ * settings store (app.json) rather than localStorage.
  */
-export function useTheme(): [Theme, (t: Theme) => void] {
-  const [themeId, setThemeId] = useState<Theme>(DEFAULT_THEME_ID);
+export function useColorMode(): [ColorMode, (m: ColorMode) => void] {
+  const [mode, setMode] = useState<ColorMode>(DEFAULT_MODE);
   const [loaded, setLoaded] = useState(false);
 
-  // Load the persisted theme from disk on mount.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const stored = await window.api?.getTheme?.();
-        if (!cancelled && stored) setThemeId(stored);
+        if (!cancelled && (stored === "dark" || stored === "light")) {
+          setMode(stored);
+        }
       } finally {
         if (!cancelled) setLoaded(true);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
-    applyTheme(getThemeById(themeId));
-    // Avoid writing the fallback default back to disk before the real persisted
-    // value has been loaded.
+    applyMode(mode);
     if (loaded) {
-      window.api?.setTheme?.(themeId);
+      window.api?.setTheme?.(mode);
     }
-  }, [themeId, loaded]);
+  }, [mode, loaded]);
 
-  return [themeId, setThemeId];
+  return [mode, setMode];
 }

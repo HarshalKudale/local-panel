@@ -157,7 +157,7 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
     <span
       style={{
         display: "inline-block", width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-        background: isConnected ? "var(--c-green)" : status === "connecting" ? "var(--c-yellow)" : status === "error" ? "var(--c-red)" : "var(--c-text-dim)",
+        background: isConnected ? "var(--c-signal)" : status === "connecting" ? "var(--c-amber)" : status === "error" ? "var(--c-destructive)" : "var(--c-muted-foreground)",
       }}
     />
   );
@@ -165,7 +165,7 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
   const statusLabel = isConnected ? "Connected" : isConnecting ? "Connecting…" : status === "error" ? "Error" : "Disconnected";
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-bg1">
+    <div className="flex flex-col h-full overflow-hidden bg-surface">
       {/* Title bar */}
       <EditorTitleBar
         label={isNew ? strings.sockets.newSocket : strings.sockets.editSocket}
@@ -178,14 +178,14 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
       {/* URL bar - Connect/Disconnect button inline */}
       <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex items-center gap-2">
         <div
-          className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden flex-1"
-          style={{ background: "var(--c-bg2)" }}
+          className="flex items-stretch rounded border border-border focus-within:border-signal transition-colors overflow-hidden flex-1"
+          style={{ background: "var(--c-card)" }}
         >
-          <span className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 flex-shrink-0 flex items-center" style={{ color: "var(--c-green)", minWidth: 56 }}>
+          <span className="bg-surface-2 border-r border-border text-xs font-bold font-mono px-3 py-2.5 flex-shrink-0 flex items-center" style={{ color: "var(--c-signal)", minWidth: 56 }}>
             WS
           </span>
           <input
-            className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
+            className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-foreground outline-none placeholder:text-muted-foreground min-w-0"
             placeholder="ws://localhost:8080 or wss://…"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -195,7 +195,7 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
         </div>
 
         {/* Status dot + label */}
-        <div className="flex items-center gap-1.5 flex-shrink-0 text-[10px] text-text-dim">
+        <div className="flex items-center gap-1.5 flex-shrink-0 text-[10px] text-muted-foreground">
           {statusDot}
           <span>{statusLabel}</span>
         </div>
@@ -205,14 +205,14 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
             onClick={handleConnect}
             disabled={!url.trim() || (isAtConnectionLimit && !isConnected)}
             title={isAtConnectionLimit && !isConnected ? strings.sockets.maxConnectionsTitle.replace("{n}", String(MAX_WS_CONNECTIONS)) : strings.sockets.connect}
-            className="px-4 py-2.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
+            className="px-4 py-2.5 rounded bg-signal hover:bg-signal/80 disabled:opacity-40 disabled:cursor-not-allowed text-background text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
           >
             <Play size={10} className="inline mr-1" fill="currentColor" /> {strings.sockets.connect}
           </button>
         ) : (
           <button
             onClick={handleDisconnect}
-            className="px-4 py-2.5 rounded bg-red/80 hover:bg-red text-white text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
+            className="px-4 py-2.5 rounded bg-destructive/80 hover:bg-destructive text-white text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
           >
             {strings.sockets.disconnect}
           </button>
@@ -221,8 +221,8 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
 
       {/* Connection limit warning */}
       {isAtConnectionLimit && isDisconnected && (
-        <div className="px-4 py-1.5 border-b border-border bg-yellow/5 flex-shrink-0">
-          <span className="text-[11px] text-yellow">
+        <div className="px-4 py-1.5 border-b border-border bg-amber/5 flex-shrink-0">
+          <span className="text-[11px] text-amber">
             {strings.sockets.connectionsActive.replace("{n}", String(MAX_WS_CONNECTIONS))}
           </span>
         </div>
@@ -230,8 +230,8 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
 
       {/* Error / WS error */}
       {(wsError || saveErr) && (
-        <div className="px-4 py-1.5 border-b border-border bg-red/5 flex-shrink-0">
-          <span className="text-xs text-red font-mono">{wsError ?? saveErr}</span>
+        <div className="px-4 py-1.5 border-b border-border bg-destructive/5 flex-shrink-0">
+          <span className="text-xs text-destructive font-mono">{wsError ?? saveErr}</span>
         </div>
       )}
 
@@ -248,7 +248,7 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
               active={reqTab}
               onChange={(t) => setReqTab(t as "headers")}
               prefix={
-                <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-r border-border whitespace-nowrap">
+                <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-r border-border whitespace-nowrap">
                   {strings.sockets.outputStream}
                 </span>
               }
@@ -256,8 +256,8 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
 
             <div className="flex-1 overflow-y-auto min-h-0">
               {!(isConnected || isConnecting) && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/40 bg-bg0/10 flex-shrink-0 justify-end">
-                  <span className="text-[9px] text-text-dim/60 uppercase tracking-wider mr-1">Insert</span>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/40 bg-background/10 flex-shrink-0 justify-end">
+                  <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wider mr-1">Insert</span>
                   <EnvVarHint
                     env={activeEnv}
                     onInsert={(token) => {
@@ -290,7 +290,7 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
               {/* Sent messages list */}
               <div className="max-h-40 overflow-y-auto px-4 py-2 space-y-1">
                 {outgoingMessages.length === 0 ? (
-                  <p className="text-[10px] text-text-dim italic py-1">{strings.sockets.noMessagesSent}</p>
+                  <p className="text-[10px] text-muted-foreground italic py-1">{strings.sockets.noMessagesSent}</p>
                 ) : (
                   outgoingMessages.map((m) => (
                     <MessageRow key={m.id} msg={m} />
@@ -301,8 +301,8 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
 
               {/* Token hints for message input */}
               {isConnected && (
-                <div className="flex items-center gap-1.5 px-3 py-1 border-t border-border/40 bg-bg0/10 justify-end">
-                  <span className="text-[9px] text-text-dim/60 uppercase tracking-wider mr-1">Insert</span>
+                <div className="flex items-center gap-1.5 px-3 py-1 border-t border-border/40 bg-background/10 justify-end">
+                  <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wider mr-1">Insert</span>
                   <EnvVarHint
                     env={activeEnv}
                     onInsert={(token) => setOutgoingInput((v) => v + token)}
@@ -316,7 +316,7 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
               {/* Input row */}
               <div className="flex items-center gap-2 px-4 py-2.5 border-t border-border">
                 <input
-                  className="flex-1 bg-bg2 border border-border focus:border-accent rounded px-3 py-2 text-xs font-mono text-text-bright outline-none placeholder:text-text-dim/60 transition-colors"
+                  className="flex-1 bg-card border border-border focus:border-signal rounded px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/60 transition-colors"
                   placeholder={isConnected ? strings.sockets.typeMessage : strings.sockets.connectToSend}
                   value={outgoingInput}
                   onChange={(e) => setOutgoingInput(e.target.value)}
@@ -326,21 +326,21 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
                 <button
                   onClick={handleSend}
                   disabled={!isConnected || !outgoingInput.trim()}
-                  className="px-4 py-2 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
+                  className="px-4 py-2 rounded bg-signal hover:bg-signal/80 disabled:opacity-40 disabled:cursor-not-allowed text-background text-xs font-semibold transition-all cursor-pointer flex-shrink-0"
                 >
                   <Send size={12} />
                 </button>
               </div>
               {sendErr && (
                 <div className="px-4 pb-2">
-                  <span className="text-[10px] text-red font-mono">{sendErr}</span>
+                  <span className="text-[10px] text-destructive font-mono">{sendErr}</span>
                 </div>
               )}
             </div>
           </div>
         </Panel>
 
-        <PanelResizeHandle className="w-1 bg-border hover:bg-accent/40 active:bg-accent/60 transition-colors cursor-col-resize flex-shrink-0" />
+        <PanelResizeHandle className="w-1 bg-border hover:bg-signal/40 active:bg-signal/60 transition-colors cursor-col-resize flex-shrink-0" />
 
         {/* -- InputStream (right) ------------------------------------------- */}
         <Panel defaultSize={50} minSize={20} className="flex flex-col overflow-hidden">
@@ -350,10 +350,10 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
               active="inputstream"
               onChange={() => { }}
               prefix={
-                <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-text-dim border-r border-border whitespace-nowrap">
+                <span className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-r border-border whitespace-nowrap">
                   {isConnected
                     ? <span className="flex items-center gap-1.5">
-                      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--c-green)", boxShadow: "0 0 5px var(--c-green)" }} />
+                      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--c-signal)", boxShadow: "0 0 5px var(--c-signal)" }} />
                       {strings.sockets.live}
                     </span>
                     : strings.sockets.waiting}
@@ -363,7 +363,7 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
                 incomingMessages.length > 0
                   ? <button
                     onClick={clearMessages}
-                    className="px-3 text-[10px] text-text-dim hover:text-text-base cursor-pointer transition-colors"
+                    className="px-3 text-[10px] text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                     title="Clear all messages"
                   >{strings.sockets.clear}</button>
                   : undefined
@@ -373,7 +373,7 @@ const WsEditor = forwardRef<WsEditorHandle, WsEditorProps>(function WsEditor({ t
               {incomingMessages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8">
                   <div className="opacity-15"><Radio size={28} /></div>
-                  <p className="text-xs text-text-dim">
+                  <p className="text-xs text-muted-foreground">
                     {isConnected ? strings.sockets.waitingForMessages : strings.sockets.connectToReceive}
                   </p>
                 </div>
@@ -417,7 +417,7 @@ function MessageRow({ msg }: { msg: WsMessage }) {
   const displayData = looksLikeJson(msg.data) ? tryFormat(msg.data) : msg.data;
   return (
     <div className="flex items-start gap-2 py-1 border-b border-border/30 last:border-0 group">
-      <span className="text-[9px] font-mono text-text-dim flex-shrink-0 mt-0.5 w-16">{time}</span>
+      <span className="text-[9px] font-mono text-muted-foreground flex-shrink-0 mt-0.5 w-16">{time}</span>
       {useEditor
         ? <div className="flex-1 overflow-hidden border border-border/30 rounded" style={{ maxHeight: 192 }}>
           <CodeEditor
@@ -427,7 +427,7 @@ function MessageRow({ msg }: { msg: WsMessage }) {
             className="h-full"
           />
         </div>
-        : <pre className="text-[11px] font-mono text-text-bright flex-1 whitespace-pre-wrap break-all leading-relaxed">{msg.data}</pre>
+        : <pre className="text-[11px] font-mono text-foreground flex-1 whitespace-pre-wrap break-all leading-relaxed">{msg.data}</pre>
       }
     </div>
   );
@@ -693,9 +693,9 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
         {openTabs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center gap-2">
             <div className="opacity-10 mb-1"><Zap size={48} /></div>
-            <div className="text-sm font-medium text-text-base">{strings.sockets.noSocketsOpen}</div>
-            <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-              {strings.sockets.noSocketsHintPrefix} <span className="text-accent font-semibold">+</span> {strings.sockets.noSocketsHintSuffix}
+            <div className="text-sm font-medium text-foreground">{strings.sockets.noSocketsOpen}</div>
+            <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+              {strings.sockets.noSocketsHintPrefix} <span className="text-signal font-semibold">+</span> {strings.sockets.noSocketsHintSuffix}
             </p>
           </div>
         ) : (
@@ -734,7 +734,7 @@ export default function WebSocketsPanel({ config, onConfigChange, activeEnv = nu
         expandTitle={strings.titleBar.expandSidebar}
         storageKey="websockets-panel-sidebar"
         collapsedBadge={connections.length > 0 ? (
-          <span className="text-[9px] text-text-dim font-mono" title={`${connections.length} sockets`}
+          <span className="text-[9px] text-muted-foreground font-mono" title={`${connections.length} sockets`}
             style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{connections.length}</span>
         ) : undefined}
       >
@@ -750,7 +750,7 @@ function WsTabHeader({ tabId, label, isDraft: draft, isModified, onClose }: {
   tabId: string; label: string; isDraft: boolean; isActive?: boolean; isModified?: boolean;
   onClose(e: React.MouseEvent): void;
 }) {
-  const [dotColor, setDotColor] = useState("var(--c-text-dim)");
+  const [dotColor, setDotColor] = useState("var(--c-muted-foreground)");
 
   useEffect(() => {
     const handler = (e: CustomEvent<{ tabId: string; color: string }>) => {
@@ -762,12 +762,12 @@ function WsTabHeader({ tabId, label, isDraft: draft, isModified, onClose }: {
 
   return (
     <>
-      {isModified && <span className="text-[10px] text-accent opacity-80 flex-shrink-0 leading-none">*</span>}
+      {isModified && <span className="text-[10px] text-signal opacity-80 flex-shrink-0 leading-none">*</span>}
       <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
-      {draft && <span className="text-[8px] text-yellow opacity-70 flex-shrink-0">●</span>}
+      {draft && <span className="text-[8px] text-amber opacity-70 flex-shrink-0">●</span>}
       <span className="max-w-[160px] truncate">{label}</span>
       <button onClick={onClose}
-        className="w-4 h-4 flex items-center justify-center rounded hover:bg-bg3 text-text-dim hover:text-text-base ml-0.5 flex-shrink-0 cursor-pointer" title={strings.common.close}><X size={10} /></button>
+        className="w-4 h-4 flex items-center justify-center rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground ml-0.5 flex-shrink-0 cursor-pointer" title={strings.common.close}><X size={10} /></button>
     </>
   );
 }

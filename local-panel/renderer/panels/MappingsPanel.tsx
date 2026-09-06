@@ -177,17 +177,17 @@ export default function MappingsPanel({
     {
       key: "domain",
       header: strings.mappings.columnDomain,
-      render: (m) => <span className="font-mono text-xs text-text-bright">{m.domain}</span>,
+      render: (m) => <span className="font-mono text-xs text-foreground">{m.domain}</span>,
     },
     {
       key: "target",
       header: strings.mappings.columnTarget,
-      render: (m) => <span className="font-mono text-xs text-text-dim">{m.target}</span>,
+      render: (m) => <span className="font-mono text-xs text-muted-foreground">{m.target}</span>,
     },
     {
       key: "label",
       header: strings.mappings.columnLabel,
-      render: (m) => <span className="text-xs text-text-dim">{m.label || "—"}</span>,
+      render: (m) => <span className="text-xs text-muted-foreground">{m.label || "—"}</span>,
     },
     {
       key: "on",
@@ -213,7 +213,7 @@ export default function MappingsPanel({
             {onRevert && syncSt && syncSt !== "clean" && (
               <button
                 onClick={() => onRevert(m.id)}
-                className="px-2.5 py-1 rounded text-yellow hover:bg-yellow/10 text-xs font-medium transition-all cursor-pointer"
+                className="px-2.5 py-1 rounded text-amber hover:bg-amber/10 text-xs font-medium transition-all cursor-pointer"
               >
                 {strings.mappings.revert}
               </button>
@@ -223,7 +223,7 @@ export default function MappingsPanel({
                 icon={<History size={11} />}
                 title={strings.mappings.viewHistory}
                 onClick={() => onHistoryOpen(`mappings/${m.id}.json`)}
-                className="hover:text-accent"
+                className="hover:text-signal"
               />
             )}
             <Button variant="danger" size="sm" onClick={() => remove(m.id)}>{strings.common.delete}</Button>
@@ -276,13 +276,13 @@ export default function MappingsPanel({
                 onChange={(e) => setForm({ ...form, subdomain: e.target.value })}
                 autoFocus
               />
-              <span className="bg-bg3 border border-l-0 border-border rounded-r px-3 py-2 text-sm font-mono text-text-dim select-none whitespace-nowrap">
+              <span className="bg-surface-2 border border-l-0 border-border rounded-r px-3 py-2 text-sm font-mono text-muted-foreground select-none whitespace-nowrap">
                 {strings.mappings.localHostSuffix}
               </span>
             </div>
             {form.subdomain.trim() && !errors.subdomain && (
-              <p className="text-xs text-text-dim mt-1">
-                {strings.mappings.willCreate} <span className="font-mono text-accent">{fullDomain(form.subdomain)}</span>
+              <p className="text-xs text-muted-foreground mt-1">
+                {strings.mappings.willCreate} <span className="font-mono text-signal">{fullDomain(form.subdomain)}</span>
               </p>
             )}
           </FormField>

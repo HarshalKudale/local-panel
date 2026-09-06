@@ -43,7 +43,7 @@ export default function TitleBar({
 
   return (
     <div
-      className="h-12 bg-bg0 flex items-center px-3 gap-2 flex-shrink-0 relative"
+      className="h-12 bg-background flex items-center px-3 gap-2 flex-shrink-0 relative"
       style={{
         WebkitAppRegion: "drag",
         paddingRight: "calc(100vw - env(titlebar-area-width, 100vw) + 5px)",
@@ -54,7 +54,7 @@ export default function TitleBar({
       {/* Sidebar toggle */}
       <button
         type="button"
-        className="w-7 h-7 flex items-center justify-center rounded hover:bg-bg2 text-text-dim hover:text-text-base transition-colors cursor-pointer flex-shrink-0"
+        className="w-7 h-7 flex items-center justify-center rounded hover:bg-card text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex-shrink-0"
         style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         onClick={onSidebarToggle}
         aria-label={sidebarOpen ? strings.titleBar.collapseSidebar : strings.titleBar.expandSidebar}
@@ -70,7 +70,7 @@ export default function TitleBar({
         alt=""
         draggable={false}
       />
-      <span className="text-sm font-semibold text-text-bright tracking-wide select-none">
+      <span className="text-sm font-semibold text-foreground tracking-wide select-none">
         {strings.titleBar.appName}
       </span>
 
@@ -110,16 +110,16 @@ export default function TitleBar({
       {/* Server status */}
       {serverError ? (
         <div
-          className="flex items-center gap-1.5 text-red text-xs font-medium max-w-[220px]"
+          className="flex items-center gap-1.5 text-destructive text-xs font-medium max-w-[220px]"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
           title={serverError}
         >
-          <span className="rounded-full flex-shrink-0" style={{ width: 6, height: 6, background: "var(--c-red)" }} />
+          <span className="rounded-full flex-shrink-0" style={{ width: 6, height: 6, background: "var(--c-destructive)" }} />
           <span className="truncate">{strings.titleBar.portInUse.replace("{port}", String(config.port))}</span>
         </div>
       ) : serverRunning ? (
         <div
-          className="flex items-center gap-1.5 text-green text-xs font-medium"
+          className="flex items-center gap-1.5 text-signal text-xs font-medium"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
           <span
@@ -127,15 +127,15 @@ export default function TitleBar({
             style={{
               width: 6,
               height: 6,
-              background: "var(--c-green)",
-              boxShadow: "0 0 6px var(--c-green)",
+              background: "var(--c-signal)",
+              boxShadow: "0 0 6px var(--c-signal)",
             }}
           />
           {strings.titleBar.active.replace("{port}", String(config.port))}
         </div>
       ) : (
         <div
-          className="flex items-center gap-1.5 text-text-dim text-xs font-medium"
+          className="flex items-center gap-1.5 text-muted-foreground text-xs font-medium"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
           <span
@@ -143,7 +143,7 @@ export default function TitleBar({
             style={{
               width: 6,
               height: 6,
-              background: "var(--c-text-dim)",
+              background: "var(--c-muted-foreground)",
             }}
           />
           {strings.titleBar.stopped.replace("{port}", String(config.port))}

@@ -194,9 +194,9 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
                 {openTabs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center gap-2">
                         <div className="opacity-10 mb-1"><FileCode size={48} /></div>
-                        <div className="text-sm font-medium text-text-base">{strings.soap.noMocksOpen}</div>
-                        <p className="text-xs text-text-dim max-w-xs leading-relaxed">
-                            {strings.soap.noMocksOpenHintBefore} <span className="text-accent font-semibold">+</span> {strings.soap.noMocksOpenHintAfter}
+                        <div className="text-sm font-medium text-foreground">{strings.soap.noMocksOpen}</div>
+                        <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+                            {strings.soap.noMocksOpenHintBefore} <span className="text-signal font-semibold">+</span> {strings.soap.noMocksOpenHintAfter}
                         </p>
                     </div>
                 ) : (
@@ -238,7 +238,7 @@ export default function SoapMocksPanel({ config, onConfigChange, activeEnv = nul
                 expandTitle={strings.soap.expandSidebar}
                 storageKey="soap-mocks-panel-sidebar"
                 collapsedBadge={mocks.length > 0 ? (
-                    <span className="text-[9px] text-text-dim font-mono" title={strings.soap.mockCount.replace("{count}", String(mocks.length))}
+                    <span className="text-[9px] text-muted-foreground font-mono" title={strings.soap.mockCount.replace("{count}", String(mocks.length))}
                         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{mocks.length}</span>
                 ) : undefined}
             >

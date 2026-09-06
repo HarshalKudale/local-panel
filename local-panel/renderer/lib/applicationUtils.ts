@@ -31,7 +31,7 @@ export interface RunConfigTypeInfo {
 
 export const RUN_CONFIG_TYPE_INFOS: RunConfigTypeInfo[] = [
     // Scripts
-    { type: "shell", label: "Shell Script", iconName: "Terminal", iconColor: "text-text-dim", category: "scripts" },
+    { type: "shell", label: "Shell Script", iconName: "Terminal", iconColor: "text-muted-foreground", category: "scripts" },
     { type: "bat", label: "Batch File", iconName: "FileText", iconColor: "text-yellow-400", category: "scripts", osOnly: "win32" },
     { type: "powershell", label: "PowerShell", iconName: "Terminal", iconColor: "text-blue-400", category: "scripts", osOnly: "win32" },
     { type: "vbs", label: "VBScript", iconName: "FileCode", iconColor: "text-purple-400", category: "scripts", osOnly: "win32" },
@@ -83,8 +83,8 @@ export function statusColor(status: AppProcessStatus): string {
         case "starting":
         case "stopping": return "text-yellow-400";
         case "error": return "text-red-400";
-        case "exited": return "text-text-dim";
-        default: return "text-text-dim";
+        case "exited": return "text-muted-foreground";
+        default: return "text-muted-foreground";
     }
 }
 

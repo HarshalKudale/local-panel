@@ -58,18 +58,18 @@ function statusColor(s: CheckStatus, code: number | null): "green" | "red" | "ye
 
 function cardBorderClass(s: CheckStatus, code: number | null): string {
   if (s === "idle") return "border-border";
-  if (s === "checking") return "border-yellow/40";
-  if (s === "error") return "border-red/40";
-  if (code !== null && code >= 200 && code < 300) return "border-green/40";
-  return "border-red/40";
+  if (s === "checking") return "border-amber/40";
+  if (s === "error") return "border-destructive/40";
+  if (code !== null && code >= 200 && code < 300) return "border-signal/40";
+  return "border-destructive/40";
 }
 
 function cardBgClass(s: CheckStatus, code: number | null): string {
   if (s === "idle") return "";
-  if (s === "checking") return "bg-yellow/5";
-  if (s === "error") return "bg-red/5";
-  if (code !== null && code >= 200 && code < 300) return "bg-green/5";
-  return "bg-red/5";
+  if (s === "checking") return "bg-amber/5";
+  if (s === "error") return "bg-destructive/5";
+  if (code !== null && code >= 200 && code < 300) return "bg-signal/5";
+  return "bg-destructive/5";
 }
 
 function statusLabel(s: CheckStatus, code: number | null, error: string | null): string {
@@ -132,28 +132,28 @@ function ResponseModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-8"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-bg1 border border-border rounded-lg shadow-2xl flex flex-col w-full max-w-5xl h-[70%] overflow-hidden">
+      <div className="bg-surface border border-border rounded-lg shadow-2xl flex flex-col w-full max-w-5xl h-[70%] overflow-hidden">
 
         {/* -- Header -- */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-border flex-shrink-0">
           <StatusDot color={isSuccess ? "green" : isError ? "red" : "dim"} size="md" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-text-bright">{service.name}</p>
-            <p className="text-xs text-text-dim font-mono truncate mt-0.5">{service.url}</p>
+            <p className="text-sm font-semibold text-foreground">{service.name}</p>
+            <p className="text-xs text-muted-foreground font-mono truncate mt-0.5">{service.url}</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {state.statusCode !== null && (
               <Badge variant={isSuccess ? "green" : "red"}>{state.statusCode}</Badge>
             )}
             {state.durationMs !== null && (
-              <span className="text-xs text-text-dim">{state.durationMs}ms</span>
+              <span className="text-xs text-muted-foreground">{state.durationMs}ms</span>
             )}
             {state.checkedAt !== null && (
-              <span className="text-xs text-text-dim">· {formatTs(state.checkedAt)}</span>
+              <span className="text-xs text-muted-foreground">· {formatTs(state.checkedAt)}</span>
             )}
             <button
               onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded hover:bg-bg3 text-text-dim hover:text-text-base transition-colors cursor-pointer ml-1"
+              className="w-7 h-7 flex items-center justify-center rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer ml-1"
             >
               <X size={14} />
             </button>
@@ -162,7 +162,7 @@ function ResponseModal({
 
         {/* -- Error banner -- */}
         {state.error && (
-          <div className="px-6 py-3 bg-red/5 border-b border-red/20 text-xs text-red font-mono break-all flex-shrink-0">
+          <div className="px-6 py-3 bg-destructive/5 border-b border-destructive/20 text-xs text-destructive font-mono break-all flex-shrink-0">
             {state.error}
           </div>
         )}
@@ -172,39 +172,39 @@ function ResponseModal({
 
           {/* Left - Response Headers */}
           <div className="w-80 flex-shrink-0 border-r border-border flex flex-col overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-border/60 bg-bg0/30 flex-shrink-0">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">
+            <div className="px-4 py-2.5 border-b border-border/60 bg-background/30 flex-shrink-0">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Response Headers
               </span>
             </div>
             <div className="flex-1 overflow-y-auto">
               {hasHeaders ? (
                 Object.entries(state.headers!).map(([k, v]) => (
-                  <div key={k} className="border-b border-border/20 last:border-0 px-4 py-2 hover:bg-bg2/30">
-                    <p className="text-[11px] font-mono text-accent truncate">{k}</p>
-                    <p className="text-[11px] font-mono text-text-dim break-all mt-0.5">{String(v)}</p>
+                  <div key={k} className="border-b border-border/20 last:border-0 px-4 py-2 hover:bg-card/30">
+                    <p className="text-[11px] font-mono text-signal truncate">{k}</p>
+                    <p className="text-[11px] font-mono text-muted-foreground break-all mt-0.5">{String(v)}</p>
                   </div>
                 ))
               ) : (
-                <p className="px-4 py-4 text-xs text-text-dim italic">{strings.common.noHeaders}</p>
+                <p className="px-4 py-4 text-xs text-muted-foreground italic">{strings.common.noHeaders}</p>
               )}
             </div>
           </div>
 
           {/* Right - Response Body */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-border/60 bg-bg0/30 flex-shrink-0">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">
+            <div className="px-4 py-2.5 border-b border-border/60 bg-background/30 flex-shrink-0">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Response Body
               </span>
             </div>
             <div className="flex-1 overflow-auto p-4">
               {hasBody ? (
-                <pre className="text-xs text-text-dim font-mono whitespace-pre-wrap break-all leading-relaxed">
+                <pre className="text-xs text-muted-foreground font-mono whitespace-pre-wrap break-all leading-relaxed">
                   {tryFormatJson(state.body)}
                 </pre>
               ) : (
-                <p className="text-xs text-text-dim italic">No body</p>
+                <p className="text-xs text-muted-foreground italic">No body</p>
               )}
             </div>
           </div>
@@ -252,7 +252,7 @@ function ServiceCard({
     >
       {/* Clickable body */}
       <button
-        className="w-full text-left p-4 cursor-pointer hover:bg-bg2/30 transition-colors"
+        className="w-full text-left p-4 cursor-pointer hover:bg-card/30 transition-colors"
         onClick={onClick}
         title={strings.healthBar.viewLastResponse}
       >
@@ -264,8 +264,8 @@ function ServiceCard({
             className="mt-0.5 flex-shrink-0"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-text-bright truncate">{service.name}</p>
-            <p className="text-xs text-text-dim font-mono truncate mt-0.5" title={resolvedUrl}>
+            <p className="text-sm font-semibold text-foreground truncate">{service.name}</p>
+            <p className="text-xs text-muted-foreground font-mono truncate mt-0.5" title={resolvedUrl}>
               {resolvedUrl || service.url}
             </p>
           </div>
@@ -278,10 +278,10 @@ function ServiceCard({
         {(state.durationMs !== null || state.checkedAt !== null) && (
           <div className="flex items-center gap-3 mt-2.5 pl-7">
             {state.durationMs !== null && (
-              <span className="text-xs text-text-dim">{state.durationMs}ms</span>
+              <span className="text-xs text-muted-foreground">{state.durationMs}ms</span>
             )}
             {state.checkedAt !== null && (
-              <span className="text-xs text-text-dim">
+              <span className="text-xs text-muted-foreground">
                 {strings.healthBar.lastChecked} {formatTs(state.checkedAt)}
               </span>
             )}
@@ -290,8 +290,8 @@ function ServiceCard({
       </button>
 
       {/* Footer controls */}
-      <div className="flex items-center gap-2 px-4 py-2 border-t border-border/40 bg-bg0/20">
-        <span className="text-xs text-text-dim flex-shrink-0">{strings.healthBar.autoRefresh}</span>
+      <div className="flex items-center gap-2 px-4 py-2 border-t border-border/40 bg-background/20">
+        <span className="text-xs text-muted-foreground flex-shrink-0">{strings.healthBar.autoRefresh}</span>
         <Switch checked={service.autoRefreshEnabled} onChange={onToggleAutoRefresh} />
         <div className="flex-1" />
         <IconButton
@@ -304,7 +304,7 @@ function ServiceCard({
           icon={<Trash2 size={13} />}
           title={strings.healthBar.removeService}
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="hover:border-red/40 hover:text-red"
+          className="hover:border-destructive/40 hover:text-destructive"
         />
       </div>
     </div>
@@ -377,8 +377,8 @@ function AddServiceModal({
           onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
           onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
         />
-        <p className="text-xs text-text-dim mt-1">
-          {strings.healthBar.supportsEnvVars} <code className="text-accent">{"{{VAR_NAME}}"}</code>
+        <p className="text-xs text-muted-foreground mt-1">
+          {strings.healthBar.supportsEnvVars} <code className="text-signal">{"{{VAR_NAME}}"}</code>
         </p>
       </FormField>
       <ModalFooter
@@ -639,7 +639,7 @@ export default function HealthBarPanel({ config, entitySyncStatus, onPublish, on
 
         <div className="flex-1 overflow-y-auto p-6">
           {loading && (
-            <div className="flex items-center justify-center h-32 text-text-dim text-sm">
+            <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
               {strings.healthBar.loadingServices}
             </div>
           )}

@@ -191,8 +191,8 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                 {openTabs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center gap-2">
                         <div className="opacity-10 mb-1"><Network size={48} /></div>
-                        <div className="text-sm font-medium text-text-base">{strings.grpc.noRequestsOpen}</div>
-                        <p className="text-xs text-text-dim max-w-xs leading-relaxed">
+                        <div className="text-sm font-medium text-foreground">{strings.grpc.noRequestsOpen}</div>
+                        <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
                             {strings.grpc.noRequestsOpenHint}
                         </p>
                     </div>
@@ -235,7 +235,7 @@ export default function GrpcRequestsPanel({ config, onConfigChange, activeEnv = 
                 expandTitle={strings.grpc.expandSidebar}
                 storageKey="grpc-requests-panel-sidebar"
                 collapsedBadge={requests.length > 0 ? (
-                    <span className="text-[9px] text-text-dim font-mono" title={strings.grpc.requestCount.replace("{count}", String(requests.length))}
+                    <span className="text-[9px] text-muted-foreground font-mono" title={strings.grpc.requestCount.replace("{count}", String(requests.length))}
                         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{requests.length}</span>
                 ) : undefined}
             >

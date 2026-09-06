@@ -185,7 +185,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
             <SectionLabel>{strings.workspace.sectionSync}</SectionLabel>
 
             {syncState.error && (
-              <div className="mb-3 px-3 py-2 rounded border border-red/30 bg-red/5 text-xs text-red flex items-start gap-2">
+              <div className="mb-3 px-3 py-2 rounded border border-destructive/30 bg-destructive/5 text-xs text-destructive flex items-start gap-2">
                 <span className="flex-shrink-0 mt-0.5"><Cloud size={12} /></span>
                 <span>{strings.workspace.syncError}: {syncState.error}</span>
               </div>
@@ -213,14 +213,14 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
                     />
                   </SettingsRow>
                   <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-3">
-                    <span className="text-xs text-text-dim flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                       <CloudOff size={12} />
                       Not connected
                     </span>
                     <button
                       disabled={!remoteInput.trim() || connecting}
                       onClick={handleConnectClick}
-                      className="px-3 py-1.5 rounded border border-accent/40 bg-accent/10 hover:bg-accent/20 text-accent text-xs font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded border border-signal/40 bg-signal/10 hover:bg-signal/20 text-signal text-xs font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
                     >
                       <Link size={12} />
                       {connecting ? strings.workspace.connectingBtn : strings.workspace.connectBtn}
@@ -230,13 +230,13 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
               ) : (
                 <>
                   <SettingsRow title={strings.workspace.remoteUrl} desc="">
-                    <span className="text-xs font-mono text-text-dim truncate max-w-72 flex items-center gap-1.5">
+                    <span className="text-xs font-mono text-muted-foreground truncate max-w-72 flex items-center gap-1.5">
                       <GitBranch size={11} className="flex-shrink-0" />
                       {syncConfig?.remote}
                     </span>
                   </SettingsRow>
                   <SettingsRow title={strings.workspace.branch} desc="">
-                    <span className="text-xs font-mono text-text-dim">{syncConfig?.branch ?? "main"}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{syncConfig?.branch ?? "main"}</span>
                   </SettingsRow>
                   <SettingsRow title={strings.workspace.autoSync} desc={strings.workspace.autoSyncDesc}>
                     <Switch
@@ -255,7 +255,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
                           onClick={handlePull}
                           disabled={syncState.status !== "idle"}
                           title={strings.workspace.pullBtn}
-                          className="px-2.5 py-1 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-text-base text-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                          className="px-2.5 py-1 rounded border border-border bg-card hover:bg-surface-2 text-muted-foreground hover:text-foreground text-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                         >
                           <ArrowDown size={11} />
                           {syncState.status === "pulling" ? strings.workspace.pullingBtn : strings.workspace.pullBtn}
@@ -264,19 +264,19 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
                           onClick={handlePush}
                           disabled={syncState.status !== "idle"}
                           title={strings.workspace.pushBtn}
-                          className="px-2.5 py-1 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim hover:text-text-base text-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                          className="px-2.5 py-1 rounded border border-border bg-card hover:bg-surface-2 text-muted-foreground hover:text-foreground text-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                         >
                           <ArrowUp size={11} />
                           {syncState.status === "pushing" ? strings.workspace.pushingBtn : strings.workspace.pushBtn}
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 text-[11px] text-text-dim">
+                    <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
                       <span>
-                        {strings.workspace.lastPushed}: <span className="text-text-base">{lastPushed ? formatRelTime(lastPushed) : strings.workspace.never}</span>
+                        {strings.workspace.lastPushed}: <span className="text-foreground">{lastPushed ? formatRelTime(lastPushed) : strings.workspace.never}</span>
                       </span>
                       <span>
-                        {strings.workspace.lastPulled}: <span className="text-text-base">{lastPulled ? formatRelTime(lastPulled) : strings.workspace.never}</span>
+                        {strings.workspace.lastPulled}: <span className="text-foreground">{lastPulled ? formatRelTime(lastPulled) : strings.workspace.never}</span>
                       </span>
                     </div>
                   </div>
@@ -285,11 +285,11 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
                   <div className="px-5 py-3 border-t border-border">
                     {disconnectConfirm ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-text-dim flex-1">{strings.workspace.disconnectWarning}</span>
-                        <button onClick={() => setDisconnectConfirm(false)} className="px-2.5 py-1 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim text-xs cursor-pointer">
+                        <span className="text-xs text-muted-foreground flex-1">{strings.workspace.disconnectWarning}</span>
+                        <button onClick={() => setDisconnectConfirm(false)} className="px-2.5 py-1 rounded border border-border bg-card hover:bg-surface-2 text-muted-foreground text-xs cursor-pointer">
                           {strings.common.cancel}
                         </button>
-                        <button onClick={handleDisconnect} className="px-2.5 py-1 rounded border border-red/40 bg-red/10 hover:bg-red/20 text-red text-xs cursor-pointer flex items-center gap-1">
+                        <button onClick={handleDisconnect} className="px-2.5 py-1 rounded border border-destructive/40 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs cursor-pointer flex items-center gap-1">
                           <Unlink size={11} />
                           {strings.workspace.disconnectConfirm}
                         </button>
@@ -297,7 +297,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
                     ) : (
                       <button
                         onClick={() => setDisconnectConfirm(true)}
-                        className="px-2.5 py-1 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim text-xs cursor-pointer flex items-center gap-1.5"
+                        className="px-2.5 py-1 rounded border border-border bg-card hover:bg-surface-2 text-muted-foreground text-xs cursor-pointer flex items-center gap-1.5"
                       >
                         <Unlink size={11} />
                         {strings.workspace.disconnectBtn}
@@ -308,26 +308,26 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
               )}
 
               {connectError && (
-                <div className="px-5 py-3 border-t border-red/20 bg-red/5 text-xs text-red">{connectError}</div>
+                <div className="px-5 py-3 border-t border-destructive/20 bg-destructive/5 text-xs text-destructive">{connectError}</div>
               )}
             </SectionCard>
 
             {/* Connect confirmation dialog */}
             {connectConfirm && (
-              <div className="mt-3 p-4 rounded border border-accent/20 bg-accent/5 text-xs text-text-dim flex flex-col gap-3">
-                <p className="text-text-base">
+              <div className="mt-3 p-4 rounded border border-signal/20 bg-signal/5 text-xs text-muted-foreground flex flex-col gap-3">
+                <p className="text-foreground">
                   {connectConfirm === "empty" ? strings.workspace.connectWarningEmpty : strings.workspace.connectWarningNonEmpty}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setConnectConfirm(null)}
-                    className="px-3 py-1.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim text-xs cursor-pointer"
+                    className="px-3 py-1.5 rounded border border-border bg-card hover:bg-surface-2 text-muted-foreground text-xs cursor-pointer"
                   >
                     {strings.workspace.cancelConnect}
                   </button>
                   <button
                     onClick={handleConnectConfirm}
-                    className="px-3 py-1.5 rounded border border-accent/40 bg-accent/10 hover:bg-accent/20 text-accent text-xs font-medium cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded border border-signal/40 bg-signal/10 hover:bg-signal/20 text-signal text-xs font-medium cursor-pointer flex items-center gap-1.5"
                   >
                     <Link size={11} />
                     {strings.workspace.confirmConnect}
@@ -338,9 +338,9 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
 
             {/* In-progress indicator shown after confirmation, during clone/push */}
             {connecting && (
-              <div className="mt-3 p-4 rounded border border-accent/20 bg-accent/5 flex items-center gap-3">
-                <span className="inline-block w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                <span className="text-xs text-accent font-medium">
+              <div className="mt-3 p-4 rounded border border-signal/20 bg-signal/5 flex items-center gap-3">
+                <span className="inline-block w-4 h-4 border-2 border-signal border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                <span className="text-xs text-signal font-medium">
                   {syncState.progressMessage ?? strings.workspace.connectingBtn}
                 </span>
               </div>
@@ -363,19 +363,19 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
           {/* -- Danger Zone ----------------------------------------------- */}
           <section>
             <SectionLabel>{strings.workspace.sectionDanger}</SectionLabel>
-            <div className="bg-bg1 border border-red/20 rounded-lg overflow-hidden">
+            <div className="bg-surface border border-destructive/20 rounded-lg overflow-hidden">
               <div className="flex items-center gap-4 px-5 py-4">
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-text-base">{strings.workspace.deleteBtn}</div>
-                  <div className="text-xs text-text-dim mt-0.5">{strings.workspace.deleteDesc}</div>
+                  <div className="text-sm font-medium text-foreground">{strings.workspace.deleteBtn}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{strings.workspace.deleteDesc}</div>
                 </div>
                 <div className="flex-shrink-0">
                   {deleteConfirm ? (
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setDeleteConfirm(false)} className="px-2.5 py-1 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim text-xs cursor-pointer">
+                      <button onClick={() => setDeleteConfirm(false)} className="px-2.5 py-1 rounded border border-border bg-card hover:bg-surface-2 text-muted-foreground text-xs cursor-pointer">
                         {strings.common.cancel}
                       </button>
-                      <button onClick={handleDeleteConfirm} className="px-2.5 py-1 rounded border border-red/40 bg-red/10 hover:bg-red/20 text-red text-xs font-medium cursor-pointer">
+                      <button onClick={handleDeleteConfirm} className="px-2.5 py-1 rounded border border-destructive/40 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-medium cursor-pointer">
                         {strings.workspace.deleteConfirmBtn}
                       </button>
                     </div>
@@ -383,7 +383,7 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
                     <button
                       onClick={() => setDeleteConfirm(true)}
                       disabled={config.workspaces.length <= 1}
-                      className="px-3 py-1.5 rounded border border-red/40 bg-red/5 hover:bg-red/15 text-red text-xs font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 rounded border border-destructive/40 bg-destructive/5 hover:bg-destructive/15 text-destructive text-xs font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {strings.workspace.deleteBtn}
                     </button>
@@ -392,7 +392,6 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
               </div>
             </div>
           </section>
-
         </div>
 
         <ImportExportModal
@@ -411,11 +410,11 @@ export default function WorkspacePanel({ config, onConfigChange, onWorkspaceDele
 
 function SyncStatusBadge({ status, progressMessage }: { status: SyncStatus; progressMessage: string | null }) {
   const map: Record<SyncStatus, { label: string; color: string }> = {
-    idle: { label: strings.workspace.statusIdle, color: "text-green" },
-    pushing: { label: strings.workspace.statusPushing, color: "text-accent" },
-    pulling: { label: strings.workspace.statusPulling, color: "text-accent" },
-    cloning: { label: strings.workspace.statusCloning, color: "text-accent" },
-    error: { label: strings.workspace.statusError, color: "text-red" },
+    idle: { label: strings.workspace.statusIdle, color: "text-signal" },
+    pushing: { label: strings.workspace.statusPushing, color: "text-signal" },
+    pulling: { label: strings.workspace.statusPulling, color: "text-signal" },
+    cloning: { label: strings.workspace.statusCloning, color: "text-signal" },
+    error: { label: strings.workspace.statusError, color: "text-destructive" },
   };
   const { label, color } = map[status] ?? map.idle;
   const spinning = status !== "idle" && status !== "error";

@@ -136,7 +136,7 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
   }, [selectedPayload]);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-bg1">
+    <div className="flex flex-col h-full overflow-hidden bg-surface">
       <EditorTitleBar
         label={isNew ? strings.webhooks.newWebhook : strings.webhooks.webhook}
         namePlaceholder={strings.webhooks.namePlaceholder}
@@ -147,14 +147,14 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
 
       {/* URL bar */}
       <div className="px-4 py-3 border-b border-border flex-shrink-0">
-        <div className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden" style={{ background: "var(--c-bg2)" }}>
+        <div className="flex items-stretch rounded border border-border focus-within:border-signal transition-colors overflow-hidden" style={{ background: "var(--c-card)" }}>
           {/* Fixed base - not editable */}
-          <span className="bg-bg3 border-r border-border text-xs font-mono px-3 flex items-center flex-shrink-0 text-text-dim whitespace-nowrap select-all">
+          <span className="bg-surface-2 border-r border-border text-xs font-mono px-3 flex items-center flex-shrink-0 text-muted-foreground whitespace-nowrap select-all">
             {`localhost:${webhookPort}${BASE_URL_SEGMENT}`}
           </span>
           {/* User-editable suffix */}
           <input
-            className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
+            className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-foreground outline-none placeholder:text-muted-foreground min-w-0"
             placeholder="your-webhook-path"
             value={urlSuffix}
             onChange={(e) => {
@@ -164,19 +164,19 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
           />
         </div>
         <div className="mt-1.5 flex items-center gap-2">
-          <span className="text-[10px] text-text-dim font-mono truncate flex-1">{fullUrl}</span>
+          <span className="text-[10px] text-muted-foreground font-mono truncate flex-1">{fullUrl}</span>
           {/* Status indicator */}
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${isActive
-            ? "bg-green/10 text-green"
+            ? "bg-signal/10 text-signal"
             : isAtLimit
-              ? "bg-yellow/10 text-yellow"
-              : "bg-text-dim/10 text-text-dim"
+              ? "bg-amber/10 text-amber"
+              : "bg-muted-foreground/10 text-muted-foreground"
             }`}>
             {isActive ? strings.webhooks.statusActive : isAtLimit ? strings.webhooks.statusAtLimit : strings.webhooks.statusInactive}
           </span>
         </div>
         {isAtLimit && !isActive && (
-          <p className="mt-1 text-[11px] text-yellow">
+          <p className="mt-1 text-[11px] text-amber">
             {strings.webhooks.maxActive.replace("{n}", String(MAX_ACTIVE_WEBHOOKS))}
           </p>
         )}
@@ -187,16 +187,16 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
         {/* Left: payload list */}
         <div className="flex flex-col border-r border-border flex-shrink-0 overflow-hidden" style={{ width: 220 }}>
           <div className="px-3 py-2 border-b border-border flex-shrink-0 flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-dim">{strings.webhooks.received}</span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{strings.webhooks.received}</span>
             {payloads.length > 0 && (
-              <span className="text-[10px] text-text-dim">{payloads.length}</span>
+              <span className="text-[10px] text-muted-foreground">{payloads.length}</span>
             )}
           </div>
           <div className="flex-1 overflow-y-auto min-h-0">
             {payloads.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8 px-3">
                 <div className="opacity-15"><Webhook size={28} /></div>
-                <p className="text-xs text-text-dim">
+                <p className="text-xs text-muted-foreground">
                   {isActive ? strings.webhooks.waitingForPost : strings.webhooks.activateToReceive}
                 </p>
               </div>
@@ -208,14 +208,14 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
                   <button
                     key={i}
                     onClick={() => setSelectedPayload(p)}
-                    className={`w-full text-left px-3 py-2 border-b border-border/50 transition-colors cursor-pointer ${isSelected ? "bg-accent/10 text-accent" : "hover:bg-bg2 text-text-dim hover:text-text-base"
+                    className={`w-full text-left px-3 py-2 border-b border-border/50 transition-colors cursor-pointer ${isSelected ? "bg-signal/10 text-signal" : "hover:bg-card text-muted-foreground hover:text-foreground"
                       }`}
                   >
                     <div className="flex items-center gap-2 text-[10px]">
                       <span className="font-semibold">{p.method}</span>
-                      <span className="font-mono text-text-dim truncate flex-1">{t}</span>
+                      <span className="font-mono text-muted-foreground truncate flex-1">{t}</span>
                     </div>
-                    <div className="text-[10px] font-mono text-text-dim mt-0.5 truncate">
+                    <div className="text-[10px] font-mono text-muted-foreground mt-0.5 truncate">
                       {p.body ? p.body.slice(0, 30) : strings.webhooks.empty}
                     </div>
                   </button>
@@ -231,8 +231,8 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
           {selectedPayload ? (
             <>
               {/* Headers strip */}
-              <div className="px-4 py-2 border-b border-border flex-shrink-0 flex items-center gap-3 text-[10px] text-text-dim font-mono">
-                <span className="text-accent font-semibold">{selectedPayload.method}</span>
+              <div className="px-4 py-2 border-b border-border flex-shrink-0 flex items-center gap-3 text-[10px] text-muted-foreground font-mono">
+                <span className="text-signal font-semibold">{selectedPayload.method}</span>
                 <span>{new Date(selectedPayload.ts).toLocaleString()}</span>
                 {Object.keys(selectedPayload.headers).length > 0 && (
                   <span>{Object.keys(selectedPayload.headers).length} headers</span>
@@ -251,7 +251,7 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8 px-6">
               <div className="opacity-15"><Webhook size={28} /></div>
-              <p className="text-xs text-text-dim">{strings.webhooks.selectPayload}</p>
+              <p className="text-xs text-muted-foreground">{strings.webhooks.selectPayload}</p>
             </div>
           )}
         </div>
@@ -267,7 +267,7 @@ const WebhookEditor = forwardRef<WebhookEditorHandle, WebhookEditorProps>(functi
         saveDisabled={!isNew && !isDirtyWh}
         saving={saving}
         savingLabel={strings.server.saving}
-        extraLeft={saveErr ? <span className="text-xs text-red">{saveErr}</span> : undefined}
+        extraLeft={saveErr ? <span className="text-xs text-destructive">{saveErr}</span> : undefined}
       />
     </div>
   );
@@ -570,8 +570,8 @@ export default function WebhooksPanel({
           onClick={handleServerToggle}
           disabled={serverLoading}
           className={`flex items-center justify-center w-6 h-6 rounded border transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 ${serverRunning
-            ? "border-green/40 bg-green/10 hover:bg-red/15 hover:border-red/40 text-green hover:text-red"
-            : "border-border bg-bg2 hover:bg-green/15 hover:border-green/40 text-text-dim hover:text-green"
+            ? "border-signal/40 bg-signal/10 hover:bg-destructive/15 hover:border-destructive/40 text-signal hover:text-destructive"
+            : "border-border bg-card hover:bg-signal/15 hover:border-signal/40 text-muted-foreground hover:text-signal"
             }`}
           title={serverRunning ? strings.webhooks.stopServer : strings.webhooks.startServer}
         >
@@ -583,11 +583,11 @@ export default function WebhooksPanel({
             <Play size={8} fill="currentColor" />
           )}
         </button>
-        <span className="text-[10px] text-text-dim">
+        <span className="text-[10px] text-muted-foreground">
           {serverRunning ? `${strings.webhooks.serverLabel} :${webhookPort}` : strings.webhooks.serverStopped}
         </span>
         {serverError && (
-          <span className="text-[9px] text-red truncate max-w-[120px]" title={serverError}>
+          <span className="text-[9px] text-destructive truncate max-w-[120px]" title={serverError}>
             {serverError}
           </span>
         )}
@@ -640,10 +640,10 @@ export default function WebhooksPanel({
       {openTabs.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 gap-4 text-center py-16 px-8">
           <div className="opacity-10"><Webhook size={48} /></div>
-          <p className="text-sm text-text-dim">{strings.webhooks.openToReceive}</p>
+          <p className="text-sm text-muted-foreground">{strings.webhooks.openToReceive}</p>
           <button
             onClick={openNewTab}
-            className="flex items-center gap-2 px-4 py-2 rounded bg-accent/10 hover:bg-accent/20 text-accent text-sm font-medium transition-colors cursor-pointer border border-accent/20"
+            className="flex items-center gap-2 px-4 py-2 rounded bg-signal/10 hover:bg-signal/20 text-signal text-sm font-medium transition-colors cursor-pointer border border-signal/20"
           >
             <Plus size={14} /> {strings.webhooks.newWebhook}
           </button>
@@ -658,19 +658,19 @@ export default function WebhooksPanel({
               isModified: dirtyTabs[id],
               renderTab: isDraftId(id) ? undefined : (isActive) => (
                 <span className="flex items-center gap-1.5">
-                  {dirtyTabs[id] && <span className="text-[10px] text-accent opacity-80 flex-shrink-0 leading-none">*</span>}
+                  {dirtyTabs[id] && <span className="text-[10px] text-signal opacity-80 flex-shrink-0 leading-none">*</span>}
                   {activeTabs.has(id) && (
                     <span
                       className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{ background: "var(--c-green)", boxShadow: "0 0 4px var(--c-green)" }}
+                      style={{ background: "var(--c-signal)", boxShadow: "0 0 4px var(--c-signal)" }}
                     />
                   )}
-                  <span className={`max-w-[140px] truncate text-xs font-medium ${isActive ? "text-text-bright" : "text-text-dim"}`}>
+                  <span className={`max-w-[140px] truncate text-xs font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
                     {tabLabel(id)}
                   </span>
                   <button
                     onClick={(e) => { e.stopPropagation(); closeTab(id); }}
-                    className="w-4 h-4 flex items-center justify-center rounded hover:bg-bg3 text-text-dim hover:text-text-base transition-colors ml-0.5 flex-shrink-0 cursor-pointer"
+                    className="w-4 h-4 flex items-center justify-center rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground transition-colors ml-0.5 flex-shrink-0 cursor-pointer"
                   >
                     <X size={10} />
                   </button>
@@ -733,7 +733,7 @@ export default function WebhooksPanel({
         sidebar={sidebarContent}
         storageKey="webhooks-panel-sidebar"
         collapsedBadge={
-          <span className="text-[10px] text-text-dim rotate-90 whitespace-nowrap" style={{ writingMode: "vertical-rl" }}>
+          <span className="text-[10px] text-muted-foreground rotate-90 whitespace-nowrap" style={{ writingMode: "vertical-rl" }}>
             {strings.webhooks.title}
           </span>
         }

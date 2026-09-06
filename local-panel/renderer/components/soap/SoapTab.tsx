@@ -164,12 +164,12 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                 <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                         <div
-                            className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden flex-1"
-                            style={{ background: "var(--c-bg2)" }}
+                            className="flex items-stretch rounded border border-border focus-within:border-signal transition-colors overflow-hidden flex-1"
+                            style={{ background: "var(--c-card)" }}
                         >
-                            <span className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 text-green flex-shrink-0">{strings.soap.methodPost}</span>
+                            <span className="bg-surface-2 border-r border-border text-xs font-bold font-mono px-3 py-2.5 text-signal flex-shrink-0">{strings.soap.methodPost}</span>
                             <input
-                                className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
+                                className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-foreground outline-none placeholder:text-muted-foreground min-w-0"
                                 placeholder="https://example.com/ws/service"
                                 value={state.endpointUrl}
                                 onChange={(e) => dispatch({ type: "SET_FIELD", field: "endpointUrl", value: e.target.value })}
@@ -179,7 +179,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                         <button
                             onClick={handleSend}
                             disabled={state.sending || !state.endpointUrl}
-                            className="px-4 py-2.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
+                            className="px-4 py-2.5 rounded bg-signal hover:bg-signal/80 disabled:opacity-40 disabled:cursor-not-allowed text-background text-xs font-semibold transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
                         >
                             {state.sending
                                 ? <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />{strings.soap.sending}</>
@@ -187,9 +187,9 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                         </button>
                     </div>
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-text-dim flex-shrink-0">{strings.soap.soapAction}</label>
+                        <label className="text-xs text-muted-foreground flex-shrink-0">{strings.soap.soapAction}</label>
                         <input
-                            className="flex-1 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
+                            className="flex-1 bg-card border border-border rounded px-2.5 py-1.5 text-xs font-mono text-foreground outline-none focus:border-signal placeholder:text-muted-foreground"
                             placeholder='"http://example.com/Action"'
                             value={state.soapAction}
                             onChange={(e) => dispatch({ type: "SET_FIELD", field: "soapAction", value: e.target.value })}
@@ -202,44 +202,44 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
             {tabType === "mock" && (
                 <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex flex-col gap-2">
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-text-dim flex-shrink-0 w-28">{strings.soap.endpointPattern}</label>
+                        <label className="text-xs text-muted-foreground flex-shrink-0 w-28">{strings.soap.endpointPattern}</label>
                         <input
-                            className="flex-1 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
+                            className="flex-1 bg-card border border-border rounded px-2.5 py-1.5 text-xs font-mono text-foreground outline-none focus:border-signal placeholder:text-muted-foreground"
                             placeholder="/ws/service"
                             value={state.endpointPattern}
                             onChange={(e) => dispatch({ type: "SET_FIELD", field: "endpointPattern", value: e.target.value })}
                         />
-                        <label className="flex items-center gap-1.5 text-xs text-text-dim cursor-pointer">
+                        <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={state.useRegex}
                                 onChange={(e) => dispatch({ type: "SET_FIELD", field: "useRegex", value: e.target.checked })}
-                                className="accent-accent"
+                                className="accent-signal"
                             />
                             {strings.soap.regex}
                         </label>
                     </div>
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-text-dim flex-shrink-0 w-28">{strings.soap.soapActionMatch}</label>
+                        <label className="text-xs text-muted-foreground flex-shrink-0 w-28">{strings.soap.soapActionMatch}</label>
                         <input
-                            className="flex-1 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent placeholder:text-text-dim"
+                            className="flex-1 bg-card border border-border rounded px-2.5 py-1.5 text-xs font-mono text-foreground outline-none focus:border-signal placeholder:text-muted-foreground"
                             placeholder="*"
                             value={state.soapActionPattern}
                             onChange={(e) => dispatch({ type: "SET_FIELD", field: "soapActionPattern", value: e.target.value })}
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-text-dim flex-shrink-0 w-28">{strings.soap.responseStatus}</label>
+                        <label className="text-xs text-muted-foreground flex-shrink-0 w-28">{strings.soap.responseStatus}</label>
                         <input
                             type="number"
-                            className="w-20 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent"
+                            className="w-20 bg-card border border-border rounded px-2.5 py-1.5 text-xs font-mono text-foreground outline-none focus:border-signal"
                             value={state.responseStatus}
                             onChange={(e) => dispatch({ type: "SET_FIELD", field: "responseStatus", value: parseInt(e.target.value) || 200 })}
                         />
-                        <label className="text-xs text-text-dim flex-shrink-0 ml-4">{strings.soap.delay}</label>
+                        <label className="text-xs text-muted-foreground flex-shrink-0 ml-4">{strings.soap.delay}</label>
                         <input
                             type="number"
-                            className="w-20 bg-bg2 border border-border rounded px-2.5 py-1.5 text-xs font-mono text-text-bright outline-none focus:border-accent"
+                            className="w-20 bg-card border border-border rounded px-2.5 py-1.5 text-xs font-mono text-foreground outline-none focus:border-signal"
                             value={state.responseDelay}
                             onChange={(e) => dispatch({ type: "SET_FIELD", field: "responseDelay", value: parseInt(e.target.value) || 0 })}
                         />
@@ -300,7 +300,7 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                             </div>
                         </Panel>
 
-                        <PanelResizeHandle className="w-1.5 bg-border hover:bg-accent transition-colors cursor-col-resize" />
+                        <PanelResizeHandle className="w-1.5 bg-border hover:bg-signal transition-colors cursor-col-resize" />
 
                         {/* Right: Response viewer */}
                         <Panel defaultSize={50} minSize={25}>
@@ -313,14 +313,14 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                                         state.resStatus != null ? (
                                             <div className="flex items-center gap-2 px-3 text-xs">
                                                 <span className={cn("font-bold", statusColor(state.resStatus))}>{state.resStatus}</span>
-                                                {state.resDuration != null && <span className="text-text-dim">{state.resDuration}ms</span>}
+                                                {state.resDuration != null && <span className="text-muted-foreground">{state.resDuration}ms</span>}
                                             </div>
                                         ) : undefined
                                     }
                                 />
                                 <div className="flex-1 overflow-hidden">
                                     {state.resError ? (
-                                        <div className="p-4 text-red text-xs font-mono">{state.resError}</div>
+                                        <div className="p-4 text-destructive text-xs font-mono">{state.resError}</div>
                                     ) : state.resTab === "body" ? (
                                         <CodeEditor
                                             value={state.resBody}
@@ -333,12 +333,12 @@ const SoapTab = forwardRef<SoapTabHandle, SoapTabProps>(function SoapTab(
                                         <div className="p-3 overflow-auto h-full">
                                             {Object.entries(state.resHeaders).map(([k, v]) => (
                                                 <div key={k} className="flex gap-2 text-xs py-0.5 font-mono">
-                                                    <span className="text-accent">{k}:</span>
-                                                    <span className="text-text-base">{v}</span>
+                                                    <span className="text-signal">{k}:</span>
+                                                    <span className="text-foreground">{v}</span>
                                                 </div>
                                             ))}
                                             {Object.keys(state.resHeaders).length === 0 && (
-                                                <div className="text-text-dim text-xs">{strings.soap.noResponseYet}</div>
+                                                <div className="text-muted-foreground text-xs">{strings.soap.noResponseYet}</div>
                                             )}
                                         </div>
                                     )}

@@ -2,7 +2,7 @@ import React from "react";
 import { AppConfig, MockRule, SavedRequest, ServiceInfo, Folder, SyncStatus } from "@/types";
 import { Panel, isPanelEnabled } from "@/lib/panelRegistry";
 import { CaptureStats } from "@/panels/CapturePanel";
-import { Theme } from "@/lib/useTheme";
+import { ColorMode } from "@/lib/useTheme";
 
 import ServicesPanel from "@/panels/ServicesPanel";
 import MappingsPanel from "@/panels/MappingsPanel";
@@ -42,9 +42,9 @@ export interface PanelRenderContext {
     // Server state
     serverRunning: boolean;
     serverError: string | null;
-    // Theme
-    theme: Theme;
-    setTheme: (t: Theme) => void;
+    // Color mode
+    colorMode: ColorMode;
+    setColorMode: (m: ColorMode) => void;
     // Active environment
     activeEnv: any;
     // History sidebar
@@ -271,8 +271,8 @@ const PANEL_RENDERERS: Record<Panel, (ctx: PanelRenderContext) => React.ReactNod
             serverRunning={ctx.serverRunning}
             serverError={ctx.serverError}
             onConfigChange={ctx.handleConfigChange}
-            theme={ctx.theme}
-            onThemeChange={ctx.setTheme}
+            colorMode={ctx.colorMode}
+            onColorModeChange={ctx.setColorMode}
             onServerRestart={ctx.onServerRestart}
             sidebarVisibility={ctx.sidebarVisibility}
             onSidebarVisibilityChange={ctx.setSidebarPanelVisible}

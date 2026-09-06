@@ -44,22 +44,22 @@ export function UrlBar({
   return (
     <div className="px-4 py-2.5 border-b border-border flex-shrink-0 flex items-center gap-2">
       <div
-        className="flex items-stretch rounded border border-border focus-within:border-accent transition-colors overflow-hidden flex-1"
-        style={{ background: "var(--c-bg2)" }}
+        className="flex items-stretch rounded border border-border focus-within:border-signal transition-colors overflow-hidden flex-1"
+        style={{ background: "var(--c-card)" }}
       >
         <select
           value={method}
           onChange={(e) => onMethodChange(e.target.value)}
-          className="bg-bg3 border-r border-border text-xs font-bold font-mono px-3 py-2.5 outline-none cursor-pointer appearance-none flex-shrink-0"
+          className="bg-surface-2 border-r border-border text-xs font-bold font-mono px-3 py-2.5 outline-none cursor-pointer appearance-none flex-shrink-0"
           style={{ color: methodColor(method), minWidth: 84 }}
         >
           {methods.map((m) => (
-            <option key={m} value={m} style={{ color: methodColor(m), background: "var(--c-bg2)" }}>{m}</option>
+            <option key={m} value={m} style={{ color: methodColor(m), background: "var(--c-card)" }}>{m}</option>
           ))}
         </select>
         <input
           ref={urlRef}
-          className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-text-bright outline-none placeholder:text-text-dim min-w-0"
+          className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-foreground outline-none placeholder:text-muted-foreground min-w-0"
           placeholder={urlPlaceholder}
           value={url}
           onChange={(e) => onUrlChange(e.target.value)}
@@ -94,7 +94,7 @@ export function UrlBar({
       <button
         onClick={onAction}
         disabled={actionLoading || actionDisabled}
-        className="px-4 py-2.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
+        className="px-4 py-2.5 rounded bg-signal hover:bg-signal/80 disabled:opacity-40 disabled:cursor-not-allowed text-background text-xs font-semibold transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
       >
         {actionLoading
           ? <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />{actionLoadingLabel}</>
@@ -120,14 +120,14 @@ export interface TabStripProps<T extends string> {
 
 export function TabStrip<T extends string>({ tabs, active, onChange, prefix, suffix }: TabStripProps<T>) {
   return (
-    <div className="flex items-center flex-shrink-0 border-b border-border bg-bg0/40">
+    <div className="flex items-center flex-shrink-0 border-b border-border bg-background/40">
       {prefix}
       {tabs.map((t) => (
         <button
           key={t.id}
           onClick={() => onChange(t.id)}
           className={`px-4 py-2.5 text-xs font-medium cursor-pointer transition-colors whitespace-nowrap ${
-            active === t.id ? "text-accent border-b-2 border-accent -mb-px" : "text-text-dim hover:text-text-base"
+            active === t.id ? "text-signal border-b-2 border-signal -mb-px" : "text-muted-foreground hover:text-foreground"
           }`}
         >
           {t.label}
@@ -160,7 +160,7 @@ export function BottomBar({
   saveLabel, saveDisabled, saving, savingLabel, extraLeft,
 }: BottomBarProps) {
   return (
-    <div className="flex items-center justify-between px-4 py-2.5 border-t border-border flex-shrink-0 bg-bg0/30">
+    <div className="flex items-center justify-between px-4 py-2.5 border-t border-border flex-shrink-0 bg-background/30">
       <div className="flex items-center gap-2">
         {folders.length > 0 && (
           <FolderPicker folders={folders} value={folderId} onChange={onFolderChange} />
@@ -170,14 +170,14 @@ export function BottomBar({
       <div className="flex items-center gap-2">
         <button
           onClick={onCancel}
-          className="px-3 py-1.5 rounded border border-border bg-bg2 hover:bg-bg3 text-text-dim text-xs font-medium transition-all cursor-pointer"
+          className="px-3 py-1.5 rounded border border-border bg-card hover:bg-surface-2 text-muted-foreground text-xs font-medium transition-all cursor-pointer"
         >
           {strings.common.cancel}
         </button>
         <button
           onClick={onSave}
           disabled={saveDisabled || saving}
-          className="px-4 py-1.5 rounded bg-accent hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed text-bg0 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+          className="px-4 py-1.5 rounded bg-signal hover:bg-signal/80 disabled:opacity-40 disabled:cursor-not-allowed text-background text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
         >
           {saving
             ? <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />{savingLabel ?? saveLabel}</>

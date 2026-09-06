@@ -359,8 +359,8 @@ export default function MocksPanel({
         {openTabs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center gap-2">
             <div className="opacity-10 mb-1"><Zap size={48} /></div>
-            <div className="text-sm font-medium text-text-base">{strings.mocks.noMocksOpen}</div>
-            <p className="text-xs text-text-dim max-w-xs leading-relaxed">
+            <div className="text-sm font-medium text-foreground">{strings.mocks.noMocksOpen}</div>
+            <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
               {strings.mocks.noMocksOpenHint}
             </p>
           </div>
@@ -411,7 +411,7 @@ export default function MocksPanel({
         expandTitle={strings.mocks.expandSidebar}
         storageKey="mocks-panel-sidebar"
         collapsedBadge={mocks.length > 0 ? (
-          <span className="text-[9px] text-text-dim font-mono" title={`${mocks.length} mocks`}
+          <span className="text-[9px] text-muted-foreground font-mono" title={`${mocks.length} mocks`}
             style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1.4 }}>{mocks.length}</span>
         ) : undefined}
       >
